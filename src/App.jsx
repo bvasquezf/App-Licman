@@ -9,6 +9,7 @@ import NuevaEntrada from "./pages/NuevaEntrada";
 import NuevaSalida from "./pages/NuevaSalida";
 import StockActual from "./pages/StockActual";
 import Historial from "./pages/Historial";
+import UpdatePassword from "./pages/UpdatePassword";
 
 function App() {
   const { session, loading } = useAuth();
@@ -32,6 +33,7 @@ function App() {
         <Route path="/salidas" element={<NuevaSalida />} />
         <Route path="/stock" element={<StockActual />} />
         <Route path="/historial" element={<Historial />} />
+        <Route path="/actualizar-contraseña" element={<UpdatePassword />} />
       </Routes>
     </Layout>
   );

@@ -1,15 +1,20 @@
 import { useEffect, useState } from "react";
 
 function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
-  const [formData, setFormData] = useState({
+  const getInitialFormData = () => ({
     codigo: "",
     nombre: "",
     categoria: "",
     unidad: "",
     stock_minimo: "",
     precio_referencia: "",
+    cargar_stock_inicial: false,
+    cantidad_inicial: "",
+    precio_inicial: "",
+    observacion_inicial: "",
   });
 
+  const [formData, setFormData] = useState(getInitialFormData());
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -21,26 +26,27 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
         unidad: productoEditar.unidad || "",
         stock_minimo: productoEditar.stock_minimo ?? "",
         precio_referencia: productoEditar.precio_referencia ?? "",
+        cargar_stock_inicial: false,
+        cantidad_inicial: "",
+        precio_inicial: "",
+        observacion_inicial: "",
       });
     } else {
-      setFormData({
-        codigo: "",
-        nombre: "",
-        categoria: "",
-        unidad: "",
-        stock_minimo: "",
-        precio_referencia: "",
-      });
+      setFormData(getInitialFormData());
     }
   }, [productoEditar]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
 
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
+  };
+
+  const resetForm = () => {
+    setFormData(getInitialFormData());
   };
 
   const handleSubmit = async (e) => {
@@ -51,30 +57,56 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
       return;
     }
 
+    if (!productoEditar && formData.cargar_stock_inicial) {
+      if (
+        formData.cantidad_inicial === "" ||
+        Number(formData.cantidad_inicial) < 0
+      ) {
+        alert("Debes ingresar una cantidad inicial válida");
+        return;
+      }
+
+      if (
+        formData.precio_inicial !== "" &&
+        Number(formData.precio_inicial) < 0
+      ) {
+        alert("El precio inicial no puede ser negativo");
+        return;
+      }
+    }
+
     setLoading(true);
 
-    const productoData = {
-      codigo: formData.codigo.trim() || null,
-      nombre: formData.nombre.trim(),
-      categoria: formData.categoria.trim() || null,
-      unidad: formData.unidad.trim() || null,
-      stock_minimo: formData.stock_minimo ? Number(formData.stock_minimo) : 0,
-      precio_referencia: formData.precio_referencia
-        ? Number(formData.precio_referencia)
-        : null,
+    const payload = {
+      producto: {
+        codigo: formData.codigo.trim() || null,
+        nombre: formData.nombre.trim(),
+        categoria: formData.categoria.trim() || null,
+        unidad: formData.unidad.trim() || null,
+        stock_minimo:
+          formData.stock_minimo !== "" ? Number(formData.stock_minimo) : 0,
+        precio_referencia:
+          formData.precio_referencia !== ""
+            ? Number(formData.precio_referencia)
+            : null,
+      },
+      stockInicial:
+        !productoEditar && formData.cargar_stock_inicial
+          ? {
+              cantidad: Number(formData.cantidad_inicial),
+              precio_unitario:
+                formData.precio_inicial !== ""
+                  ? Number(formData.precio_inicial)
+                  : null,
+              observacion: formData.observacion_inicial.trim() || null,
+            }
+          : null,
     };
 
-    await onGuardar(productoData);
+    await onGuardar(payload);
 
     if (!productoEditar) {
-      setFormData({
-        codigo: "",
-        nombre: "",
-        categoria: "",
-        unidad: "",
-        stock_minimo: "",
-        precio_referencia: "",
-      });
+      resetForm();
     }
 
     setLoading(false);
@@ -85,9 +117,9 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
       onSubmit={handleSubmit}
       className="mb-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
     >
-      <div className="mb-4 flex items-center justify-between gap-4">
+      <div className="mb-2 flex items-center justify-between gap-4">
         <h2 className="text-xl font-semibold text-gray-800">
-          {productoEditar ? "Editar producto" : "Agregar producto"}
+          {productoEditar ? "Editar producto" : "Crear ficha de producto"}
         </h2>
 
         {productoEditar && (
@@ -100,6 +132,12 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
           </button>
         )}
       </div>
+
+      <p className="mb-6 text-sm text-gray-500">
+        {productoEditar
+          ? "Modifica los datos base del producto. El stock debe ajustarse desde movimientos."
+          : "Aquí defines el producto base. También puedes cargar stock inicial si el producto ya existe físicamente en bodega."}
+      </p>
 
       <div className="grid gap-4 md:grid-cols-2">
         <div>
@@ -165,6 +203,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
           <input
             type="number"
             name="stock_minimo"
+            min="0"
             value={formData.stock_minimo}
             onChange={handleChange}
             className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500"
@@ -174,17 +213,88 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
 
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700">
-            Precio referencia(Opcional)
+            Precio referencia (opcional)
           </label>
           <input
             type="number"
             name="precio_referencia"
+            min="0"
             value={formData.precio_referencia}
             onChange={handleChange}
             className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500"
-            placeholder="Ej: 2500 o dejar vacio"
+            placeholder="Ej: 2500 o dejar vacío"
           />
         </div>
+
+        {!productoEditar && (
+          <>
+            <div className="md:col-span-2 mt-2 rounded-xl border border-blue-100 bg-blue-50 p-4">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <input
+                  type="checkbox"
+                  name="cargar_stock_inicial"
+                  checked={formData.cargar_stock_inicial}
+                  onChange={handleChange}
+                />
+                Cargar stock inicial ahora
+              </label>
+
+              <p className="mt-2 text-sm text-gray-500">
+                Activa esta opción si el producto ya existe físicamente en la
+                bodega y quieres dejarlo contado desde el inicio, aunque no tenga
+                factura.
+              </p>
+            </div>
+
+            {formData.cargar_stock_inicial && (
+              <>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Cantidad inicial *
+                  </label>
+                  <input
+                    type="number"
+                    name="cantidad_inicial"
+                    min="0"
+                    value={formData.cantidad_inicial}
+                    onChange={handleChange}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500"
+                    placeholder="Ej: 25"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Precio estimado inicial (opcional)
+                  </label>
+                  <input
+                    type="number"
+                    name="precio_inicial"
+                    min="0"
+                    value={formData.precio_inicial}
+                    onChange={handleChange}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500"
+                    placeholder="Ej: 2500"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Observación inicial
+                  </label>
+                  <textarea
+                    name="observacion_inicial"
+                    value={formData.observacion_inicial}
+                    onChange={handleChange}
+                    rows={3}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500"
+                    placeholder="Ej: Stock contado manualmente al inicio del sistema"
+                  />
+                </div>
+              </>
+            )}
+          </>
+        )}
       </div>
 
       <button
