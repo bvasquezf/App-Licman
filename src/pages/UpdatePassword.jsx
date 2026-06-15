@@ -1,13 +1,20 @@
 import { useState } from "react";
 import { supabase } from "../services/supabase";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function UpdatePassword() {
-    const navigate = useNavigate();
-
+    const { logout } = useAuth();
     const [password, setPassword] = useState("");
     const [passwordConfirm, setPasswordConfirm] = useState("");
     const [loading, setLoading] = useState(false);
+
+    const validarPassword = (pw) => {
+        if (pw.length < 8) return "Debe tener al menos 8 caracteres";
+        if (!/[A-Z]/.test(pw)) return "Debe tener al menos una mayúscula";
+        if (!/[a-z]/.test(pw)) return "Debe tener al menos una minúscula";
+        if (!/[0-9]/.test(pw)) return "Debe tener al menos un número";
+        return null;
+    };
 
     const handleUpdatePassword = async (e) => {
         e.preventDefault();
@@ -17,8 +24,9 @@ function UpdatePassword() {
             return;
         }
 
-        if (password.length < 6) {
-            alert("La contraseña debe tener al menos 6 caracteres");
+        const errorValidacion = validarPassword(password);
+        if (errorValidacion) {
+            alert(errorValidacion);
             return;
         }
 
@@ -29,73 +37,76 @@ function UpdatePassword() {
 
         setLoading(true);
 
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: "https://tu-app.netlify.app/update-password",
-        });
+        // Esta es la función correcta para actualizar la contraseña
+        const { error } = await supabase.auth.updateUser({ password });
 
         setLoading(false);
 
         if (error) {
             console.error("Error al actualizar contraseña:", error);
-            alert("No se pudo actualizar la contraseña");
+            alert("No se pudo actualizar la contraseña: " + error.message);
             return;
         }
 
-        alert("Contraseña actualizada correctamente");
-
-        await supabase.auth.signOut();
-
-        navigate("/login");
+        alert("Contraseña actualizada correctamente. Por seguridad, inicia sesión nuevamente.");
+        await logout();
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-100 px-4">
-            <form
-                onSubmit={handleUpdatePassword}
-                className="w-full max-w-md rounded-2xl bg-white p-6 shadow"
-            >
-                <h1 className="mb-2 text-2xl font-bold text-gray-800">
-                    Cambiar contraseña
-                </h1>
-
-                <p className="mb-6 text-sm text-gray-500">
-                    Ingresa tu nueva contraseña para recuperar el acceso.
-                </p>
-
-                <div className="mb-4">
-                    <label className="mb-1 block text-sm font-medium text-gray-700">
+        <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
+            <div className="w-full max-w-sm">
+                <div className="mb-8 text-center">
+                    <h1 className="text-2xl font-semibold text-slate-800">
                         Nueva contraseña
-                    </label>
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500"
-                        placeholder="Nueva contraseña"
-                    />
+                    </h1>
+                    <p className="mt-1 text-sm text-slate-400">
+                        Elige una contraseña segura para tu cuenta
+                    </p>
                 </div>
 
-                <div className="mb-6">
-                    <label className="mb-1 block text-sm font-medium text-gray-700">
-                        Repetir contraseña
-                    </label>
-                    <input
-                        type="password"
-                        value={passwordConfirm}
-                        onChange={(e) => setPasswordConfirm(e.target.value)}
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500"
-                        placeholder="Repite la nueva contraseña"
-                    />
-                </div>
-
-                <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                <form
+                    className="rounded-2xl border border-slate-100 bg-white p-8 shadow-sm"
+                    onSubmit={handleUpdatePassword}
                 >
-                    {loading ? "Actualizando..." : "Actualizar contraseña"}
-                </button>
-            </form>
+                    <div className="mb-4">
+                        <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-slate-400">
+                            Nueva contraseña
+                        </label>
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-indigo-400 focus:outline-none"
+                            placeholder="Mínimo 8 caracteres"
+                        />
+                    </div>
+
+                    <div className="mb-6">
+                        <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-slate-400">
+                            Repetir contraseña
+                        </label>
+                        <input
+                            type="password"
+                            value={passwordConfirm}
+                            onChange={(e) => setPasswordConfirm(e.target.value)}
+                            className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-indigo-400 focus:outline-none"
+                            placeholder="Repite la nueva contraseña"
+                        />
+                    </div>
+
+                    <p className="mb-4 text-xs text-slate-400">
+                        La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número.
+                    </p>
+
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+                    >
+                        {loading ? "Actualizando..." : "Actualizar contraseña"}
+                    </button>
+                </form>
+            </div>
         </div>
     );
 }

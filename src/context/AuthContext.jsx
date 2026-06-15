@@ -6,6 +6,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
     const [session, setSession] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
     useEffect(() => {
         const obtenerSesion = async () => {
@@ -13,12 +14,16 @@ export const AuthProvider = ({ children }) => {
             setSession(data.session);
             setLoading(false);
         };
-
         obtenerSesion();
 
         const { data: listener } = supabase.auth.onAuthStateChange(
-            (_event, session) => {
+            (event, session) => {
                 setSession(session);
+                if (event === "PASSWORD_RECOVERY") {
+                    setIsPasswordRecovery(true);
+                } else {
+                    setIsPasswordRecovery(false);
+                }
             }
         );
 
@@ -28,10 +33,7 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const login = async (email, password) => {
-        return await supabase.auth.signInWithPassword({
-            email,
-            password,
-        });
+        return await supabase.auth.signInWithPassword({ email, password });
     };
 
     const register = async (email, password) => {
@@ -39,7 +41,7 @@ export const AuthProvider = ({ children }) => {
             email,
             password,
             options: {
-                emailRedirectTo: "http://localhost:5173",
+                emailRedirectTo: "https://appinventariorepuestos.netlify.app",
             },
         });
     };
@@ -50,7 +52,7 @@ export const AuthProvider = ({ children }) => {
 
     return (
         <AuthContext.Provider
-            value={{ session, loading, login, register, logout }}
+            value={{ session, loading, login, register, logout, isPasswordRecovery }}
         >
             {children}
         </AuthContext.Provider>
