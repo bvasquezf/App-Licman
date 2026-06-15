@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import Layout from "./components/layout/Layout";
@@ -12,9 +12,22 @@ import Historial from "./pages/Historial";
 import UpdatePassword from "./pages/UpdatePassword";
 
 function App() {
-    const { session, loading, isPasswordRecovery } = useAuth();
+    const { session, loading } = useAuth();
+    const [isRecovery, setIsRecovery] = useState(false);
 
     useEffect(() => {
+        // Supabase v2 PKCE manda ?type=recovery en la URL
+        const params = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(window.location.hash.replace("#", "?"));
+
+        const type = params.get("type") || hashParams.get("type");
+
+        if (type === "recovery") {
+            setIsRecovery(true);
+            // Limpiar la URL sin recargar
+            window.history.replaceState(null, "", window.location.pathname);
+        }
+
         if (window.location.hash.includes("error=")) {
             window.history.replaceState(null, "", window.location.pathname);
         }
@@ -24,8 +37,8 @@ function App() {
 
     if (!session) return <Login />;
 
-    // Si viene del link de recuperación, mandarlo directo a UpdatePassword
-    if (isPasswordRecovery) return <UpdatePassword />;
+    // Si viene del link de recuperación, mostrar UpdatePassword
+    if (isRecovery) return <UpdatePassword onDone={() => setIsRecovery(false)} />;
 
     return (
         <Layout>

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { supabase } from "../services/supabase";
 import { useAuth } from "../context/AuthContext";
 
-function UpdatePassword() {
+function UpdatePassword({ onDone }) {
     const { logout } = useAuth();
     const [password, setPassword] = useState("");
     const [passwordConfirm, setPasswordConfirm] = useState("");
@@ -37,7 +37,6 @@ function UpdatePassword() {
 
         setLoading(true);
 
-        // Esta es la función correcta para actualizar la contraseña
         const { error } = await supabase.auth.updateUser({ password });
 
         setLoading(false);
@@ -48,8 +47,9 @@ function UpdatePassword() {
             return;
         }
 
-        alert("Contraseña actualizada correctamente. Por seguridad, inicia sesión nuevamente.");
+        alert("Contraseña actualizada correctamente. Inicia sesión nuevamente.");
         await logout();
+        if (onDone) onDone();
     };
 
     return (
@@ -95,7 +95,7 @@ function UpdatePassword() {
                     </div>
 
                     <p className="mb-4 text-xs text-slate-400">
-                        La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número.
+                        Debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número.
                     </p>
 
                     <button
