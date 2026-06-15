@@ -2,7 +2,7 @@ import { useState } from "react";
 import { supabase } from "../services/supabase";
 import { useAuth } from "../context/AuthContext";
 
-function UpdatePassword({ onDone }) {
+function UpdatePassword() {
     const { logout } = useAuth();
     const [password, setPassword] = useState("");
     const [passwordConfirm, setPasswordConfirm] = useState("");
@@ -36,20 +36,16 @@ function UpdatePassword({ onDone }) {
         }
 
         setLoading(true);
-
         const { error } = await supabase.auth.updateUser({ password });
-
         setLoading(false);
 
         if (error) {
-            console.error("Error al actualizar contraseña:", error);
             alert("No se pudo actualizar la contraseña: " + error.message);
             return;
         }
 
         alert("Contraseña actualizada correctamente. Inicia sesión nuevamente.");
         await logout();
-        if (onDone) onDone();
     };
 
     return (
