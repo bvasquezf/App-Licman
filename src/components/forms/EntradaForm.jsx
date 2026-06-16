@@ -18,10 +18,10 @@ function EntradaForm({ productos, onGuardar }) {
   const [loading, setLoading] = useState(false);
 
   const esCompra = formData.motivo_movimiento === "compra";
+  // Solo los ajustes positivos requieren observación obligatoria
+  // (hay que justificar la diferencia). Los demás son opcionales.
   const requiereObservacion =
-    formData.motivo_movimiento === "ajuste_positivo" ||
-    formData.motivo_movimiento === "stock_inicial" ||
-    formData.motivo_movimiento === "devolucion";
+    formData.motivo_movimiento === "ajuste_positivo";
 
   const productoSeleccionado = useMemo(() => {
     return (
@@ -268,7 +268,8 @@ function EntradaForm({ productos, onGuardar }) {
 
         <div className="md:col-span-2">
           <label className="mb-1 block text-sm font-medium text-gray-700">
-            Observación {requiereObservacion ? "*" : "(opcional)"}
+            Observación
+            {requiereObservacion ? " *" : " (opcional)"}
           </label>
           <textarea
             name="observacion"
