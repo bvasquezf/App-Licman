@@ -79,25 +79,27 @@ function Productos() {
     // 2) Si hay stock inicial, registrarlo como movimiento de entrada.
     //    El trigger de Supabase se encarga de actualizar stock_actual.
     if (stockInicial && stockInicial.cantidad > 0) {
+      const movimientoPayload = {
+        producto_id: productoInsertado.id,
+        tipo_movimiento: "entrada",
+        motivo_movimiento: "stock_inicial",
+        cantidad: stockInicial.cantidad,
+        precio_unitario: stockInicial.precio_unitario ?? null,
+        observacion:
+          stockInicial.observacion ?? "Stock inicial del producto",
+      };
+
+      console.log("Insertando stock inicial:", movimientoPayload);
+
       const { error: movError } = await supabase
         .from("movimientos")
-        .insert([
-          {
-            producto_id: productoInsertado.id,
-            tipo_movimiento: "entrada",
-            motivo_movimiento: "stock_inicial",
-            cantidad: stockInicial.cantidad,
-            precio_unitario: stockInicial.precio_unitario ?? null,
-            observacion:
-              stockInicial.observacion ?? "Stock inicial del producto",
-          },
-        ]);
+        .insert([movimientoPayload]);
 
       if (movError) {
-        console.error("Error al registrar stock inicial:", movError);
+        console.error("Error completo al registrar stock inicial:", movError);
         showToast(
-          "Producto creado, pero no se pudo registrar el stock inicial",
-          "warning"
+          `Producto creado, pero falló el stock inicial: ${movError.message}`,
+          "error"
         );
         await cargarProductos();
         return;
