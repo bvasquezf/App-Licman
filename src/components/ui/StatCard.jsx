@@ -21,22 +21,26 @@ function StatCard({ label, value, hint, icon, tone = "indigo" }) {
     const t = tones[tone] || tones.indigo;
 
     return (
-        <div className="group rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm transition-all duration-200 hover:shadow-md">
+        <div className="group rounded-2xl border border-slate-200/60 bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-md sm:p-5">
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium uppercase tracking-wider text-slate-400">
+                    <p className="truncate text-[10px] font-medium uppercase tracking-wider text-slate-400 sm:text-xs">
                         {label}
                     </p>
-                    <p className={`mt-2 text-2xl font-semibold tabular-nums ${t.text} md:text-3xl`}>
+                    <p
+                        className={`mt-1.5 text-xl font-semibold tabular-nums sm:mt-2 sm:text-2xl md:text-3xl ${t.text}`}
+                    >
                         {value}
                     </p>
                     {hint && (
-                        <p className="mt-2 text-xs text-slate-400">{hint}</p>
+                        <p className="mt-1.5 truncate text-[10px] text-slate-400 sm:text-xs">
+                            {hint}
+                        </p>
                     )}
                 </div>
                 {icon && (
                     <div
-                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg ${t.bg}`}
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-base sm:h-10 sm:w-10 sm:text-lg ${t.bg}`}
                     >
                         {icon}
                     </div>

@@ -185,7 +185,7 @@ function Historial() {
                     placeholder="Buscar por producto, código, proveedor..."
                     value={busqueda}
                     onChange={(e) => setBusqueda(e.target.value)}
-                    className="w-full rounded-2xl border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm shadow-sm transition-colors focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                    className="w-full rounded-2xl border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm shadow-sm transition-colors focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 sm:text-base"
                 />
             </div>
 
@@ -230,8 +230,8 @@ function Historial() {
             </div>
 
             {/* Filtros de fecha */}
-            <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200/60 bg-white p-3 shadow-sm">
-                <div className="flex flex-col">
+            <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/60 bg-white p-3 shadow-sm sm:flex-row sm:flex-wrap sm:items-end sm:p-4">
+                <div className="flex flex-1 flex-col sm:flex-none">
                     <label className="mb-1 px-1 text-[10px] font-medium uppercase tracking-wider text-slate-400">
                         Desde
                     </label>
@@ -239,10 +239,10 @@ function Historial() {
                         type="date"
                         value={fechaDesde}
                         onChange={(e) => setFechaDesde(e.target.value)}
-                        className="rounded-xl border border-slate-200/60 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                        className="w-full rounded-xl border border-slate-200/60 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 sm:w-auto"
                     />
                 </div>
-                <div className="flex flex-col">
+                <div className="flex flex-1 flex-col sm:flex-none">
                     <label className="mb-1 px-1 text-[10px] font-medium uppercase tracking-wider text-slate-400">
                         Hasta
                     </label>
@@ -250,7 +250,7 @@ function Historial() {
                         type="date"
                         value={fechaHasta}
                         onChange={(e) => setFechaHasta(e.target.value)}
-                        className="rounded-xl border border-slate-200/60 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                        className="w-full rounded-xl border border-slate-200/60 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 sm:w-auto"
                     />
                 </div>
                 {filtrosActivos && (
@@ -304,7 +304,7 @@ function Historial() {
                                                 isExpanded ? null : mov.id
                                             )
                                         }
-                                        className={`flex w-full items-center gap-3 p-4 text-left ${
+                                        className={`flex w-full items-center gap-3 p-3 text-left sm:p-4 ${
                                             hasDetails
                                                 ? "cursor-pointer"
                                                 : "cursor-default"
@@ -389,7 +389,7 @@ function Historial() {
                                     </button>
 
                                     {isExpanded && hasDetails && (
-                                        <div className="border-t border-slate-100 bg-slate-50/50 p-4">
+                                        <div className="border-t border-slate-100 bg-slate-50/50 p-3 sm:p-4">
                                             <div className="grid gap-3 text-xs sm:grid-cols-2">
                                                 {mov.precio_unitario && (
                                                     <div>

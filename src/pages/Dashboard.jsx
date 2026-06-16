@@ -179,13 +179,13 @@ function Dashboard() {
 
             {/* KPIs */}
             {loading ? (
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
                     {Array.from({ length: 4 }).map((_, i) => (
-                        <Skeleton key={i} className="h-28" />
+                        <Skeleton key={i} className="h-24 sm:h-28" />
                     ))}
                 </div>
             ) : (
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
                     <StatCard
                         label="Total productos"
                         value={totalProductos.toLocaleString("es-CL")}
@@ -215,7 +215,7 @@ function Dashboard() {
             )}
 
             {/* Secciones */}
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
                 {/* Stock bajo */}
                 <Card>
                     <div className="mb-4 flex items-center justify-between">
@@ -248,7 +248,7 @@ function Dashboard() {
                                 return (
                                     <li
                                         key={item.id}
-                                        className="flex items-center justify-between py-3"
+                                        className="flex items-center justify-between py-2.5 sm:py-3"
                                     >
                                         <div className="min-w-0 flex-1">
                                             <p className="truncate text-sm font-medium text-slate-800">
@@ -293,7 +293,7 @@ function Dashboard() {
                             {movimientos.slice(0, 5).map((mov) => (
                                 <li
                                     key={mov.id}
-                                    className="flex items-center gap-3 py-3"
+                                    className="flex items-center gap-3 py-2.5 sm:py-3"
                                 >
                                     <span
                                         className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${getTipoBadge(

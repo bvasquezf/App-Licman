@@ -49,9 +49,12 @@ function UpdatePassword() {
     // en vez de dejarlo enviar un formulario que va a fallar.
     if (!session) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-                <div className="w-full max-w-sm rounded-2xl border border-slate-100 bg-white p-8 text-center shadow-sm">
-                    <h1 className="text-xl font-semibold text-slate-800">
+            <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-8">
+                <div className="w-full max-w-sm rounded-2xl border border-slate-200/60 bg-white p-6 text-center shadow-sm sm:p-8">
+                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-2xl sm:mb-4 sm:h-14 sm:w-14">
+                        ⏱️
+                    </div>
+                    <h1 className="text-xl font-semibold tracking-tight text-slate-800 sm:text-2xl">
                         Link expirado
                     </h1>
                     <p className="mt-2 text-sm text-slate-500">
@@ -60,7 +63,7 @@ function UpdatePassword() {
                     </p>
                     <a
                         href="/"
-                        className="mt-6 inline-block rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+                        className="mt-6 inline-block rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-indigo-700 hover:shadow-md active:scale-95"
                     >
                         Volver al inicio
                     </a>
@@ -104,25 +107,28 @@ function UpdatePassword() {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-            <div className="w-full max-w-sm">
-                <div className="mb-8 text-center">
-                    <h1 className="text-2xl font-semibold text-slate-800">
+        <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-8">
+            <div className="w-full max-w-sm sm:max-w-md">
+                <div className="mb-6 text-center sm:mb-8">
+                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-2xl text-white shadow-sm sm:mb-4 sm:h-14 sm:w-14">
+                        🔒
+                    </div>
+                    <h1 className="text-2xl font-semibold tracking-tight text-slate-800 sm:text-3xl">
                         Nueva contraseña
                     </h1>
-                    <p className="mt-1 text-sm text-slate-400">
+                    <p className="mt-1 text-sm text-slate-500">
                         Elige una contraseña segura para tu cuenta
                     </p>
                 </div>
 
                 <form
-                    className="rounded-2xl border border-slate-100 bg-white p-8 shadow-sm"
+                    className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm sm:p-8"
                     onSubmit={handleUpdatePassword}
                 >
                     <div className="mb-4">
                         <label
                             htmlFor="new-password"
-                            className="mb-1 block text-xs font-medium uppercase tracking-wider text-slate-400"
+                            className="mb-1.5 block text-[10px] font-medium uppercase tracking-wider text-slate-500"
                         >
                             Nueva contraseña
                         </label>
@@ -131,7 +137,7 @@ function UpdatePassword() {
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-indigo-400 focus:outline-none"
+                            className="w-full rounded-xl border border-slate-200/60 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm transition-colors focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 sm:text-base"
                             placeholder="Mínimo 8 caracteres"
                             autoComplete="new-password"
                             maxLength={MAX_PASSWORD_LENGTH}
@@ -142,7 +148,7 @@ function UpdatePassword() {
                     <div className="mb-4">
                         <label
                             htmlFor="confirm-password"
-                            className="mb-1 block text-xs font-medium uppercase tracking-wider text-slate-400"
+                            className="mb-1.5 block text-[10px] font-medium uppercase tracking-wider text-slate-500"
                         >
                             Repetir contraseña
                         </label>
@@ -153,7 +159,7 @@ function UpdatePassword() {
                             onChange={(e) =>
                                 setPasswordConfirm(e.target.value)
                             }
-                            className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-indigo-400 focus:outline-none"
+                            className="w-full rounded-xl border border-slate-200/60 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm transition-colors focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 sm:text-base"
                             placeholder="Repite la nueva contraseña"
                             autoComplete="new-password"
                             maxLength={MAX_PASSWORD_LENGTH}
@@ -161,7 +167,7 @@ function UpdatePassword() {
                         />
                     </div>
 
-                    <p className="mb-4 text-xs text-slate-400">
+                    <p className="mb-4 text-xs text-slate-500">
                         Mínimo 8 caracteres, una mayúscula, una minúscula y un
                         número. Evita contraseñas comunes.
                     </p>
@@ -169,7 +175,7 @@ function UpdatePassword() {
                     {error && (
                         <div
                             role="alert"
-                            className="mb-4 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700"
+                            className="mb-4 rounded-xl border border-rose-100 bg-rose-50 px-3 py-2 text-sm text-rose-700"
                         >
                             {error}
                         </div>
@@ -178,7 +184,7 @@ function UpdatePassword() {
                     {success && (
                         <div
                             role="status"
-                            className="mb-4 rounded-lg border border-green-100 bg-green-50 px-3 py-2 text-sm text-green-700"
+                            className="mb-4 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-sm text-emerald-700"
                         >
                             Contraseña actualizada. Cerrando sesión...
                         </div>
@@ -187,7 +193,7 @@ function UpdatePassword() {
                     <button
                         type="submit"
                         disabled={loading || success}
-                        className="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="w-full rounded-xl bg-indigo-600 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-indigo-700 hover:shadow-md active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {loading
                             ? "Actualizando..."

@@ -3,7 +3,6 @@ import { useEffect } from "react";
 const AUTO_CLOSE_MS = 3500;
 
 function Toast({ message, type = "success", onClose }) {
-    // Auto-cierre después de unos segundos
     useEffect(() => {
         if (!message) return;
         const timer = setTimeout(onClose, AUTO_CLOSE_MS);
@@ -12,26 +11,32 @@ function Toast({ message, type = "success", onClose }) {
 
     if (!message) return null;
 
-    const baseStyles =
-        "fixed right-4 top-4 z-50 rounded-xl px-4 py-3 shadow-lg text-white";
-
     const typeStyles =
         type === "error"
-            ? "bg-red-600"
+            ? "bg-rose-600"
             : type === "warning"
-            ? "bg-yellow-500"
-            : "bg-green-600";
+            ? "bg-amber-500"
+            : "bg-emerald-600";
+
+    const icon =
+        type === "error" ? "⚠️" : type === "warning" ? "⚠️" : "✓";
 
     return (
         <div
             role={type === "error" ? "alert" : "status"}
-            className={`${baseStyles} ${typeStyles}`}
+            className={`fixed inset-x-3 top-3 z-50 mx-auto max-w-sm rounded-2xl px-4 py-3 text-sm font-medium text-white shadow-lg ring-1 ring-black/5 animate-fade-in sm:left-auto sm:right-4 sm:top-4 sm:mx-0 ${typeStyles}`}
+            style={{
+                paddingTop: "max(0.75rem, env(safe-area-inset-top))",
+            }}
         >
-            <div className="flex items-center gap-3">
-                <span>{message}</span>
+            <div className="flex items-start gap-3">
+                <span className="shrink-0 text-base" aria-hidden="true">
+                    {icon}
+                </span>
+                <span className="flex-1 break-words">{message}</span>
                 <button
                     onClick={onClose}
-                    className="rounded px-2 py-1 text-sm font-bold hover:bg-white/20"
+                    className="shrink-0 rounded p-1 text-white/80 transition-colors hover:bg-white/20 hover:text-white"
                     aria-label="Cerrar notificación"
                 >
                     ✕

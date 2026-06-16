@@ -14,7 +14,7 @@ function Field({ label, required, children, className = "" }) {
 }
 
 const inputClass =
-    "w-full rounded-xl border border-slate-200/60 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm transition-colors focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100";
+    "w-full rounded-xl border border-slate-200/60 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm transition-colors focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 sm:text-base";
 
 function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
     const { showToast } = useToast();
@@ -157,7 +157,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
     if (productoEditar) {
         return (
             <Card className="overflow-hidden" padding="p-0">
-                <div className="border-b border-slate-200/60 bg-amber-50/60 px-5 py-4">
+                <div className="border-b border-slate-200/60 bg-amber-50/60 px-4 py-3 sm:px-5 sm:py-4">
                     <div className="flex items-center justify-between gap-3">
                         <div>
                             <h2 className="text-base font-semibold text-slate-800">
@@ -202,7 +202,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                         });
                         setLoading(false);
                     }}
-                    className="p-5"
+                    className="p-4 sm:p-5"
                 >
                     <div className="grid gap-4 md:grid-cols-2">
                         <Field label="Código">
@@ -288,7 +288,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
     return (
         <Card padding="p-0" className="overflow-hidden">
             {/* Header con stepper */}
-            <div className="border-b border-slate-200/60 bg-gradient-to-br from-indigo-50/40 to-slate-50 px-5 py-4">
+            <div className="border-b border-slate-200/60 bg-gradient-to-br from-indigo-50/40 to-slate-50 px-4 py-3 sm:px-5 sm:py-4">
                 <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2">
                         <div
@@ -330,7 +330,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
 
             {/* PASO 1 */}
             {paso === 1 && (
-                <form onSubmit={handleSiguiente} className="p-5">
+                <form onSubmit={handleSiguiente} className="p-4 sm:p-5">
                     <p className="mb-5 text-sm text-slate-500">
                         Define la ficha base del producto. El stock lo cargas en
                         el siguiente paso.
@@ -429,7 +429,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
 
             {/* PASO 2 */}
             {paso === 2 && (
-                <form onSubmit={handleSubmit} className="p-5">
+                <form onSubmit={handleSubmit} className="p-4 sm:p-5">
                     <p className="mb-5 text-sm text-slate-500">
                         ¿Este producto ya existe físicamente en la bodega? Si
                         quieres, puedes dejar registrado el stock inicial ahora.

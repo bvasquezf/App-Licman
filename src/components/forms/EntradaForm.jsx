@@ -3,7 +3,7 @@ import { useToast } from "../../context/ToastContext";
 import Card from "../ui/Card";
 
 const inputClass =
-    "w-full rounded-xl border border-slate-200/60 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm transition-colors focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100";
+    "w-full rounded-xl border border-slate-200/60 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm transition-colors focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 sm:text-base";
 
 function Field({ label, required, children, className = "" }) {
     return (
@@ -142,7 +142,7 @@ function EntradaForm({ productos, onGuardar }) {
 
     return (
         <Card padding="p-0" className="overflow-hidden">
-            <div className="border-b border-slate-200/60 bg-gradient-to-br from-emerald-50/40 to-slate-50 px-5 py-4">
+            <div className="border-b border-slate-200/60 bg-gradient-to-br from-emerald-50/40 to-slate-50 px-4 py-3 sm:px-5 sm:py-4">
                 <h2 className="text-base font-semibold text-slate-800">
                     Registrar ingreso de stock
                 </h2>
@@ -151,7 +151,7 @@ function EntradaForm({ productos, onGuardar }) {
                 </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-5">
+            <form onSubmit={handleSubmit} className="p-4 sm:p-5">
                 <div className="grid gap-4 md:grid-cols-2">
                     <Field label="Producto" required>
                         <select

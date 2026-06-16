@@ -260,7 +260,7 @@ function Productos() {
                     placeholder="Buscar por nombre, código o categoría..."
                     value={busqueda}
                     onChange={(e) => setBusqueda(e.target.value)}
-                    className="w-full rounded-2xl border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm shadow-sm transition-colors focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                    className="w-full rounded-2xl border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm shadow-sm transition-colors focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 sm:text-base"
                 />
             </div>
 
@@ -271,8 +271,8 @@ function Productos() {
             />
 
             {/* Listado */}
-            <Card padding="p-5">
-                <div className="mb-4 flex items-center justify-between">
+            <Card padding="p-4 sm:p-5">
+                <div className="mb-3 flex items-center justify-between sm:mb-4">
                     <h2 className="text-base font-semibold text-slate-800">
                         Listado
                     </h2>
@@ -294,11 +294,11 @@ function Productos() {
                         description="Crea tu primer producto con el formulario de arriba"
                     />
                 ) : (
-                    <ul className="space-y-3">
+                    <ul className="space-y-2 sm:space-y-3">
                         {productosFiltrados.map((producto) => (
                             <li
                                 key={producto.id}
-                                className={`group rounded-2xl border p-4 transition-all duration-200 hover:shadow-sm ${
+                                className={`group rounded-2xl border p-3 transition-all duration-200 hover:shadow-sm sm:p-4 ${
                                     producto.activo
                                         ? "border-slate-200/60 bg-white"
                                         : "border-amber-200/60 bg-amber-50/40"
@@ -307,7 +307,7 @@ function Productos() {
                                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                                     <div className="min-w-0 flex-1">
                                         <div className="flex flex-wrap items-center gap-2">
-                                            <h3 className="text-sm font-semibold text-slate-800">
+                                            <h3 className="truncate text-sm font-semibold text-slate-800 sm:text-base">
                                                 {producto.nombre}
                                             </h3>
                                             {producto.codigo && (
@@ -316,7 +316,7 @@ function Productos() {
                                                 </span>
                                             )}
                                             <span
-                                                className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                                                className={`rounded-full px-2 py-0.5 text-[10px] font-medium sm:text-xs ${
                                                     producto.activo
                                                         ? "bg-emerald-50 text-emerald-700"
                                                         : "bg-amber-100 text-amber-800"
@@ -327,7 +327,7 @@ function Productos() {
                                                     : "Inactivo"}
                                             </span>
                                         </div>
-                                        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
+                                        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-500 sm:text-xs">
                                             {producto.categoria && (
                                                 <span>📁 {producto.categoria}</span>
                                             )}
@@ -350,12 +350,12 @@ function Productos() {
                                         </div>
                                     </div>
 
-                                    <div className="flex flex-wrap gap-2">
+                                    <div className="flex flex-wrap gap-1.5 sm:gap-2">
                                         <button
                                             onClick={() =>
                                                 setProductoEditar(producto)
                                             }
-                                            className="rounded-lg px-3 py-1.5 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-50"
+                                            className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-50 sm:px-3"
                                         >
                                             Editar
                                         </button>
@@ -364,7 +364,7 @@ function Productos() {
                                                 onClick={() =>
                                                     desactivarProducto(producto)
                                                 }
-                                                className="rounded-lg px-3 py-1.5 text-xs font-medium text-amber-600 transition-colors hover:bg-amber-50"
+                                                className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-amber-600 transition-colors hover:bg-amber-50 sm:px-3"
                                             >
                                                 Desactivar
                                             </button>
@@ -373,7 +373,7 @@ function Productos() {
                                                 onClick={() =>
                                                     activarProducto(producto)
                                                 }
-                                                className="rounded-lg px-3 py-1.5 text-xs font-medium text-emerald-600 transition-colors hover:bg-emerald-50"
+                                                className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-emerald-600 transition-colors hover:bg-emerald-50 sm:px-3"
                                             >
                                                 Activar
                                             </button>

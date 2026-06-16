@@ -174,7 +174,7 @@ function StockActual() {
                         placeholder="Buscar por nombre o código..."
                         value={busqueda}
                         onChange={(e) => setBusqueda(e.target.value)}
-                        className="w-full rounded-2xl border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm shadow-sm transition-colors focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                        className="w-full rounded-2xl border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm shadow-sm transition-colors focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 sm:text-base"
                     />
                 </div>
             </div>
@@ -221,7 +221,7 @@ function StockActual() {
 
             {/* Grid de stock */}
             {loading ? (
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {Array.from({ length: 6 }).map((_, i) => (
                         <Skeleton key={i} className="h-32" />
                     ))}
@@ -237,11 +237,11 @@ function StockActual() {
                     }
                 />
             ) : (
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {stockFiltrado.map((item) => (
                         <div
                             key={item.id}
-                            className="group rounded-2xl border border-slate-200/60 bg-white p-4 shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-md"
+                            className="group rounded-2xl border border-slate-200/60 bg-white p-3.5 shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-md sm:p-4"
                         >
                             <div className="flex items-start justify-between gap-2">
                                 <div className="min-w-0 flex-1">
