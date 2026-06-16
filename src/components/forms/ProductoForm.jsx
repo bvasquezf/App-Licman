@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { useToast } from "../../context/ToastContext";
 import Card from "../ui/Card";
+import {
+    detectarCategoria,
+    generarCodigo,
+} from "../../utils/productCodeUtils";
+import { useSiguienteCorrelativo } from "../../hooks/useSiguienteCorrelativo";
 
 function Field({ label, required, children, className = "" }) {
     return (
@@ -40,6 +45,11 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
     const [quiereStockInicial, setQuiereStockInicial] = useState(null);
     const [loading, setLoading] = useState(false);
 
+    // Flags de auto-generación: cuando el usuario edita manualmente
+    // categoría o código, dejamos de sobrescribir automáticamente.
+    const [categoriaEsManual, setCategoriaEsManual] = useState(false);
+    const [codigoEsManual, setCodigoEsManual] = useState(false);
+
     useEffect(() => {
         if (productoEditar) {
             setProductoData({
@@ -52,8 +62,48 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
             });
         } else {
             setProductoData(getInitialProductoData());
+            setCategoriaEsManual(false);
+            setCodigoEsManual(false);
         }
     }, [productoEditar]);
+
+    // ─── Auto-detección de categoría ──────────────────────────────
+    // Solo aplica en modo creación y cuando el usuario no la editó a mano.
+    useEffect(() => {
+        if (productoEditar || categoriaEsManual) return;
+        const det = detectarCategoria(productoData.nombre);
+        setProductoData((prev) => {
+            if (prev.categoria === det.categoria) return prev;
+            return { ...prev, categoria: det.categoria };
+        });
+    }, [productoData.nombre, categoriaEsManual, productoEditar]);
+
+    // ─── Auto-generación de código ────────────────────────────────
+    // Detecta prefijo desde el nombre, consulta correlativo a BD.
+    const det = productoEditar ? null : detectarCategoria(productoData.nombre);
+    const prefijo = det?.prefijo || "";
+
+    const {
+        siguiente,
+        loading: loadingCodigo,
+        refetch: refetchCorrelativo,
+    } = useSiguienteCorrelativo(prefijo, {
+        habilitado: !productoEditar && !!prefijo && !codigoEsManual,
+    });
+
+    useEffect(() => {
+        if (productoEditar || codigoEsManual) return;
+        if (!prefijo) {
+            setProductoData((prev) =>
+                prev.codigo === "" ? prev : { ...prev, codigo: "" }
+            );
+            return;
+        }
+        const nuevo = generarCodigo(prefijo, siguiente);
+        setProductoData((prev) =>
+            prev.codigo === nuevo ? prev : { ...prev, codigo: nuevo }
+        );
+    }, [prefijo, siguiente, codigoEsManual, productoEditar]);
 
     const handleProductoChange = (e) => {
         const { name, value } = e.target;
@@ -70,6 +120,8 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
         setStockData(getInitialStockData());
         setPaso(1);
         setQuiereStockInicial(null);
+        setCategoriaEsManual(false);
+        setCodigoEsManual(false);
     };
 
     const validarPaso1 = () => {
@@ -338,14 +390,59 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
 
                     <div className="grid gap-4 md:grid-cols-2">
                         <Field label="Código">
-                            <input
-                                type="text"
-                                name="codigo"
-                                value={productoData.codigo}
-                                onChange={handleProductoChange}
-                                className={inputClass}
-                                placeholder="Ej: TOR-001"
-                            />
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    name="codigo"
+                                    value={productoData.codigo}
+                                    onChange={(e) => {
+                                        setCodigoEsManual(true);
+                                        handleProductoChange(e);
+                                    }}
+                                    className={`${inputClass} flex-1`}
+                                    placeholder={
+                                        loadingCodigo
+                                            ? "Generando…"
+                                            : "Ej: TOR-001"
+                                    }
+                                    autoComplete="off"
+                                />
+                                <button
+                                    type="button"
+                                    disabled={!prefijo || loadingCodigo}
+                                    onClick={() => {
+                                        setCodigoEsManual(false);
+                                        refetchCorrelativo();
+                                    }}
+                                    title="Regenerar código sugerido"
+                                    aria-label="Regenerar código sugerido"
+                                    className="shrink-0 rounded-xl border border-slate-200/60 bg-white px-3 text-slate-500 transition-colors hover:bg-slate-50 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    >
+                                        <polyline points="23 4 23 10 17 10" />
+                                        <polyline points="1 20 1 14 7 14" />
+                                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                                    </svg>
+                                </button>
+                            </div>
+                            {prefijo && !codigoEsManual && (
+                                <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                    Sugerido automáticamente · prefijo{" "}
+                                    <span className="font-mono font-semibold">
+                                        {prefijo}
+                                    </span>
+                                </p>
+                            )}
                         </Field>
                         <Field label="Nombre" required>
                             <input
@@ -359,14 +456,27 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                             />
                         </Field>
                         <Field label="Categoría">
-                            <input
-                                type="text"
-                                name="categoria"
-                                value={productoData.categoria}
-                                onChange={handleProductoChange}
-                                className={inputClass}
-                                placeholder="Ej: Pernos"
-                            />
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    name="categoria"
+                                    value={productoData.categoria}
+                                    onChange={(e) => {
+                                        setCategoriaEsManual(true);
+                                        handleProductoChange(e);
+                                    }}
+                                    className={inputClass}
+                                    placeholder="Ej: Pernos"
+                                />
+                                {productoData.categoria && !categoriaEsManual && (
+                                    <span
+                                        aria-hidden="true"
+                                        className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-medium text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300"
+                                    >
+                                        auto
+                                    </span>
+                                )}
+                            </div>
                         </Field>
                         <Field label="Unidad">
                             <input
