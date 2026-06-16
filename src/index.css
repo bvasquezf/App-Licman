@@ -13,17 +13,7 @@
     box-sizing: border-box;
 }
 
-html {
-    margin: 0;
-    padding: 0;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
-    scroll-behavior: smooth;
-    /* Permitir scroll vertical siempre; prevenir solo el horizontal */
-    overflow-x: clip;
-}
-
+html,
 body {
     margin: 0;
     padding: 0;
@@ -38,12 +28,22 @@ body {
         "Helvetica Neue",
         Arial,
         sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+html {
+    scroll-behavior: smooth;
+    /* Prevenir scroll horizontal SIN crear scrollport (que rompe la rueda) */
+    overflow-x: clip;
+}
+
+body {
+    /* Importante: NO declarar overflow en el body.
+       El scroll vertical es nativo del navegador. */
     min-height: 100vh;
     min-height: 100dvh;
-    /* El body debe ser scrollable verticalmente */
-    overflow-x: clip;
-    overflow-y: auto;
-    overscroll-behavior-y: none;
 }
 
 #root {

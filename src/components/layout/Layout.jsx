@@ -98,13 +98,12 @@ function Layout({ children }) {
     // Bloquear scroll del body cuando el drawer está abierto
     useEffect(() => {
         if (menuAbierto) {
+            const prev = document.body.style.overflow;
             document.body.style.overflow = "hidden";
-        } else {
-            document.body.style.overflow = "";
+            return () => {
+                document.body.style.overflow = prev;
+            };
         }
-        return () => {
-            document.body.style.overflow = "";
-        };
     }, [menuAbierto]);
 
     return (
@@ -191,11 +190,7 @@ function Layout({ children }) {
             {/* ─── Contenido ──────────────────────────────────────── */}
             <main
                 className="mx-auto w-full max-w-7xl p-4 pb-8 md:ml-16 md:p-6 md:pl-6 md:pb-10 lg:ml-72 lg:p-8 lg:pb-12"
-                style={{
-                    minHeight: "100vh",
-                    minHeight: "100dvh",
-                    paddingTop: "max(1rem, env(safe-area-inset-top))",
-                }}
+                style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
             >
                 {children}
             </main>
