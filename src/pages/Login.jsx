@@ -7,7 +7,7 @@ import {
 } from "../services/supabase";
 
 const inputClass =
-    "w-full rounded-xl border border-slate-200/60 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm transition-colors focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 sm:text-base";
+    "w-full rounded-xl border border-slate-200/60 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm transition-colors placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-indigo-500 dark:focus:ring-indigo-500/20 sm:text-base";
 
 function Login() {
     const { login, register } = useAuth();
@@ -112,16 +112,16 @@ function Login() {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-8">
+        <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-8 dark:bg-slate-950">
             <div className="w-full max-w-sm sm:max-w-md">
                 <div className="mb-6 text-center sm:mb-8">
                     <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-2xl text-white shadow-sm sm:mb-4 sm:h-14 sm:w-14">
                         📦
                     </div>
-                    <h1 className="text-2xl font-semibold tracking-tight text-slate-800 sm:text-3xl">
+                    <h1 className="text-2xl font-semibold tracking-tight text-slate-800 dark:text-slate-100 sm:text-3xl">
                         Control de Bodega
                     </h1>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                         {isRecovery
                             ? "Recupera el acceso a tu cuenta"
                             : isRegister
@@ -131,14 +131,14 @@ function Login() {
                 </div>
 
                 <form
-                    className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm sm:p-8"
+                    className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8"
                     onSubmit={handleSubmit}
                     noValidate
                 >
                     <div className="mb-4">
                         <label
                             htmlFor="email"
-                            className="mb-1.5 block text-[10px] font-medium uppercase tracking-wider text-slate-500"
+                            className="mb-1.5 block text-[10px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400"
                         >
                             Correo
                         </label>
@@ -158,7 +158,7 @@ function Login() {
                         <div className="mb-4">
                             <label
                                 htmlFor="password"
-                                className="mb-1.5 block text-[10px] font-medium uppercase tracking-wider text-slate-500"
+                                className="mb-1.5 block text-[10px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400"
                             >
                                 Contraseña
                             </label>
@@ -180,14 +180,14 @@ function Login() {
                     )}
 
                     {isRecovery && (
-                        <p className="mb-4 text-xs leading-relaxed text-slate-500">
+                        <p className="mb-4 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
                             Ingresa tu correo y te enviaremos un enlace para
                             crear una nueva contraseña.
                         </p>
                     )}
 
                     {!isRecovery && (
-                        <label className="mb-4 flex cursor-pointer items-center gap-2 text-xs text-slate-600">
+                        <label className="mb-4 flex cursor-pointer items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
                             <input
                                 type="checkbox"
                                 checked={remember}
@@ -195,7 +195,7 @@ function Login() {
                                     setRemember(e.target.checked)
                                 }
                                 disabled={loading}
-                                className="h-4 w-4 cursor-pointer rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                className="h-4 w-4 cursor-pointer rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800"
                             />
                             <span>Recordar sesión en este equipo</span>
                         </label>
@@ -204,7 +204,7 @@ function Login() {
                     {error && (
                         <div
                             role="alert"
-                            className="mb-4 rounded-xl border border-rose-100 bg-rose-50 px-3 py-2 text-sm text-rose-700"
+                            className="mb-4 rounded-xl border border-rose-100 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300"
                         >
                             {error}
                         </div>
@@ -213,7 +213,7 @@ function Login() {
                     {info && (
                         <div
                             role="status"
-                            className="mb-4 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-700"
+                            className="mb-4 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-300"
                         >
                             {info}
                         </div>
@@ -236,7 +236,7 @@ function Login() {
                     {!isRecovery && !isRegister && (
                         <button
                             type="button"
-                            className="mt-4 w-full text-center text-xs text-slate-500 transition-colors hover:text-indigo-600"
+                            className="mt-4 w-full text-center text-xs text-slate-500 transition-colors hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400"
                             onClick={cambiarAModoRecuperacion}
                         >
                             ¿Olvidaste tu contraseña?
@@ -245,7 +245,7 @@ function Login() {
 
                     <button
                         type="button"
-                        className="mt-3 w-full text-center text-xs text-indigo-600 transition-colors hover:text-indigo-700"
+                        className="mt-3 w-full text-center text-xs text-indigo-600 transition-colors hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
                         onClick={
                             isRecovery || isRegister
                                 ? cambiarAModoLogin

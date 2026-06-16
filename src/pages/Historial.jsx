@@ -107,10 +107,10 @@ function Historial() {
 
     const getTipoBadge = (tipo) => {
         if (tipo === "entrada")
-            return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/60";
+            return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/60 dark:bg-emerald-500/15 dark:text-emerald-400 dark:ring-emerald-500/30";
         if (tipo === "salida")
-            return "bg-rose-50 text-rose-700 ring-1 ring-rose-200/60";
-        return "bg-amber-50 text-amber-700 ring-1 ring-amber-200/60";
+            return "bg-rose-50 text-rose-700 ring-1 ring-rose-200/60 dark:bg-rose-500/15 dark:text-rose-400 dark:ring-rose-500/30";
+        return "bg-amber-50 text-amber-700 ring-1 ring-amber-200/60 dark:bg-amber-500/15 dark:text-amber-400 dark:ring-amber-500/30";
     };
 
     const getMotivoLabel = (motivo) => {
@@ -141,7 +141,7 @@ function Historial() {
                 actions={
                     <button
                         onClick={exportarHistorial}
-                        className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl bg-slate-800 px-3 py-2 text-xs font-medium text-white shadow-sm transition-all duration-200 hover:bg-slate-900 hover:shadow-md active:scale-95 sm:gap-2 sm:px-4 sm:text-sm"
+                        className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl bg-slate-800 px-3 py-2 text-xs font-medium text-white shadow-sm transition-all duration-200 hover:bg-slate-900 hover:shadow-md active:scale-95 dark:bg-slate-700 dark:hover:bg-slate-600 sm:gap-2 sm:px-4 sm:text-sm"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -167,7 +167,7 @@ function Historial() {
             {/* Búsqueda */}
             <div className="relative">
                 <svg
-                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
                     xmlns="http://www.w3.org/2000/svg"
                     width="18"
                     height="18"
@@ -186,7 +186,7 @@ function Historial() {
                     placeholder="Buscar por producto, código, proveedor..."
                     value={busqueda}
                     onChange={(e) => setBusqueda(e.target.value)}
-                    className="w-full rounded-2xl border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm shadow-sm transition-colors focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 sm:text-base"
+                    className="w-full rounded-2xl border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 shadow-sm transition-colors placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-indigo-500 dark:focus:ring-indigo-500/20 sm:text-base"
                 />
             </div>
 
@@ -200,14 +200,14 @@ function Historial() {
                     const active = tipoFiltro === chip.key;
                     const tones = {
                         slate: active
-                            ? "bg-slate-800 text-white"
-                            : "bg-white text-slate-700 border-slate-200/60 hover:bg-slate-50",
+                            ? "bg-slate-800 text-white border-slate-800 dark:bg-slate-700 dark:border-slate-700"
+                            : "bg-white text-slate-700 border-slate-200/60 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-800",
                         emerald: active
-                            ? "bg-emerald-500 text-white"
-                            : "bg-white text-emerald-700 border-emerald-200/60 hover:bg-emerald-50",
+                            ? "bg-emerald-500 text-white border-emerald-500"
+                            : "bg-white text-emerald-700 border-emerald-200/60 hover:bg-emerald-50 dark:bg-slate-900 dark:text-emerald-400 dark:border-emerald-500/30 dark:hover:bg-emerald-500/10",
                         rose: active
-                            ? "bg-rose-500 text-white"
-                            : "bg-white text-rose-700 border-rose-200/60 hover:bg-rose-50",
+                            ? "bg-rose-500 text-white border-rose-500"
+                            : "bg-white text-rose-700 border-rose-200/60 hover:bg-rose-50 dark:bg-slate-900 dark:text-rose-400 dark:border-rose-500/30 dark:hover:bg-rose-500/10",
                     };
                     return (
                         <button
@@ -219,8 +219,8 @@ function Historial() {
                             <span
                                 className={`rounded-full px-1.5 text-[10px] font-semibold ${
                                     active
-                                        ? "bg-white/20"
-                                        : "bg-slate-100 text-slate-600"
+                                        ? "bg-white/20 text-white"
+                                        : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
                                 }`}
                             >
                                 {counts[chip.key]}
@@ -231,33 +231,33 @@ function Historial() {
             </div>
 
             {/* Filtros de fecha */}
-            <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/60 bg-white p-3 shadow-sm sm:flex-row sm:flex-wrap sm:items-end sm:p-4">
+            <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/60 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:flex-wrap sm:items-end sm:p-4">
                 <div className="flex flex-1 flex-col sm:flex-none">
-                    <label className="mb-1 px-1 text-[10px] font-medium uppercase tracking-wider text-slate-400">
+                    <label className="mb-1 px-1 text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
                         Desde
                     </label>
                     <input
                         type="date"
                         value={fechaDesde}
                         onChange={(e) => setFechaDesde(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200/60 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 sm:w-auto"
+                        className="w-full rounded-xl border border-slate-200/60 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-indigo-500 dark:focus:ring-indigo-500/20 sm:w-auto"
                     />
                 </div>
                 <div className="flex flex-1 flex-col sm:flex-none">
-                    <label className="mb-1 px-1 text-[10px] font-medium uppercase tracking-wider text-slate-400">
+                    <label className="mb-1 px-1 text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
                         Hasta
                     </label>
                     <input
                         type="date"
                         value={fechaHasta}
                         onChange={(e) => setFechaHasta(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200/60 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 sm:w-auto"
+                        className="w-full rounded-xl border border-slate-200/60 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-indigo-500 dark:focus:ring-indigo-500/20 sm:w-auto"
                     />
                 </div>
                 {filtrosActivos && (
                     <button
                         onClick={limpiarFiltros}
-                        className="rounded-xl border border-slate-200/60 bg-white px-3 py-2 text-sm text-slate-500 transition-colors hover:bg-slate-50"
+                        className="rounded-xl border border-slate-200/60 bg-white px-3 py-2 text-sm text-slate-500 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
                     >
                         Limpiar todo
                     </button>
@@ -296,7 +296,7 @@ function Historial() {
                             return (
                                 <li
                                     key={mov.id}
-                                    className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-sm transition-all duration-200 hover:border-slate-300"
+                                    className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-sm transition-all duration-200 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
                                 >
                                     <button
                                         onClick={() =>
@@ -315,8 +315,8 @@ function Historial() {
                                         <div
                                             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg ${
                                                 mov.tipo_movimiento === "entrada"
-                                                    ? "bg-emerald-50 text-emerald-600"
-                                                    : "bg-rose-50 text-rose-600"
+                                                    ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400"
+                                                    : "bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400"
                                             }`}
                                         >
                                             {mov.tipo_movimiento === "entrada"
@@ -326,17 +326,17 @@ function Historial() {
 
                                         <div className="min-w-0 flex-1">
                                             <div className="flex flex-wrap items-center gap-2">
-                                                <p className="truncate text-sm font-semibold text-slate-800">
+                                                <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
                                                     {mov.productos?.nombre ||
                                                         "Producto sin nombre"}
                                                 </p>
                                                 {mov.productos?.codigo && (
-                                                    <span className="rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-600">
+                                                    <span className="rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                                                         {mov.productos.codigo}
                                                     </span>
                                                 )}
                                             </div>
-                                            <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                                            <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                                                 <span>{mov.fecha}</span>
                                                 {mov.motivo_movimiento && (
                                                     <>
@@ -354,8 +354,8 @@ function Historial() {
                                         <div
                                             className={`shrink-0 text-right ${
                                                 mov.tipo_movimiento === "entrada"
-                                                    ? "text-emerald-600"
-                                                    : "text-rose-600"
+                                                    ? "text-emerald-600 dark:text-emerald-400"
+                                                    : "text-rose-600 dark:text-rose-400"
                                             }`}
                                         >
                                             <p className="text-base font-semibold tabular-nums">
@@ -364,14 +364,14 @@ function Historial() {
                                                     : "−"}
                                                 {mov.cantidad}
                                             </p>
-                                            <p className="text-[10px] uppercase tracking-wide text-slate-400">
+                                            <p className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
                                                 {mov.tipo_movimiento}
                                             </p>
                                         </div>
 
                                         {hasDetails && (
                                             <svg
-                                                className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${
+                                                className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 dark:text-slate-500 ${
                                                     isExpanded
                                                         ? "rotate-180"
                                                         : ""
@@ -390,14 +390,14 @@ function Historial() {
                                     </button>
 
                                     {isExpanded && hasDetails && (
-                                        <div className="border-t border-slate-100 bg-slate-50/50 p-3 sm:p-4">
+                                        <div className="border-t border-slate-100 bg-slate-50/50 p-3 dark:border-slate-800 dark:bg-slate-800/30 sm:p-4">
                                             <div className="grid gap-3 text-xs sm:grid-cols-2">
                                                 {mov.precio_unitario && (
                                                     <div>
-                                                        <p className="text-[10px] uppercase tracking-wide text-slate-400">
+                                                        <p className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
                                                             Precio unitario
                                                         </p>
-                                                        <p className="font-medium text-slate-700">
+                                                        <p className="font-medium text-slate-700 dark:text-slate-200">
                                                             {formatCLP(
                                                                 mov.precio_unitario
                                                             )}
@@ -406,30 +406,30 @@ function Historial() {
                                                 )}
                                                 {mov.proveedor && (
                                                     <div>
-                                                        <p className="text-[10px] uppercase tracking-wide text-slate-400">
+                                                        <p className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
                                                             Proveedor
                                                         </p>
-                                                        <p className="font-medium text-slate-700">
+                                                        <p className="font-medium text-slate-700 dark:text-slate-200">
                                                             {mov.proveedor}
                                                         </p>
                                                     </div>
                                                 )}
                                                 {mov.tipo_documento && (
                                                     <div>
-                                                        <p className="text-[10px] uppercase tracking-wide text-slate-400">
+                                                        <p className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
                                                             Tipo documento
                                                         </p>
-                                                        <p className="font-medium text-slate-700">
+                                                        <p className="font-medium text-slate-700 dark:text-slate-200">
                                                             {mov.tipo_documento}
                                                         </p>
                                                     </div>
                                                 )}
                                                 {mov.numero_documento && (
                                                     <div>
-                                                        <p className="text-[10px] uppercase tracking-wide text-slate-400">
+                                                        <p className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
                                                             N° documento
                                                         </p>
-                                                        <p className="font-medium text-slate-700">
+                                                        <p className="font-medium text-slate-700 dark:text-slate-200">
                                                             {
                                                                 mov.numero_documento
                                                             }
@@ -438,27 +438,27 @@ function Historial() {
                                                 )}
                                                 {mov.solicitante && (
                                                     <div>
-                                                        <p className="text-[10px] uppercase tracking-wide text-slate-400">
+                                                        <p className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
                                                             Solicitante
                                                         </p>
-                                                        <p className="font-medium text-slate-700">
+                                                        <p className="font-medium text-slate-700 dark:text-slate-200">
                                                             {mov.solicitante}
                                                         </p>
                                                     </div>
                                                 )}
                                                 {mov.destino && (
                                                     <div>
-                                                        <p className="text-[10px] uppercase tracking-wide text-slate-400">
+                                                        <p className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
                                                             Destino
                                                         </p>
-                                                        <p className="font-medium text-slate-700">
+                                                        <p className="font-medium text-slate-700 dark:text-slate-200">
                                                             {mov.destino}
                                                         </p>
                                                     </div>
                                                 )}
                                             </div>
                                             {mov.observacion && (
-                                                <div className="mt-3 rounded-xl bg-white p-3 text-xs italic text-slate-600">
+                                                <div className="mt-3 rounded-xl bg-white p-3 text-xs italic text-slate-600 dark:bg-slate-900 dark:text-slate-300">
                                                     "{mov.observacion}"
                                                 </div>
                                             )}

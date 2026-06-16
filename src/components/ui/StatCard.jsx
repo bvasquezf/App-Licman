@@ -1,30 +1,30 @@
 function StatCard({ label, value, hint, icon, tone = "indigo" }) {
     const tones = {
         indigo: {
-            bg: "bg-indigo-50",
-            text: "text-indigo-600",
+            bg: "bg-indigo-50 dark:bg-indigo-500/15",
+            text: "text-indigo-600 dark:text-indigo-400",
         },
         emerald: {
-            bg: "bg-emerald-50",
-            text: "text-emerald-600",
+            bg: "bg-emerald-50 dark:bg-emerald-500/15",
+            text: "text-emerald-600 dark:text-emerald-400",
         },
         amber: {
-            bg: "bg-amber-50",
-            text: "text-amber-600",
+            bg: "bg-amber-50 dark:bg-amber-500/15",
+            text: "text-amber-600 dark:text-amber-400",
         },
         rose: {
-            bg: "bg-rose-50",
-            text: "text-rose-600",
+            bg: "bg-rose-50 dark:bg-rose-500/15",
+            text: "text-rose-600 dark:text-rose-400",
         },
     };
 
     const t = tones[tone] || tones.indigo;
 
     return (
-        <div className="group flex h-full flex-col rounded-2xl border border-slate-200/60 bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-md sm:p-5">
+        <div className="group flex h-full flex-col rounded-2xl border border-slate-200/60 bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 sm:p-5">
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                    <p className="truncate text-[10px] font-medium uppercase tracking-wider text-slate-400 sm:text-xs">
+                    <p className="truncate text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500 sm:text-xs">
                         {label}
                     </p>
                     <p
@@ -42,7 +42,7 @@ function StatCard({ label, value, hint, icon, tone = "indigo" }) {
                 )}
             </div>
             {hint && (
-                <p className="mt-1.5 truncate text-[10px] text-slate-400 sm:text-xs">
+                <p className="mt-1.5 truncate text-[10px] text-slate-400 dark:text-slate-500 sm:text-xs">
                     {hint}
                 </p>
             )}

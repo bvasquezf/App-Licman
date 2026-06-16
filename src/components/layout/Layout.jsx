@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import ThemeToggle from "../ui/ThemeToggle";
 
 const menu = [
     { path: "/", label: "Dashboard", icon: "📊" },
@@ -66,13 +67,21 @@ function SidebarContent({ onNavigate, collapsed = false }) {
                 })}
             </nav>
 
+            {/* Theme toggle (solo en sidebar expandido) */}
+            {!collapsed && (
+                <div className="mt-4 flex items-center justify-between gap-2 rounded-xl bg-slate-800/60 px-3 py-2">
+                    <span className="text-xs text-slate-400">Tema</span>
+                    <ThemeToggle />
+                </div>
+            )}
+
             {/* Cerrar sesión */}
             <button
                 onClick={logout}
                 title={collapsed ? "Cerrar sesión" : undefined}
-                className={`mt-4 flex items-center gap-3 rounded-xl bg-slate-800/60 text-sm font-medium text-slate-300 transition-colors hover:bg-rose-600/90 hover:text-white ${
+                className={`mt-2 flex items-center gap-3 rounded-xl bg-slate-800/60 text-sm font-medium text-slate-300 transition-colors hover:bg-rose-600/90 hover:text-white ${
                     collapsed
-                        ? "justify-center px-2 py-2.5"
+                        ? "mt-4 justify-center px-2 py-2.5"
                         : "px-3 py-2.5"
                 }`}
             >
@@ -107,47 +116,50 @@ function Layout({ children }) {
     }, [menuAbierto]);
 
     return (
-        <div className="bg-slate-50">
+        <div className="bg-slate-50 dark:bg-slate-950">
             {/* ─── Header móvil (sticky) ──────────────────────────── */}
-            <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200/60 bg-white/80 px-4 py-3 backdrop-blur md:hidden">
+            <header className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-slate-200/60 bg-white/80 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80 md:hidden">
                 <div className="flex min-w-0 items-center gap-2">
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-base text-white">
                         📦
                     </div>
-                    <h1 className="truncate text-sm font-semibold text-slate-800">
+                    <h1 className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
                         Control de Bodega
                     </h1>
                 </div>
-                <button
-                    onClick={() => setMenuAbierto(true)}
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 active:scale-95"
-                    aria-label="Abrir menú"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                <div className="flex shrink-0 items-center gap-2">
+                    <ThemeToggle />
+                    <button
+                        onClick={() => setMenuAbierto(true)}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                        aria-label="Abrir menú"
                     >
-                        <line x1="3" y1="6" x2="21" y2="6" />
-                        <line x1="3" y1="12" x2="21" y2="12" />
-                        <line x1="3" y1="18" x2="21" y2="18" />
-                    </svg>
-                </button>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        >
+                            <line x1="3" y1="6" x2="21" y2="6" />
+                            <line x1="3" y1="12" x2="21" y2="12" />
+                            <line x1="3" y1="18" x2="21" y2="18" />
+                        </svg>
+                    </button>
+                </div>
             </header>
 
             {/* ─── Sidebar tablet (md a lg) - colapsado 64px ────────── */}
-            <aside className="hidden md:fixed md:inset-y-0 md:left-0 md:z-30 md:flex md:w-16 md:flex-col md:bg-slate-900 md:p-3 md:text-white lg:hidden">
+            <aside className="hidden md:fixed md:inset-y-0 md:left-0 md:z-30 md:flex md:w-16 md:flex-col md:bg-slate-900 md:p-3 md:text-white md:dark:bg-slate-950 lg:hidden">
                 <SidebarContent collapsed />
             </aside>
 
             {/* ─── Sidebar desktop (lg en adelante) - expandido 240px ── */}
-            <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-60 lg:flex-col lg:bg-slate-900 lg:p-5 lg:text-white">
+            <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-60 lg:flex-col lg:bg-slate-900 lg:p-5 lg:text-white lg:dark:bg-slate-950">
                 <SidebarContent />
             </aside>
 
@@ -160,7 +172,7 @@ function Layout({ children }) {
                 />
             )}
             <aside
-                className={`fixed left-0 top-0 z-50 flex h-full w-72 max-w-[85vw] flex-col bg-slate-900 p-6 text-white shadow-2xl transition-transform duration-300 ease-out md:hidden ${
+                className={`fixed left-0 top-0 z-50 flex h-full w-72 max-w-[85vw] flex-col bg-slate-900 p-6 text-white shadow-2xl transition-transform duration-300 ease-out dark:bg-slate-950 md:hidden ${
                     menuAbierto ? "translate-x-0" : "-translate-x-full"
                 }`}
             >

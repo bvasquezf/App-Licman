@@ -102,10 +102,10 @@ function StockActual() {
 
     const getEstadoBadge = (estado) => {
         if (estado === "sin_stock")
-            return "bg-rose-50 text-rose-700 ring-1 ring-rose-200/60";
+            return "bg-rose-50 text-rose-700 ring-1 ring-rose-200/60 dark:bg-rose-500/15 dark:text-rose-400 dark:ring-rose-500/30";
         if (estado === "bajo")
-            return "bg-amber-50 text-amber-700 ring-1 ring-amber-200/60";
-        return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/60";
+            return "bg-amber-50 text-amber-700 ring-1 ring-amber-200/60 dark:bg-amber-500/15 dark:text-amber-400 dark:ring-amber-500/30";
+        return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/60 dark:bg-emerald-500/15 dark:text-emerald-400 dark:ring-emerald-500/30";
     };
 
     const getEstadoLabel = (estado) => {
@@ -115,9 +115,9 @@ function StockActual() {
     };
 
     const getStockColor = (estado) => {
-        if (estado === "sin_stock") return "text-rose-600";
-        if (estado === "bajo") return "text-amber-600";
-        return "text-slate-800";
+        if (estado === "sin_stock") return "text-rose-600 dark:text-rose-400";
+        if (estado === "bajo") return "text-amber-600 dark:text-amber-400";
+        return "text-slate-800 dark:text-slate-100";
     };
 
     return (
@@ -129,7 +129,7 @@ function StockActual() {
                 actions={
                     <button
                         onClick={exportarStock}
-                        className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl bg-slate-800 px-3 py-2 text-xs font-medium text-white shadow-sm transition-all duration-200 hover:bg-slate-900 hover:shadow-md active:scale-95 sm:gap-2 sm:px-4 sm:text-sm"
+                        className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl bg-slate-800 px-3 py-2 text-xs font-medium text-white shadow-sm transition-all duration-200 hover:bg-slate-900 hover:shadow-md active:scale-95 dark:bg-slate-700 dark:hover:bg-slate-600 sm:gap-2 sm:px-4 sm:text-sm"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -156,7 +156,7 @@ function StockActual() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <div className="relative flex-1">
                     <svg
-                        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
                         xmlns="http://www.w3.org/2000/svg"
                         width="18"
                         height="18"
@@ -175,7 +175,7 @@ function StockActual() {
                         placeholder="Buscar por nombre o código..."
                         value={busqueda}
                         onChange={(e) => setBusqueda(e.target.value)}
-                        className="w-full rounded-2xl border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm shadow-sm transition-colors focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 sm:text-base"
+                        className="w-full rounded-2xl border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 shadow-sm transition-colors placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-indigo-500 dark:focus:ring-indigo-500/20 sm:text-base"
                     />
                 </div>
             </div>
@@ -190,14 +190,14 @@ function StockActual() {
                     const active = filtroEstado === chip.key;
                     const tones = {
                         slate: active
-                            ? "bg-slate-800 text-white"
-                            : "bg-white text-slate-700 border-slate-200/60 hover:bg-slate-50",
+                            ? "bg-slate-800 text-white border-slate-800 dark:bg-slate-700 dark:border-slate-700"
+                            : "bg-white text-slate-700 border-slate-200/60 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-800",
                         amber: active
-                            ? "bg-amber-500 text-white"
-                            : "bg-white text-amber-700 border-amber-200/60 hover:bg-amber-50",
+                            ? "bg-amber-500 text-white border-amber-500"
+                            : "bg-white text-amber-700 border-amber-200/60 hover:bg-amber-50 dark:bg-slate-900 dark:text-amber-400 dark:border-amber-500/30 dark:hover:bg-amber-500/10",
                         rose: active
-                            ? "bg-rose-500 text-white"
-                            : "bg-white text-rose-700 border-rose-200/60 hover:bg-rose-50",
+                            ? "bg-rose-500 text-white border-rose-500"
+                            : "bg-white text-rose-700 border-rose-200/60 hover:bg-rose-50 dark:bg-slate-900 dark:text-rose-400 dark:border-rose-500/30 dark:hover:bg-rose-500/10",
                     };
                     return (
                         <button
@@ -209,8 +209,8 @@ function StockActual() {
                             <span
                                 className={`rounded-full px-1.5 text-[10px] font-semibold ${
                                     active
-                                        ? "bg-white/20"
-                                        : "bg-slate-100 text-slate-600"
+                                        ? "bg-white/20 text-white"
+                                        : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
                                 }`}
                             >
                                 {counts[chip.key]}
@@ -242,16 +242,16 @@ function StockActual() {
                     {stockFiltrado.map((item) => (
                         <div
                             key={item.id}
-                            className="group rounded-2xl border border-slate-200/60 bg-white p-3.5 shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-md sm:p-4"
+                            className="group rounded-2xl border border-slate-200/60 bg-white p-3.5 shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700 dark:hover:shadow-none sm:p-4"
                         >
                             <div className="flex items-start justify-between gap-2">
                                 <div className="min-w-0 flex-1">
                                     {item.codigo && (
-                                        <p className="font-mono text-[10px] uppercase tracking-wide text-slate-400">
+                                        <p className="font-mono text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
                                             {item.codigo}
                                         </p>
                                     )}
-                                    <h3 className="mt-0.5 truncate text-sm font-semibold text-slate-800">
+                                    <h3 className="mt-0.5 truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
                                         {item.nombre}
                                     </h3>
                                 </div>
@@ -273,24 +273,24 @@ function StockActual() {
                                     >
                                         {item.stock}
                                     </p>
-                                    <p className="text-xs text-slate-500">
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">
                                         {item.producto?.unidad || "unidades"}
                                     </p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[10px] uppercase tracking-wide text-slate-400">
+                                    <p className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
                                         Mínimo
                                     </p>
-                                    <p className="text-sm font-medium text-slate-600 tabular-nums">
+                                    <p className="text-sm font-medium text-slate-600 tabular-nums dark:text-slate-300">
                                         {item.stockMin}
                                     </p>
                                 </div>
                             </div>
 
                             {item.producto?.precio_referencia != null && (
-                                <div className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-500">
+                                <div className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
                                     Ref:{" "}
-                                    <span className="font-medium text-slate-700">
+                                    <span className="font-medium text-slate-700 dark:text-slate-200">
                                         {formatCLP(
                                             item.producto.precio_referencia
                                         )}
