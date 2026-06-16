@@ -1,7 +1,7 @@
 function PageHeader({ title, subtitle, icon, actions }) {
     return (
-        <div className="mb-5 flex flex-col gap-3 sm:mb-6 md:mb-8 md:flex-row md:items-center md:justify-between md:gap-4">
-            <div className="flex items-start gap-3">
+        <div className="mb-5 flex flex-col gap-3 sm:mb-6 md:mb-8 md:flex-row md:items-start md:justify-between md:gap-4">
+            <div className="flex min-w-0 items-start gap-3">
                 {icon && (
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-xl sm:h-11 sm:w-11 sm:text-2xl">
                         {icon}
@@ -20,7 +20,7 @@ function PageHeader({ title, subtitle, icon, actions }) {
             </div>
 
             {actions && (
-                <div className="flex flex-wrap items-center gap-2 md:shrink-0">
+                <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:shrink-0 md:justify-end">
                     {actions}
                 </div>
             )}

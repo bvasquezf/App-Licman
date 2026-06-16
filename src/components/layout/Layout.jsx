@@ -146,8 +146,8 @@ function Layout({ children }) {
                 <SidebarContent collapsed />
             </aside>
 
-            {/* ─── Sidebar desktop (lg en adelante) - expandido 288px ── */}
-            <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-72 lg:flex-col lg:bg-slate-900 lg:p-6 lg:text-white">
+            {/* ─── Sidebar desktop (lg en adelante) - expandido 240px ── */}
+            <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-60 lg:flex-col lg:bg-slate-900 lg:p-5 lg:text-white">
                 <SidebarContent />
             </aside>
 
@@ -189,7 +189,7 @@ function Layout({ children }) {
 
             {/* ─── Contenido ──────────────────────────────────────── */}
             <main
-                className="w-full max-w-7xl overflow-x-hidden px-4 pb-8 md:ml-16 md:max-w-[calc(100vw-4rem)] md:px-6 md:pl-6 md:pb-10 lg:ml-72 lg:max-w-[calc(100vw-18rem)] lg:px-8 lg:pb-12"
+                className="w-full max-w-7xl overflow-x-hidden px-4 pb-8 md:ml-16 md:px-6 md:pb-10 lg:ml-60 lg:px-6 lg:pb-12 xl:px-8"
                 style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
             >
                 {children}

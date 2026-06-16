@@ -158,8 +158,8 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
         return (
             <Card className="overflow-hidden" padding="p-0">
                 <div className="border-b border-slate-200/60 bg-amber-50/60 px-4 py-3 sm:px-5 sm:py-4">
-                    <div className="flex items-center justify-between gap-3">
-                        <div>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                        <div className="min-w-0">
                             <h2 className="text-base font-semibold text-slate-800">
                                 Editar producto
                             </h2>
@@ -171,7 +171,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                         <button
                             type="button"
                             onClick={onCancelarEdicion}
-                            className="rounded-xl border border-slate-200/60 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50"
+                            className="self-start whitespace-nowrap rounded-xl border border-slate-200/60 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 sm:self-auto"
                         >
                             Cancelar
                         </button>

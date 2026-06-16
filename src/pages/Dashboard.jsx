@@ -155,7 +155,7 @@ function Dashboard() {
                 actions={
                     <button
                         onClick={exportarReporteMaestro}
-                        className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-indigo-700 hover:shadow-md active:scale-95"
+                        className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl bg-indigo-600 px-3 py-2 text-xs font-medium text-white shadow-sm transition-all duration-200 hover:bg-indigo-700 hover:shadow-md active:scale-95 sm:gap-2 sm:px-4 sm:text-sm"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -167,25 +167,29 @@ function Dashboard() {
                             strokeWidth="2"
                             strokeLinecap="round"
                             strokeLinejoin="round"
+                            className="shrink-0"
                         >
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                             <polyline points="7 10 12 15 17 10" />
                             <line x1="12" y1="15" x2="12" y2="3" />
                         </svg>
-                        Exportar reporte
+                        <span className="hidden sm:inline">
+                            Exportar reporte
+                        </span>
+                        <span className="sm:hidden">Reporte</span>
                     </button>
                 }
             />
 
             {/* KPIs */}
             {loading ? (
-                <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 2xl:grid-cols-4">
                     {Array.from({ length: 4 }).map((_, i) => (
                         <Skeleton key={i} className="h-24 sm:h-28" />
                     ))}
                 </div>
             ) : (
-                <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 2xl:grid-cols-4">
                     <StatCard
                         label="Total productos"
                         value={totalProductos.toLocaleString("es-CL")}
