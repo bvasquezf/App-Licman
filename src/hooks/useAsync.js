@@ -21,12 +21,12 @@ import { supabase } from "../services/supabase";
  * @param {boolean} [options.signOutOnAuth=true] - Si true, hace signOut al detectar 401/403.
  *
  * @returns {{
- *   data: T|null,
+ *   data: T|undefined,
  *   loading: boolean,
  *   error: import('../utils/handleSupabaseError').NormalizedError|null,
- *   refetch: (...args: any[]) => Promise<T|null>,
- *   execute: (...args: any[]) => Promise<T|null>,
- *   setData: (next: T|null) => void,
+ *   refetch: (...args: any[]) => Promise<T|null|undefined>,
+ *   execute: (...args: any[]) => Promise<T|null|undefined>,
+ *   setData: (next: T|undefined) => void,
  * }}
  */
 export function useAsync(asyncFn, options = {}) {
@@ -40,7 +40,7 @@ export function useAsync(asyncFn, options = {}) {
         signOutOnAuth = true,
     } = options;
 
-    const [data, setData] = useState(null);
+    const [data, setData] = useState(undefined);
     const [loading, setLoading] = useState(Boolean(immediate));
     const [error, setError] = useState(null);
 
@@ -62,8 +62,10 @@ export function useAsync(asyncFn, options = {}) {
             setError(null);
             try {
                 const result = await asyncFnRef.current(...args);
-                if (canceladoRef.current) return null;
-                setData(result ?? null);
+                if (canceladoRef.current) return result ?? null;
+                // Guardamos tal cual (puede ser undefined o array) para que
+                // el default del destructuring del caller funcione.
+                setData(result);
                 return result ?? null;
             } catch (err) {
                 if (canceladoRef.current) return null;
