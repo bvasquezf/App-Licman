@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useToast } from "../../context/ToastContext";
+import { useUnsavedChanges } from "../../hooks/useUnsavedChanges";
 import Card from "../ui/Card";
 
 const inputClass =
@@ -28,6 +29,8 @@ function SalidaForm({ productos, onGuardar, stockActual = {} }) {
     });
 
     const [loading, setLoading] = useState(false);
+
+    useUnsavedChanges(formData);
 
     const productoSeleccionado = useMemo(() => {
         return (

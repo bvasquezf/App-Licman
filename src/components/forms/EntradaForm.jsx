@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useToast } from "../../context/ToastContext";
+import { useUnsavedChanges } from "../../hooks/useUnsavedChanges";
 import Card from "../ui/Card";
 
 const inputClass =
@@ -31,6 +32,8 @@ function EntradaForm({ productos, onGuardar }) {
 
     const [formData, setFormData] = useState(initialFormData);
     const [loading, setLoading] = useState(false);
+
+    useUnsavedChanges(formData);
 
     const esCompra = formData.motivo_movimiento === "compra";
     const requiereObservacion =

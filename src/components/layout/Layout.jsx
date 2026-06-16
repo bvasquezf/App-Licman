@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import ThemeToggle from "../ui/ThemeToggle";
+import OfflineBanner from "../ui/OfflineBanner";
 
 const menu = [
     { path: "/", label: "Dashboard", icon: "📊" },
@@ -117,6 +118,7 @@ function Layout({ children }) {
 
     return (
         <div className="bg-slate-50 dark:bg-slate-950">
+            <OfflineBanner />
             {/* ─── Header móvil (sticky) ──────────────────────────── */}
             <header className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-slate-200/60 bg-white/80 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80 md:hidden">
                 <div className="flex min-w-0 items-center gap-2">

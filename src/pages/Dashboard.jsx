@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback } from "react";
 import { supabase } from "../services/supabase";
 import { exportWorkbook } from "../utils/exportWorkbook";
 import { useToast } from "../context/ToastContext";
+import { useAsync } from "../hooks/useAsync";
+import { withRetry } from "../utils/withRetry";
 import PageHeader from "../components/ui/PageHeader";
 import StatCard from "../components/ui/StatCard";
 import Card from "../components/ui/Card";
@@ -9,53 +11,59 @@ import EmptyState from "../components/ui/EmptyState";
 import Skeleton from "../components/ui/Skeleton";
 
 function Dashboard() {
-    const [productos, setProductos] = useState([]);
-    const [stock, setStock] = useState([]);
-    const [movimientos, setMovimientos] = useState([]);
-    const [loading, setLoading] = useState(true);
     const { showToast } = useToast();
 
-    const cargarData = async () => {
-        setLoading(true);
+    const cargarData = useCallback(async () => {
+        const [productosRes, stockRes, movimientosRes] = await Promise.all([
+            withRetry(() => supabase.from("productos").select("*")),
+            withRetry(() => supabase.from("stock_actual").select("*")),
+            withRetry(() =>
+                supabase
+                    .from("movimientos")
+                    .select(`
+                        id,
+                        tipo_movimiento,
+                        cantidad,
+                        precio_unitario,
+                        proveedor,
+                        numero_documento,
+                        solicitante,
+                        destino,
+                        observacion,
+                        fecha,
+                        productos (nombre, codigo)
+                    `)
+                    .order("id", { ascending: false })
+            ),
+        ]);
 
-        const { data: productosData, error: productosError } = await supabase
-            .from("productos")
-            .select("*");
+        // Acumulamos errores: el primero que se presente detiene el flujo
+        // y se reporta con un mensaje claro al usuario.
+        const err =
+            productosRes.error ||
+            stockRes.error ||
+            movimientosRes.error;
+        if (err) throw err;
 
-        const { data: stockData, error: stockError } = await supabase
-            .from("stock_actual")
-            .select("*");
-
-        const { data: movimientosData, error: movimientosError } = await supabase
-            .from("movimientos")
-            .select(`
-                id,
-                tipo_movimiento,
-                cantidad,
-                precio_unitario,
-                proveedor,
-                numero_documento,
-                solicitante,
-                destino,
-                observacion,
-                fecha,
-                productos (nombre, codigo)
-            `)
-            .order("id", { ascending: false });
-
-        if (productosError) console.error("Error productos:", productosError);
-        if (stockError) console.error("Error stock:", stockError);
-        if (movimientosError) console.error("Error movimientos:", movimientosError);
-
-        setProductos(productosData || []);
-        setStock(stockData || []);
-        setMovimientos(movimientosData || []);
-        setLoading(false);
-    };
-
-    useEffect(() => {
-        cargarData();
+        return {
+            productos: productosRes.data || [],
+            stock: stockRes.data || [],
+            movimientos: movimientosRes.data || [],
+        };
     }, []);
+
+    const {
+        data,
+        loading,
+        refetch: cargarDataRefetch,
+    } = useAsync(cargarData, {
+        errorContexto: "cargar el dashboard",
+        onError: (err) => showToast(err.message, "error"),
+    });
+
+    const productos = data?.productos || [];
+    const stock = data?.stock || [];
+    const movimientos = data?.movimientos || [];
 
     const totalProductos = productos.length;
 

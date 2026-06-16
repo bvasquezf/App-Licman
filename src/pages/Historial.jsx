@@ -1,7 +1,9 @@
-import { useEffect, useState, useMemo } from "react";
+import { useCallback, useState, useMemo } from "react";
 import { supabase } from "../services/supabase";
 import { exportToExcel } from "../utils/exportToExcel";
 import { useToast } from "../context/ToastContext";
+import { useAsync } from "../hooks/useAsync";
+import { withRetry } from "../utils/withRetry";
 import PageHeader from "../components/ui/PageHeader";
 import EmptyState from "../components/ui/EmptyState";
 import Skeleton from "../components/ui/Skeleton";
@@ -14,8 +16,6 @@ const formatCLP = (value) =>
     }).format(value || 0);
 
 function Historial() {
-    const [movimientos, setMovimientos] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [fechaDesde, setFechaDesde] = useState("");
     const [fechaHasta, setFechaHasta] = useState("");
     const [tipoFiltro, setTipoFiltro] = useState("todos"); // todos | entrada | salida
@@ -23,23 +23,26 @@ function Historial() {
     const [expandido, setExpandido] = useState(null);
     const { showToast } = useToast();
 
-    const cargarMovimientos = async () => {
-        setLoading(true);
-        const { data, error } = await supabase
-            .from("movimientos")
-            .select(
-                `id, tipo_movimiento, motivo_movimiento, cantidad, precio_unitario, proveedor, numero_documento, tipo_documento, solicitante, destino, observacion, fecha, productos (nombre, codigo)`
-            )
-            .order("id", { ascending: false });
-        if (error) {
-            console.error(error);
-            showToast("Error al cargar historial", "error");
-            setLoading(false);
-            return;
+    const cargarMovimientos = useCallback(async () => {
+        const res = await withRetry(() =>
+            supabase
+                .from("movimientos")
+                .select(
+                    `id, tipo_movimiento, motivo_movimiento, cantidad, precio_unitario, proveedor, numero_documento, tipo_documento, solicitante, destino, observacion, fecha, productos (nombre, codigo)`
+                )
+                .order("id", { ascending: false })
+        );
+        if (res.error) throw res.error;
+        return res.data || [];
+    }, []);
+
+    const { data: movimientos = [], loading } = useAsync(
+        cargarMovimientos,
+        {
+            errorContexto: "cargar el historial",
+            onError: (err) => showToast(err.message, "error"),
         }
-        setMovimientos(data || []);
-        setLoading(false);
-    };
+    );
 
     const exportarHistorial = () => {
         if (movimientosFiltrados.length === 0) {
@@ -65,10 +68,6 @@ function Historial() {
         exportToExcel(dataExport, "historial_movimientos_bodega", "Historial");
         showToast("Reporte exportado");
     };
-
-    useEffect(() => {
-        cargarMovimientos();
-    }, []);
 
     const counts = useMemo(() => {
         return {

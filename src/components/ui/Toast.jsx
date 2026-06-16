@@ -1,13 +1,16 @@
+// Componente individual de un toast. El stacking/montaje lo hace
+// `ToastStack` desde el `ToastContext` para soportar múltiples a la vez.
+
 import { useEffect } from "react";
 
 const AUTO_CLOSE_MS = 3500;
 
-function Toast({ message, type = "success", onClose }) {
+function Toast({ message, type = "success", duration = AUTO_CLOSE_MS, onClose }) {
     useEffect(() => {
-        if (!message) return;
-        const timer = setTimeout(onClose, AUTO_CLOSE_MS);
+        if (!message || !onClose) return;
+        const timer = setTimeout(onClose, duration);
         return () => clearTimeout(timer);
-    }, [message, onClose]);
+    }, [message, duration, onClose]);
 
     if (!message) return null;
 
@@ -24,10 +27,7 @@ function Toast({ message, type = "success", onClose }) {
     return (
         <div
             role={type === "error" ? "alert" : "status"}
-            className={`fixed inset-x-3 top-3 z-50 mx-auto max-w-sm rounded-2xl px-4 py-3 text-sm font-medium text-white shadow-lg ring-1 ring-black/5 animate-fade-in sm:left-auto sm:right-4 sm:top-4 sm:mx-0 dark:ring-white/10 ${typeStyles}`}
-            style={{
-                paddingTop: "max(0.75rem, env(safe-area-inset-top))",
-            }}
+            className={`rounded-2xl px-4 py-3 text-sm font-medium text-white shadow-lg ring-1 ring-black/5 animate-fade-in dark:ring-white/10 ${typeStyles}`}
         >
             <div className="flex items-start gap-3">
                 <span className="shrink-0 text-base" aria-hidden="true">

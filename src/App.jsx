@@ -27,7 +27,21 @@ function App() {
     }, []);
 
     if (loading) {
-        return <p className="p-6">Cargando...</p>;
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-slate-50 p-6 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-600 text-3xl text-white shadow-lg">
+                        📦
+                    </div>
+                    <div className="h-1.5 w-48 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+                        <div className="h-full w-1/3 animate-[shimmer_1.2s_infinite] rounded-full bg-indigo-500" />
+                    </div>
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                        Cargando Control de Bodega…
+                    </p>
+                </div>
+            </div>
+        );
     }
 
     const enUpdatePassword = location.pathname === "/update-password";

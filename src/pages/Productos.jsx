@@ -1,8 +1,11 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import ProductoForm from "../components/forms/ProductoForm";
 import { supabase } from "../services/supabase";
 import { exportToExcel } from "../utils/exportToExcel";
 import { useToast } from "../context/ToastContext";
+import { useAsync } from "../hooks/useAsync";
+import { withRetry } from "../utils/withRetry";
+import { handleSupabaseError } from "../utils/handleSupabaseError";
 import PageHeader from "../components/ui/PageHeader";
 import Card from "../components/ui/Card";
 import EmptyState from "../components/ui/EmptyState";
@@ -16,16 +19,12 @@ const formatCLP = (value) =>
     }).format(value || 0);
 
 function Productos() {
-    const [productos, setProductos] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [productoEditar, setProductoEditar] = useState(null);
     const [mostrarInactivos, setMostrarInactivos] = useState(false);
     const [busqueda, setBusqueda] = useState("");
     const { showToast } = useToast();
 
-    const cargarProductos = async () => {
-        setLoading(true);
-
+    const cargarProductos = useCallback(async () => {
         let query = supabase
             .from("productos")
             .select("*")
@@ -35,18 +34,20 @@ function Productos() {
             query = query.eq("activo", true);
         }
 
-        const { data, error } = await query;
+        const res = await withRetry(() => query);
+        if (res.error) throw res.error;
+        return res.data || [];
+    }, [mostrarInactivos]);
 
-        if (error) {
-            console.error("Error al cargar productos:", error);
-            showToast("Error al cargar productos", "error");
-            setLoading(false);
-            return;
-        }
-
-        setProductos(data || []);
-        setLoading(false);
-    };
+    const {
+        data: productos = [],
+        loading,
+        refetch: cargarProductosRefetch,
+    } = useAsync(cargarProductos, {
+        deps: [mostrarInactivos],
+        errorContexto: "cargar productos",
+        onError: (err) => showToast(err.message, "error"),
+    });
 
     const guardarProducto = async (payload) => {
         const { producto, stockInicial } = payload;
@@ -59,13 +60,17 @@ function Productos() {
 
             if (error) {
                 console.error("Error al actualizar producto:", error);
-                showToast("Hubo un error al actualizar el producto", "error");
+                showToast(
+                    handleSupabaseError(error, "actualizar el producto")
+                        .message,
+                    "error"
+                );
                 return;
             }
 
             showToast("Producto actualizado correctamente");
             setProductoEditar(null);
-            await cargarProductos();
+            await cargarProductosRefetch();
             return;
         }
 
@@ -77,7 +82,10 @@ function Productos() {
 
         if (error) {
             console.error("Error al guardar producto:", error);
-            showToast("Hubo un error al guardar el producto", "error");
+            showToast(
+                handleSupabaseError(error, "guardar el producto").message,
+                "error"
+            );
             return;
         }
 
@@ -102,10 +110,13 @@ function Productos() {
                     movError
                 );
                 showToast(
-                    `Producto creado, pero falló el stock inicial: ${movError.message}`,
+                    `Producto creado, pero falló el stock inicial: ${
+                        handleSupabaseError(movError, "registrar el stock inicial")
+                            .message
+                    }`,
                     "error"
                 );
-                await cargarProductos();
+                await cargarProductosRefetch();
                 return;
             }
 
@@ -114,7 +125,7 @@ function Productos() {
             showToast("Producto guardado correctamente");
         }
 
-        await cargarProductos();
+        await cargarProductosRefetch();
     };
 
     const desactivarProducto = async (producto) => {
@@ -131,7 +142,10 @@ function Productos() {
 
         if (error) {
             console.error("Error al desactivar producto:", error);
-            showToast("No se pudo desactivar el producto", "error");
+            showToast(
+                handleSupabaseError(error, "desactivar el producto").message,
+                "error"
+            );
             return;
         }
 
@@ -141,7 +155,7 @@ function Productos() {
             setProductoEditar(null);
         }
 
-        await cargarProductos();
+        await cargarProductosRefetch();
     };
 
     const activarProducto = async (producto) => {
@@ -152,12 +166,15 @@ function Productos() {
 
         if (error) {
             console.error("Error al activar producto:", error);
-            showToast("No se pudo activar el producto", "error");
+            showToast(
+                handleSupabaseError(error, "activar el producto").message,
+                "error"
+            );
             return;
         }
 
         showToast("Producto activado correctamente");
-        await cargarProductos();
+        await cargarProductosRefetch();
     };
 
     const exportarProductos = () => {
@@ -189,10 +206,6 @@ function Productos() {
             producto.categoria?.toLowerCase().includes(texto)
         );
     });
-
-    useEffect(() => {
-        cargarProductos();
-    }, [mostrarInactivos]);
 
     return (
         <div className="space-y-6">

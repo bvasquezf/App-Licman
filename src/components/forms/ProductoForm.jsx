@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { useToast } from "../../context/ToastContext";
+import { useUnsavedChanges } from "../../hooks/useUnsavedChanges";
 import Card from "../ui/Card";
 import {
     detectarCategoria,
     generarCodigo,
 } from "../../utils/productCodeUtils";
 import { useSiguienteCorrelativo } from "../../hooks/useSiguienteCorrelativo";
+import { useCodigoDisponible } from "../../hooks/useCodigoDisponible";
 
 function Field({ label, required, children, className = "" }) {
     return (
@@ -50,6 +52,13 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
     const [categoriaEsManual, setCategoriaEsManual] = useState(false);
     const [codigoEsManual, setCodigoEsManual] = useState(false);
 
+    // Activamos el snapshot del "unsaved changes" solo después de que
+    // el effect de arriba haya cargado el producto (modo edición) o
+    // el form esté listo (modo creación). Si lo activamos desde el
+    // primer render, capturaría el initial vacío y nos protegería
+    // de un refresh accidental sin querer.
+    const [snapshotListo, setSnapshotListo] = useState(false);
+
     useEffect(() => {
         if (productoEditar) {
             setProductoData({
@@ -65,7 +74,10 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
             setCategoriaEsManual(false);
             setCodigoEsManual(false);
         }
+        setSnapshotListo(true);
     }, [productoEditar]);
+
+    useUnsavedChanges(productoData, { habilitado: snapshotListo });
 
     // ─── Auto-detección de categoría ──────────────────────────────
     // Solo aplica en modo creación y cuando el usuario no la editó a mano.
@@ -90,6 +102,16 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
     } = useSiguienteCorrelativo(prefijo, {
         habilitado: !productoEditar && !!prefijo && !codigoEsManual,
     });
+
+    // ─── Validación de unicidad del código ───────────────────────
+    // En creación: solo si el usuario ya tocó el código o si tenemos
+    // un código auto-sugerido. En edición: siempre, excluyendo el propio id.
+    const codigoActual = (productoData.codigo || "").trim();
+    const { disponible: codigoLibre, loading: loadingDisponible } =
+        useCodigoDisponible(codigoActual, {
+            habilitado: !!codigoActual,
+            excluirId: productoEditar?.id ?? null,
+        });
 
     useEffect(() => {
         if (productoEditar || codigoEsManual) return;
@@ -258,14 +280,39 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                 >
                     <div className="grid gap-4 md:grid-cols-2">
                         <Field label="Código">
-                            <input
-                                type="text"
-                                name="codigo"
-                                value={productoData.codigo}
-                                onChange={handleProductoChange}
-                                className={inputClass}
-                                placeholder="Ej: TOR-001"
-                            />
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    name="codigo"
+                                    value={productoData.codigo}
+                                    onChange={handleProductoChange}
+                                    className={`${inputClass} pr-9 ${
+                                        codigoLibre === false
+                                            ? "border-rose-400 focus:border-rose-500 focus:ring-rose-500/20 dark:border-rose-500"
+                                            : codigoLibre === true
+                                            ? "border-emerald-400 focus:border-emerald-500 focus:ring-emerald-500/20 dark:border-emerald-500"
+                                            : ""
+                                    }`}
+                                    placeholder="Ej: TOR-001"
+                                />
+                                {codigoActual && !loadingDisponible && (
+                                    <span
+                                        aria-hidden="true"
+                                        className={`pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 ${
+                                            codigoLibre
+                                                ? "text-emerald-500"
+                                                : "text-rose-500"
+                                        }`}
+                                    >
+                                        {codigoLibre ? "✓" : "✗"}
+                                    </span>
+                                )}
+                            </div>
+                            {codigoLibre === false && (
+                                <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-400">
+                                    Este código ya está en uso por otro producto.
+                                </p>
+                            )}
                         </Field>
                         <Field label="Nombre" required>
                             <input
@@ -391,22 +438,42 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                     <div className="grid gap-4 md:grid-cols-2">
                         <Field label="Código">
                             <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    name="codigo"
-                                    value={productoData.codigo}
-                                    onChange={(e) => {
-                                        setCodigoEsManual(true);
-                                        handleProductoChange(e);
-                                    }}
-                                    className={`${inputClass} flex-1`}
-                                    placeholder={
-                                        loadingCodigo
-                                            ? "Generando…"
-                                            : "Ej: TOR-001"
-                                    }
-                                    autoComplete="off"
-                                />
+                                <div className="relative flex-1">
+                                    <input
+                                        type="text"
+                                        name="codigo"
+                                        value={productoData.codigo}
+                                        onChange={(e) => {
+                                            setCodigoEsManual(true);
+                                            handleProductoChange(e);
+                                        }}
+                                        className={`${inputClass} pr-9 ${
+                                            codigoLibre === false
+                                                ? "border-rose-400 focus:border-rose-500 focus:ring-rose-500/20 dark:border-rose-500"
+                                                : codigoLibre === true
+                                                ? "border-emerald-400 focus:border-emerald-500 focus:ring-emerald-500/20 dark:border-emerald-500"
+                                                : ""
+                                        }`}
+                                        placeholder={
+                                            loadingCodigo
+                                                ? "Generando…"
+                                                : "Ej: TOR-001"
+                                        }
+                                        autoComplete="off"
+                                    />
+                                    {codigoActual && !loadingDisponible && (
+                                        <span
+                                            aria-hidden="true"
+                                            className={`pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 ${
+                                                codigoLibre
+                                                    ? "text-emerald-500"
+                                                    : "text-rose-500"
+                                            }`}
+                                        >
+                                            {codigoLibre ? "✓" : "✗"}
+                                        </span>
+                                    )}
+                                </div>
                                 <button
                                     type="button"
                                     disabled={!prefijo || loadingCodigo}
@@ -435,6 +502,12 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                                     </svg>
                                 </button>
                             </div>
+                            {codigoLibre === false && (
+                                <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-400">
+                                    Este código ya está en uso. Elegí otro o
+                                    regenerá la sugerencia.
+                                </p>
+                            )}
                             {prefijo && !codigoEsManual && (
                                 <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
                                     Sugerido automáticamente · prefijo{" "}

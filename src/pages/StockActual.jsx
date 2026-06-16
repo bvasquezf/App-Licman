@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { supabase } from "../services/supabase";
 import { exportToExcel } from "../utils/exportToExcel";
 import { useToast } from "../context/ToastContext";
+import { useAsync } from "../hooks/useAsync";
+import { withRetry } from "../utils/withRetry";
 import PageHeader from "../components/ui/PageHeader";
 import EmptyState from "../components/ui/EmptyState";
 import Skeleton from "../components/ui/Skeleton";
@@ -14,35 +16,41 @@ const formatCLP = (value) =>
     }).format(value || 0);
 
 function StockActual() {
-    const [stock, setStock] = useState([]);
-    const [productos, setProductos] = useState([]);
     const [busqueda, setBusqueda] = useState("");
-    const [loading, setLoading] = useState(true);
     const [filtroEstado, setFiltroEstado] = useState("todos"); // todos | bajo | sin_stock
     const { showToast } = useToast();
 
-    const cargarStock = async () => {
-        setLoading(true);
+    const cargarStock = useCallback(async () => {
         const [stockRes, productosRes] = await Promise.all([
-            supabase
-                .from("stock_actual")
-                .select("*")
-                .order("nombre", { ascending: true }),
-            supabase.from("productos").select("*"),
+            withRetry(() =>
+                supabase
+                    .from("stock_actual")
+                    .select("*")
+                    .order("nombre", { ascending: true })
+            ),
+            withRetry(() => supabase.from("productos").select("*")),
         ]);
 
-        if (stockRes.error) {
-            console.error(stockRes.error);
-            showToast("Error al cargar stock", "error");
-        } else {
-            setStock(stockRes.data || []);
-        }
+        if (stockRes.error) throw stockRes.error;
+        if (productosRes.error) throw productosRes.error;
 
-        if (!productosRes.error) {
-            setProductos(productosRes.data || []);
-        }
-        setLoading(false);
-    };
+        return {
+            stock: stockRes.data || [],
+            productos: productosRes.data || [],
+        };
+    }, []);
+
+    const {
+        data,
+        loading,
+        refetch: cargarStockRefetch,
+    } = useAsync(cargarStock, {
+        errorContexto: "cargar stock",
+        onError: (err) => showToast(err.message, "error"),
+    });
+
+    const stock = data?.stock || [];
+    const productos = data?.productos || [];
 
     const exportarStock = () => {
         if (stock.length === 0) {
@@ -58,10 +66,6 @@ function StockActual() {
         exportToExcel(dataExport, "stock_actual_bodega", "Stock");
         showToast("Reporte exportado");
     };
-
-    useEffect(() => {
-        cargarStock();
-    }, []);
 
     const stockConEstado = stock.map((item) => {
         const producto = productos.find((p) => p.id === item.id);
