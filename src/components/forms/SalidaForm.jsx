@@ -1,5 +1,20 @@
 import { useState } from "react";
 import { useToast } from "../../context/ToastContext";
+import Card from "../ui/Card";
+
+const inputClass =
+    "w-full rounded-xl border border-slate-200/60 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm transition-colors focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100";
+
+function Field({ label, required, children, className = "" }) {
+    return (
+        <div className={className}>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                {label} {required && <span className="text-rose-500">*</span>}
+            </label>
+            {children}
+        </div>
+    );
+}
 
 function SalidaForm({ productos, onGuardar }) {
     const { showToast } = useToast();
@@ -16,14 +31,10 @@ function SalidaForm({ productos, onGuardar }) {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-
-        setFormData((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
+        setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const resetForm = () => {
+    const resetForm = () =>
         setFormData({
             producto_id: "",
             cantidad: "",
@@ -31,7 +42,6 @@ function SalidaForm({ productos, onGuardar }) {
             destino: "",
             observacion: "",
         });
-    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -40,7 +50,6 @@ function SalidaForm({ productos, onGuardar }) {
             showToast("Selecciona un producto", "error");
             return;
         }
-
         if (!formData.cantidad || Number(formData.cantidad) <= 0) {
             showToast("Cantidad inválida", "error");
             return;
@@ -58,113 +67,100 @@ function SalidaForm({ productos, onGuardar }) {
         };
 
         const ok = await onGuardar(salida);
-
-        if (ok) {
-            resetForm();
-        }
-
+        if (ok) resetForm();
         setLoading(false);
     };
 
     return (
-        <form
-            onSubmit={handleSubmit}
-            className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
-        >
-            <h2 className="mb-1 text-xl font-semibold text-gray-800">
-                Registrar salida de stock
-            </h2>
-            <p className="mb-6 text-sm text-gray-500">
-                Registra consumos internos, entregas a terreno o cualquier
-                egreso de bodega.
-            </p>
-
-            <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700">
-                        Producto *
-                    </label>
-                    <select
-                        name="producto_id"
-                        value={formData.producto_id}
-                        onChange={handleChange}
-                        className="w-full rounded-lg border border-gray-300 p-2 outline-none focus:border-blue-500"
-                    >
-                        <option value="">Seleccionar producto</option>
-                        {productos.map((p) => (
-                            <option key={p.id} value={p.id}>
-                                {p.nombre} {p.codigo ? `(${p.codigo})` : ""}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700">
-                        Cantidad *
-                    </label>
-                    <input
-                        type="number"
-                        name="cantidad"
-                        min="0"
-                        value={formData.cantidad}
-                        onChange={handleChange}
-                        className="w-full rounded-lg border border-gray-300 p-2 outline-none focus:border-blue-500"
-                        placeholder="Ej: 5"
-                    />
-                </div>
-
-                <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700">
-                        Solicitante
-                    </label>
-                    <input
-                        type="text"
-                        name="solicitante"
-                        value={formData.solicitante}
-                        onChange={handleChange}
-                        className="w-full rounded-lg border border-gray-300 p-2 outline-none focus:border-blue-500"
-                        placeholder="Ej: Juan Pérez"
-                    />
-                </div>
-
-                <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700">
-                        Destino
-                    </label>
-                    <input
-                        type="text"
-                        name="destino"
-                        value={formData.destino}
-                        onChange={handleChange}
-                        className="w-full rounded-lg border border-gray-300 p-2 outline-none focus:border-blue-500"
-                        placeholder="Ej: Obra Centro / Taller"
-                    />
-                </div>
-
-                <div className="md:col-span-2">
-                    <label className="mb-1 block text-sm font-medium text-gray-700">
-                        Observación
-                    </label>
-                    <textarea
-                        name="observacion"
-                        value={formData.observacion}
-                        onChange={handleChange}
-                        rows={3}
-                        className="w-full rounded-lg border border-gray-300 p-2 outline-none focus:border-blue-500"
-                        placeholder="Detalle del consumo o entrega"
-                    />
-                </div>
+        <Card padding="p-0" className="overflow-hidden">
+            <div className="border-b border-slate-200/60 bg-gradient-to-br from-rose-50/40 to-slate-50 px-5 py-4">
+                <h2 className="text-base font-semibold text-slate-800">
+                    Registrar salida de stock
+                </h2>
+                <p className="mt-0.5 text-xs text-slate-500">
+                    Consumos internos, entregas a terreno o cualquier egreso
+                </p>
             </div>
 
-            <button
-                type="submit"
-                disabled={loading}
-                className="mt-6 rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-rose-700 disabled:opacity-50"
-            >
-                {loading ? "Guardando..." : "Registrar salida"}
-            </button>
-        </form>
+            <form onSubmit={handleSubmit} className="p-5">
+                <div className="grid gap-4 md:grid-cols-2">
+                    <Field label="Producto" required>
+                        <select
+                            name="producto_id"
+                            value={formData.producto_id}
+                            onChange={handleChange}
+                            className={inputClass}
+                        >
+                            <option value="">Seleccionar producto</option>
+                            {productos.map((p) => (
+                                <option key={p.id} value={p.id}>
+                                    {p.nombre}{" "}
+                                    {p.codigo ? `(${p.codigo})` : ""}
+                                </option>
+                            ))}
+                        </select>
+                    </Field>
+
+                    <Field label="Cantidad" required>
+                        <input
+                            type="number"
+                            name="cantidad"
+                            min="0"
+                            value={formData.cantidad}
+                            onChange={handleChange}
+                            className={inputClass}
+                            placeholder="Ej: 5"
+                        />
+                    </Field>
+
+                    <Field label="Solicitante">
+                        <input
+                            type="text"
+                            name="solicitante"
+                            value={formData.solicitante}
+                            onChange={handleChange}
+                            className={inputClass}
+                            placeholder="Ej: Juan Pérez"
+                        />
+                    </Field>
+
+                    <Field label="Destino">
+                        <input
+                            type="text"
+                            name="destino"
+                            value={formData.destino}
+                            onChange={handleChange}
+                            className={inputClass}
+                            placeholder="Ej: Obra Centro / Taller"
+                        />
+                    </Field>
+
+                    <Field
+                        label="Observación"
+                        className="md:col-span-2"
+                    >
+                        <textarea
+                            name="observacion"
+                            value={formData.observacion}
+                            onChange={handleChange}
+                            rows={3}
+                            className={inputClass}
+                            placeholder="Detalle del consumo o entrega"
+                        />
+                    </Field>
+                </div>
+
+                <div className="mt-6 flex justify-end">
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-rose-700 hover:shadow-md active:scale-95 disabled:opacity-50"
+                    >
+                        {loading ? "Guardando..." : "Registrar salida"}
+                    </button>
+                </div>
+            </form>
+        </Card>
     );
 }
 

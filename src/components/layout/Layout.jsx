@@ -2,108 +2,155 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
-function Layout({ children }) {
-  const location = useLocation();
-  const { logout } = useAuth();
-  const [menuAbierto, setMenuAbierto] = useState(false);
+const menu = [
+    { path: "/", label: "Dashboard", icon: "📊" },
+    { path: "/productos", label: "Productos", icon: "📦" },
+    { path: "/entradas", label: "Entradas", icon: "⬇️" },
+    { path: "/salidas", label: "Salidas", icon: "⬆️" },
+    { path: "/stock", label: "Stock", icon: "🗂️" },
+    { path: "/historial", label: "Historial", icon: "📜" },
+];
 
-  const menu = [
-    { path: "/", label: "Dashboard" },
-    { path: "/productos", label: "Productos" },
-    { path: "/entradas", label: "Entradas" },
-    { path: "/salidas", label: "Salidas" },
-    { path: "/stock", label: "Stock" },
-    { path: "/historial", label: "Historial" },
-  ];
+function SidebarContent({ onNavigate }) {
+    const location = useLocation();
+    const { logout } = useAuth();
 
-  return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Header móvil */}
-      <header className="flex items-center justify-between bg-gray-900 px-4 py-4 text-white md:hidden">
-        <h1 className="text-lg font-bold">Control de Bodega</h1>
+    return (
+        <>
+            {/* Logo / título */}
+            <div className="mb-8 flex items-center gap-3 px-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-lg text-white shadow-sm">
+                    📦
+                </div>
+                <div>
+                    <h2 className="text-base font-semibold text-white">
+                        Control de Bodega
+                    </h2>
+                    <p className="text-xs text-slate-400">Inventario</p>
+                </div>
+            </div>
 
-        <button
-          onClick={() => setMenuAbierto(!menuAbierto)}
-          className="rounded-lg bg-gray-800 px-3 py-2 text-sm font-medium"
-        >
-          {menuAbierto ? "Cerrar" : "Menú"}
-        </button>
-      </header>
+            {/* Menú */}
+            <nav className="flex flex-1 flex-col gap-1">
+                {menu.map((item) => {
+                    const active = location.pathname === item.path;
+                    return (
+                        <Link
+                            key={item.path}
+                            to={item.path}
+                            onClick={onNavigate}
+                            className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                                active
+                                    ? "bg-slate-700/80 text-white shadow-sm"
+                                    : "text-slate-300 hover:bg-slate-800/60 hover:text-white"
+                            }`}
+                        >
+                            <span className="text-base">{item.icon}</span>
+                            <span>{item.label}</span>
+                            {active && (
+                                <span className="ml-auto h-1.5 w-1.5 rounded-full bg-indigo-400" />
+                            )}
+                        </Link>
+                    );
+                })}
+            </nav>
 
-      {/* Fondo oscuro móvil */}
-      {menuAbierto && (
-        <div
-          className="fixed inset-0 z-30 bg-black/40 md:hidden"
-          onClick={() => setMenuAbierto(false)}
-        />
-      )}
-
-      {/* Sidebar móvil */}
-      <aside
-        className={`fixed left-0 top-0 z-40 flex h-full w-72 flex-col bg-gray-900 p-6 text-white shadow-xl transition-transform duration-300 md:hidden ${
-          menuAbierto ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <h2 className="mb-6 text-2xl font-bold">Control de Bodega</h2>
-
-        <nav className="flex flex-col gap-2">
-          {menu.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              onClick={() => setMenuAbierto(false)}
-              className={`rounded-xl px-4 py-3 text-sm font-medium transition ${
-                location.pathname === item.path
-                  ? "bg-gray-700"
-                  : "hover:bg-gray-800"
-              }`}
+            {/* Cerrar sesión */}
+            <button
+                onClick={logout}
+                className="mt-4 flex items-center gap-3 rounded-xl bg-slate-800/60 px-3 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:bg-rose-600/90 hover:text-white"
             >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+                <span>🚪</span>
+                <span>Cerrar sesión</span>
+            </button>
+        </>
+    );
+}
 
-        <button
-          onClick={logout}
-          className="mt-auto rounded-xl bg-red-600 px-4 py-3 text-sm font-medium text-white hover:bg-red-700"
-        >
-          Cerrar sesión
-        </button>
-      </aside>
+function Layout({ children }) {
+    const [menuAbierto, setMenuAbierto] = useState(false);
 
-      {/* Layout desktop */}
-      <div className="md:flex">
-        <aside className="hidden md:fixed md:inset-y-0 md:left-0 md:flex md:w-72 md:flex-col md:bg-gray-900 md:p-6 md:text-white md:shadow-xl">
-          <h2 className="mb-8 text-2xl font-bold">Control de Bodega</h2>
+    return (
+        <div className="min-h-screen bg-slate-50">
+            {/* ─── Header móvil (sticky) ──────────────────────────── */}
+            <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200/60 bg-white/80 px-4 py-3 backdrop-blur md:hidden">
+                <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-base text-white">
+                        📦
+                    </div>
+                    <h1 className="text-sm font-semibold text-slate-800">
+                        Control de Bodega
+                    </h1>
+                </div>
+                <button
+                    onClick={() => setMenuAbierto(true)}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50"
+                    aria-label="Abrir menú"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    >
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <line x1="3" y1="12" x2="21" y2="12" />
+                        <line x1="3" y1="18" x2="21" y2="18" />
+                    </svg>
+                </button>
+            </header>
 
-          <nav className="flex flex-col gap-2">
-            {menu.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`rounded-xl px-4 py-3 text-sm font-medium transition ${
-                  location.pathname === item.path
-                    ? "bg-gray-700"
-                    : "hover:bg-gray-800"
+            {/* ─── Sidebar fijo en desktop ─────────────────────────── */}
+            <aside className="hidden md:fixed md:inset-y-0 md:left-0 md:z-30 md:flex md:w-72 md:flex-col md:bg-slate-900 md:p-6 md:text-white">
+                <SidebarContent />
+            </aside>
+
+            {/* ─── Drawer en mobile ────────────────────────────────── */}
+            {menuAbierto && (
+                <div
+                    className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm md:hidden"
+                    onClick={() => setMenuAbierto(false)}
+                />
+            )}
+            <aside
+                className={`fixed left-0 top-0 z-50 flex h-full w-72 flex-col bg-slate-900 p-6 text-white shadow-2xl transition-transform duration-300 md:hidden ${
+                    menuAbierto ? "translate-x-0" : "-translate-x-full"
                 }`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+            >
+                <button
+                    onClick={() => setMenuAbierto(false)}
+                    className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white"
+                    aria-label="Cerrar menú"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    >
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+                <SidebarContent onNavigate={() => setMenuAbierto(false)} />
+            </aside>
 
-          <button
-            onClick={logout}
-            className="mt-auto rounded-xl bg-red-600 px-4 py-3 text-sm font-medium text-white hover:bg-red-700"
-          >
-            Cerrar sesión
-          </button>
-        </aside>
-
-        <main className="w-full p-4 md:ml-72 md:p-8">{children}</main>
-      </div>
-    </div>
-  );
+            {/* ─── Contenido ──────────────────────────────────────── */}
+            <main className="mx-auto w-full max-w-7xl p-4 md:ml-72 md:p-8">
+                {children}
+            </main>
+        </div>
+    );
 }
 
 export default Layout;
