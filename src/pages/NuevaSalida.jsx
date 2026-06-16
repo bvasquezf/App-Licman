@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../services/supabase";
 import SalidaForm from "../components/forms/SalidaForm";
+import { useToast } from "../context/ToastContext";
 
 function NuevaSalida() {
     const [productos, setProductos] = useState([]);
+    const { showToast } = useToast();
 
     const cargarProductos = async () => {
         const { data, error } = await supabase
@@ -14,6 +16,7 @@ function NuevaSalida() {
 
         if (error) {
             console.error("Error al cargar productos:", error);
+            showToast("Error al cargar productos", "error");
             return;
         }
 
@@ -39,26 +42,33 @@ function NuevaSalida() {
         const stockInfo = await obtenerStockProducto(salida.producto_id);
 
         if (!stockInfo) {
-            alert("No se pudo validar el stock del producto");
-            return;
+            showToast("No se pudo validar el stock del producto", "error");
+            return false;
         }
 
         if (Number(salida.cantidad) > Number(stockInfo.stock)) {
-            alert(
-                `Stock insuficiente. Stock disponible: ${stockInfo.stock}, cantidad solicitada: ${salida.cantidad}`
+            showToast(
+                `Stock insuficiente. Disponible: ${stockInfo.stock}, solicitado: ${salida.cantidad}`,
+                "error"
             );
-            return;
+            return false;
         }
 
         const { error } = await supabase.from("movimientos").insert([salida]);
 
         if (error) {
             console.error("Error al registrar salida:", error);
-            alert("Error al registrar salida");
-            return;
+            // Si el trigger de Supabase detecta stock insuficiente,
+            // el error llega acá y lo mostramos amigablemente.
+            const mensaje = error.message?.includes("Stock insuficiente")
+                ? error.message
+                : "Error al registrar salida";
+            showToast(mensaje, "error");
+            return false;
         }
 
-        alert("Salida registrada correctamente");
+        showToast("Salida registrada correctamente");
+        return true;
     };
 
     useEffect(() => {

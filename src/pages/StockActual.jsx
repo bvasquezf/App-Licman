@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../services/supabase";
 import { exportToExcel } from "../utils/exportToExcel";
+import { useToast } from "../context/ToastContext";
 
 function StockActual() {
   const [stock, setStock] = useState([]);
   const [busqueda, setBusqueda] = useState("");
+  const { showToast } = useToast();
 
   const cargarStock = async () => {
     const { data, error } = await supabase.from("stock_actual").select("*").order("nombre", { ascending: true });
-    if (error) { console.error(error); return; }
+    if (error) { console.error(error); showToast("Error al cargar stock", "error"); return; }
     setStock(data || []);
   };
 
@@ -16,7 +18,9 @@ function StockActual() {
     const dataExport = stock.map((item) => ({
       ID: item.id, Código: item.codigo || "", Nombre: item.nombre || "", Stock: item.stock ?? 0,
     }));
-    exportToExcel(dataExport, "stock_actual_bodega", "Stock");
+    const ok = exportToExcel(dataExport, "stock_actual_bodega", "Stock");
+    if (!ok) showToast("No hay stock para exportar", "warning");
+    else showToast("Reporte exportado");
   };
 
   useEffect(() => { cargarStock(); }, []);

@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../services/supabase";
 import EntradaForm from "../components/forms/EntradaForm";
+import { useToast } from "../context/ToastContext";
 
 function NuevaEntrada() {
   const [productos, setProductos] = useState([]);
+  const { showToast } = useToast();
 
   const cargarProductos = async () => {
     const { data, error } = await supabase
@@ -14,7 +16,7 @@ function NuevaEntrada() {
 
     if (error) {
       console.error("Error al cargar productos:", error);
-      alert("Error al cargar productos");
+      showToast("Error al cargar productos", "error");
       return;
     }
 
@@ -26,11 +28,11 @@ function NuevaEntrada() {
 
     if (error) {
       console.error("Error al guardar entrada:", error);
-      alert("Error al guardar ingreso");
+      showToast("Error al guardar ingreso", "error");
       return false;
     }
 
-    alert("Ingreso registrado correctamente");
+    showToast("Ingreso registrado correctamente");
     return true;
   };
 

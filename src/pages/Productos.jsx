@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import ProductoForm from "../components/forms/ProductoForm";
 import { supabase } from "../services/supabase";
 import { exportToExcel } from "../utils/exportToExcel";
-import Toast from "../components/ui/Toast";
+import { useToast } from "../context/ToastContext";
 
 function Productos() {
   const [productos, setProductos] = useState([]);
@@ -10,18 +10,7 @@ function Productos() {
   const [productoEditar, setProductoEditar] = useState(null);
   const [mostrarInactivos, setMostrarInactivos] = useState(false);
   const [busqueda, setBusqueda] = useState("");
-  const [toast, setToast] = useState({
-    message: "",
-    type: "success",
-  });
-
-  const mostrarToast = (message, type = "success") => {
-    setToast({ message, type });
-
-    setTimeout(() => {
-      setToast({ message: "", type: "success" });
-    }, 3000);
-  };
+  const { showToast } = useToast();
 
   const cargarProductos = async () => {
     setLoading(true);
@@ -39,7 +28,7 @@ function Productos() {
 
     if (error) {
       console.error("Error al cargar productos:", error);
-      mostrarToast("Error al cargar productos", "error");
+      showToast("Error al cargar productos", "error");
       setLoading(false);
       return;
     }
@@ -59,16 +48,17 @@ function Productos() {
 
       if (error) {
         console.error("Error al actualizar producto:", error);
-        mostrarToast("Hubo un error al actualizar el producto", "error");
+        showToast("Hubo un error al actualizar el producto", "error");
         return;
       }
 
-      mostrarToast("Producto actualizado correctamente");
+      showToast("Producto actualizado correctamente");
       setProductoEditar(null);
       await cargarProductos();
       return;
     }
 
+    // 1) Insertar el producto
     const { data: productoInsertado, error } = await supabase
       .from("productos")
       .insert([
@@ -82,68 +72,40 @@ function Productos() {
 
     if (error) {
       console.error("Error al guardar producto:", error);
-      mostrarToast("Hubo un error al guardar el producto", "error");
+      showToast("Hubo un error al guardar el producto", "error");
       return;
     }
 
-    // Por ahora solo informamos si venía stock inicial.
-    // En el siguiente paso conectamos esto con tu tabla de movimientos o stock_actual.
-    if (stockInicial) {
-      console.log("Stock inicial pendiente de registrar:", {
-        producto_id: productoInsertado.id,
-        ...stockInicial,
-      });
+    // 2) Si hay stock inicial, registrarlo como movimiento de entrada.
+    //    El trigger de Supabase se encarga de actualizar stock_actual.
+    if (stockInicial && stockInicial.cantidad > 0) {
+      const { error: movError } = await supabase
+        .from("movimientos")
+        .insert([
+          {
+            producto_id: productoInsertado.id,
+            tipo_movimiento: "entrada",
+            motivo_movimiento: "stock_inicial",
+            cantidad: stockInicial.cantidad,
+            precio_unitario: stockInicial.precio_unitario ?? null,
+            observacion:
+              stockInicial.observacion ?? "Stock inicial del producto",
+          },
+        ]);
 
-      mostrarToast(
-        "Producto guardado correctamente. El stock inicial quedó preparado para integrarlo en el siguiente paso."
-      );
-    } else {
-      mostrarToast("Producto guardado correctamente");
-    }
-
-    await cargarProductos();
-  };
-
-  const eliminarProducto = async (producto) => {
-    const confirmar = window.confirm(
-      `¿Seguro que deseas eliminar "${producto.nombre}"?`
-    );
-
-    if (!confirmar) return;
-
-    const { data, error } = await supabase
-      .from("productos")
-      .delete()
-      .eq("id", producto.id)
-      .select();
-
-    if (error) {
-      const esRestriccion =
-        error.message?.toLowerCase().includes("violates foreign key constraint") ||
-        error.details?.toLowerCase().includes("still referenced") ||
-        error.code === "23503";
-
-      if (esRestriccion) {
-        mostrarToast(
-          "No se puede eliminar este producto porque tiene movimientos asociados. Lo ideal es desactivarlo."
+      if (movError) {
+        console.error("Error al registrar stock inicial:", movError);
+        showToast(
+          "Producto creado, pero no se pudo registrar el stock inicial",
+          "warning"
         );
-      } else {
-        console.error("Error real al eliminar producto:", error);
-        mostrarToast("Hubo un error al eliminar el producto", "error");
+        await cargarProductos();
+        return;
       }
 
-      return;
-    }
-
-    if (!data || data.length === 0) {
-      mostrarToast("No se pudo eliminar el producto", "error");
-      return;
-    }
-
-    mostrarToast("Producto eliminado correctamente");
-
-    if (productoEditar?.id === producto.id) {
-      setProductoEditar(null);
+      showToast("Producto creado con stock inicial");
+    } else {
+      showToast("Producto guardado correctamente");
     }
 
     await cargarProductos();
@@ -163,11 +125,11 @@ function Productos() {
 
     if (error) {
       console.error("Error al desactivar producto:", error);
-      mostrarToast("No se pudo desactivar el producto", "error");
+      showToast("No se pudo desactivar el producto", "error");
       return;
     }
 
-    mostrarToast("Producto desactivado correctamente");
+    showToast("Producto desactivado correctamente");
 
     if (productoEditar?.id === producto.id) {
       setProductoEditar(null);
@@ -184,15 +146,20 @@ function Productos() {
 
     if (error) {
       console.error("Error al activar producto:", error);
-      mostrarToast("No se pudo activar el producto", "error");
+      showToast("No se pudo activar el producto", "error");
       return;
     }
 
-    mostrarToast("Producto activado correctamente");
+    showToast("Producto activado correctamente");
     await cargarProductos();
   };
 
   const exportarProductos = () => {
+    if (productos.length === 0) {
+      showToast("No hay productos para exportar", "warning");
+      return;
+    }
+
     const dataExport = productos.map((producto) => ({
       ID: producto.id,
       Código: producto.codigo || "",
@@ -205,6 +172,7 @@ function Productos() {
     }));
 
     exportToExcel(dataExport, "productos_bodega", "Productos");
+    showToast("Reporte exportado");
   };
 
   const productosFiltrados = productos.filter((producto) => {
@@ -223,12 +191,6 @@ function Productos() {
 
   return (
     <div className="mx-auto max-w-6xl p-6">
-      <Toast
-        message={toast.message}
-        type={toast.type}
-        onClose={() => setToast({ message: "", type: "success" })}
-      />
-
       <div className="mb-6 flex flex-col gap-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -346,13 +308,6 @@ function Productos() {
                         Activar
                       </button>
                     )}
-
-                    <button
-                      onClick={() => eliminarProducto(producto)}
-                      className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700"
-                    >
-                      Eliminar
-                    </button>
                   </div>
                 </div>
               </div>

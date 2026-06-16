@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../services/supabase";
 import { exportToExcel } from "../utils/exportToExcel";
+import { useToast } from "../context/ToastContext";
 
 function Historial() {
   const [movimientos, setMovimientos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
+  const { showToast } = useToast();
 
   const cargarMovimientos = async () => {
     setLoading(true);
@@ -14,7 +16,7 @@ function Historial() {
       .from("movimientos")
       .select(`id, tipo_movimiento, cantidad, precio_unitario, proveedor, numero_documento, solicitante, destino, observacion, fecha, productos (nombre, codigo)`)
       .order("id", { ascending: false });
-    if (error) { console.error(error); setLoading(false); return; }
+    if (error) { console.error(error); showToast("Error al cargar historial", "error"); setLoading(false); return; }
     setMovimientos(data || []);
     setLoading(false);
   };
@@ -27,7 +29,9 @@ function Historial() {
       Proveedor: mov.proveedor || "", Documento: mov.numero_documento || "",
       Solicitante: mov.solicitante || "", Destino: mov.destino || "", Observación: mov.observacion || "",
     }));
-    exportToExcel(dataExport, "historial_movimientos_bodega", "Historial");
+    const ok = exportToExcel(dataExport, "historial_movimientos_bodega", "Historial");
+    if (!ok) showToast("No hay movimientos para exportar", "warning");
+    else showToast("Reporte exportado");
   };
 
   useEffect(() => { cargarMovimientos(); }, []);

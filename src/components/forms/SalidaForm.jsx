@@ -1,122 +1,171 @@
 import { useState } from "react";
+import { useToast } from "../../context/ToastContext";
 
 function SalidaForm({ productos, onGuardar }) {
-  const [formData, setFormData] = useState({
-    producto_id: "",
-    cantidad: "",
-    solicitante: "",
-    destino: "",
-    observacion: "",
-  });
+    const { showToast } = useToast();
 
-  const [loading, setLoading] = useState(false);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!formData.producto_id) {
-      alert("Selecciona un producto");
-      return;
-    }
-
-    if (!formData.cantidad || Number(formData.cantidad) <= 0) {
-      alert("Cantidad inválida");
-      return;
-    }
-
-    setLoading(true);
-
-    const salida = {
-      producto_id: Number(formData.producto_id),
-      tipo_movimiento: "salida",
-      cantidad: Number(formData.cantidad),
-      solicitante: formData.solicitante || null,
-      destino: formData.destino || null,
-      observacion: formData.observacion || null,
-    };
-
-    await onGuardar(salida);
-
-    setFormData({
-      producto_id: "",
-      cantidad: "",
-      solicitante: "",
-      destino: "",
-      observacion: "",
+    const [formData, setFormData] = useState({
+        producto_id: "",
+        cantidad: "",
+        solicitante: "",
+        destino: "",
+        observacion: "",
     });
 
-    setLoading(false);
-  };
+    const [loading, setLoading] = useState(false);
 
-  return (
-    <form className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none" onSubmit={handleSubmit}>
-      <h2 className="text-xl font-bold mb-4">Registrar salida</h2>
+    const handleChange = (e) => {
+        const { name, value } = e.target;
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <select
-          name="producto_id"
-          value={formData.producto_id}
-          onChange={handleChange}
-          className="border p-2 rounded"
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+    };
+
+    const resetForm = () => {
+        setFormData({
+            producto_id: "",
+            cantidad: "",
+            solicitante: "",
+            destino: "",
+            observacion: "",
+        });
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        if (!formData.producto_id) {
+            showToast("Selecciona un producto", "error");
+            return;
+        }
+
+        if (!formData.cantidad || Number(formData.cantidad) <= 0) {
+            showToast("Cantidad inválida", "error");
+            return;
+        }
+
+        setLoading(true);
+
+        const salida = {
+            producto_id: Number(formData.producto_id),
+            tipo_movimiento: "salida",
+            cantidad: Number(formData.cantidad),
+            solicitante: formData.solicitante.trim() || null,
+            destino: formData.destino.trim() || null,
+            observacion: formData.observacion.trim() || null,
+        };
+
+        const ok = await onGuardar(salida);
+
+        if (ok) {
+            resetForm();
+        }
+
+        setLoading(false);
+    };
+
+    return (
+        <form
+            onSubmit={handleSubmit}
+            className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
         >
-          <option value="">Seleccionar producto</option>
-          {productos.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.nombre}
-            </option>
-          ))}
-        </select>
+            <h2 className="mb-1 text-xl font-semibold text-gray-800">
+                Registrar salida de stock
+            </h2>
+            <p className="mb-6 text-sm text-gray-500">
+                Registra consumos internos, entregas a terreno o cualquier
+                egreso de bodega.
+            </p>
 
-        <input
-          type="number"
-          name="cantidad"
-          placeholder="Cantidad"
-          value={formData.cantidad}
-          onChange={handleChange}
-          className="border p-2 rounded"
-        />
+            <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                        Producto *
+                    </label>
+                    <select
+                        name="producto_id"
+                        value={formData.producto_id}
+                        onChange={handleChange}
+                        className="w-full rounded-lg border border-gray-300 p-2 outline-none focus:border-blue-500"
+                    >
+                        <option value="">Seleccionar producto</option>
+                        {productos.map((p) => (
+                            <option key={p.id} value={p.id}>
+                                {p.nombre} {p.codigo ? `(${p.codigo})` : ""}
+                            </option>
+                        ))}
+                    </select>
+                </div>
 
-        <input
-          type="text"
-          name="solicitante"
-          placeholder="Solicitante"
-          value={formData.solicitante}
-          onChange={handleChange}
-          className="border p-2 rounded"
-        />
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                        Cantidad *
+                    </label>
+                    <input
+                        type="number"
+                        name="cantidad"
+                        min="0"
+                        value={formData.cantidad}
+                        onChange={handleChange}
+                        className="w-full rounded-lg border border-gray-300 p-2 outline-none focus:border-blue-500"
+                        placeholder="Ej: 5"
+                    />
+                </div>
 
-        <input
-          type="text"
-          name="destino"
-          placeholder="Destino"
-          value={formData.destino}
-          onChange={handleChange}
-          className="border p-2 rounded"
-        />
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                        Solicitante
+                    </label>
+                    <input
+                        type="text"
+                        name="solicitante"
+                        value={formData.solicitante}
+                        onChange={handleChange}
+                        className="w-full rounded-lg border border-gray-300 p-2 outline-none focus:border-blue-500"
+                        placeholder="Ej: Juan Pérez"
+                    />
+                </div>
 
-        <textarea
-          name="observacion"
-          placeholder="Observación"
-          value={formData.observacion}
-          onChange={handleChange}
-          className="border p-2 rounded md:col-span-2"
-        />
-      </div>
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                        Destino
+                    </label>
+                    <input
+                        type="text"
+                        name="destino"
+                        value={formData.destino}
+                        onChange={handleChange}
+                        className="w-full rounded-lg border border-gray-300 p-2 outline-none focus:border-blue-500"
+                        placeholder="Ej: Obra Centro / Taller"
+                    />
+                </div>
 
-      <button className="mt-4 rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 transition-colors">
-        {loading ? "Guardando..." : "Registrar salida"}
-      </button>
-    </form>
-  );
+                <div className="md:col-span-2">
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                        Observación
+                    </label>
+                    <textarea
+                        name="observacion"
+                        value={formData.observacion}
+                        onChange={handleChange}
+                        rows={3}
+                        className="w-full rounded-lg border border-gray-300 p-2 outline-none focus:border-blue-500"
+                        placeholder="Detalle del consumo o entrega"
+                    />
+                </div>
+            </div>
+
+            <button
+                type="submit"
+                disabled={loading}
+                className="mt-6 rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-rose-700 disabled:opacity-50"
+            >
+                {loading ? "Guardando..." : "Registrar salida"}
+            </button>
+        </form>
+    );
 }
 
 export default SalidaForm;

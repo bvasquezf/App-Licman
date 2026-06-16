@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
+import { useToast } from "../../context/ToastContext";
 
 function EntradaForm({ productos, onGuardar }) {
+    const { showToast } = useToast();
   const initialFormData = {
     producto_id: "",
     motivo_movimiento: "compra",
@@ -60,39 +62,39 @@ function EntradaForm({ productos, onGuardar }) {
     e.preventDefault();
 
     if (!formData.producto_id) {
-      alert("Debes seleccionar un producto");
+      showToast("Debes seleccionar un producto", "error");
       return;
     }
 
     if (!formData.cantidad || Number(formData.cantidad) <= 0) {
-      alert("Debes ingresar una cantidad válida");
+      showToast("Debes ingresar una cantidad válida", "error");
       return;
     }
 
     if (formData.precio_unitario !== "" && Number(formData.precio_unitario) < 0) {
-      alert("El precio unitario no puede ser negativo");
+      showToast("El precio unitario no puede ser negativo", "error");
       return;
     }
 
     if (esCompra) {
       if (formData.precio_unitario === "" || Number(formData.precio_unitario) < 0) {
-        alert("En una compra debes ingresar el precio unitario");
+        showToast("En una compra debes ingresar el precio unitario", "error");
         return;
       }
 
       if (!formData.proveedor.trim()) {
-        alert("En una compra debes ingresar el proveedor");
+        showToast("En una compra debes ingresar el proveedor", "error");
         return;
       }
 
       if (!formData.numero_documento.trim()) {
-        alert("En una compra debes ingresar el número de documento");
+        showToast("En una compra debes ingresar el número de documento", "error");
         return;
       }
     }
 
     if (requiereObservacion && !formData.observacion.trim()) {
-      alert("Debes ingresar una observación para este tipo de movimiento");
+      showToast("Debes ingresar una observación para este tipo de movimiento", "error");
       return;
     }
 

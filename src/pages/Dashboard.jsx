@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../services/supabase";
 import { exportWorkbook } from "../utils/exportWorkbook";
+import { useToast } from "../context/ToastContext";
 
 function Dashboard() {
   const [productos, setProductos] = useState([]);
   const [stock, setStock] = useState([]);
   const [movimientos, setMovimientos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { showToast } = useToast();
 
   const cargarData = async () => {
     setLoading(true);
@@ -121,6 +123,7 @@ function Dashboard() {
       ],
       "reporte_maestro_bodega"
     );
+    showToast("Reporte maestro exportado");
   };
 
   const getTipoBadge = (tipo) => {

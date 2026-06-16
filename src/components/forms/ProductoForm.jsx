@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
+import { useToast } from "../../context/ToastContext";
 
 function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
+  const { showToast } = useToast();
+
   const getInitialFormData = () => ({
     codigo: "",
     nombre: "",
@@ -53,7 +56,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
     e.preventDefault();
 
     if (!formData.nombre.trim()) {
-      alert("El nombre del producto es obligatorio");
+      showToast("El nombre del producto es obligatorio", "error");
       return;
     }
 
@@ -62,7 +65,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
         formData.cantidad_inicial === "" ||
         Number(formData.cantidad_inicial) < 0
       ) {
-        alert("Debes ingresar una cantidad inicial válida");
+        showToast("Debes ingresar una cantidad inicial válida", "error");
         return;
       }
 
@@ -70,7 +73,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
         formData.precio_inicial !== "" &&
         Number(formData.precio_inicial) < 0
       ) {
-        alert("El precio inicial no puede ser negativo");
+        showToast("El precio inicial no puede ser negativo", "error");
         return;
       }
     }
