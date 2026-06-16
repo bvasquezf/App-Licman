@@ -2,36 +2,85 @@ import { useState } from "react";
 import { supabase } from "../services/supabase";
 import { useAuth } from "../context/AuthContext";
 
+const MAX_PASSWORD_LENGTH = 72; // límite de bcrypt
+const COMMON_PASSWORDS = new Set([
+    "password",
+    "password1",
+    "password123",
+    "12345678",
+    "123456789",
+    "1234567890",
+    "qwerty123",
+    "qwertyuiop",
+    "11111111",
+    "00000000",
+    "abcdef123",
+    "iloveyou",
+    "admin1234",
+    "welcome123",
+    "contraseña",
+    "contraseña1",
+]);
+
+function validarPassword(pw) {
+    if (!pw) return "Debes ingresar una contraseña";
+    if (pw.length < 8) return "Debe tener al menos 8 caracteres";
+    if (pw.length > MAX_PASSWORD_LENGTH) {
+        return `No puede tener más de ${MAX_PASSWORD_LENGTH} caracteres`;
+    }
+    if (!/[A-Z]/.test(pw)) return "Debe tener al menos una mayúscula";
+    if (!/[a-z]/.test(pw)) return "Debe tener al menos una minúscula";
+    if (!/[0-9]/.test(pw)) return "Debe tener al menos un número";
+    if (COMMON_PASSWORDS.has(pw.toLowerCase())) {
+        return "Esta contraseña es muy común, elige otra";
+    }
+    return null;
+}
+
 function UpdatePassword() {
-    const { logout } = useAuth();
+    const { session, logout } = useAuth();
     const [password, setPassword] = useState("");
     const [passwordConfirm, setPasswordConfirm] = useState("");
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [success, setSuccess] = useState(false);
 
-    const validarPassword = (pw) => {
-        if (pw.length < 8) return "Debe tener al menos 8 caracteres";
-        if (!/[A-Z]/.test(pw)) return "Debe tener al menos una mayúscula";
-        if (!/[a-z]/.test(pw)) return "Debe tener al menos una minúscula";
-        if (!/[0-9]/.test(pw)) return "Debe tener al menos un número";
-        return null;
-    };
+    // Si no hay sesión activa (link expirado o inválido), avisamos al usuario
+    // en vez de dejarlo enviar un formulario que va a fallar.
+    if (!session) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
+                <div className="w-full max-w-sm rounded-2xl border border-slate-100 bg-white p-8 text-center shadow-sm">
+                    <h1 className="text-xl font-semibold text-slate-800">
+                        Link expirado
+                    </h1>
+                    <p className="mt-2 text-sm text-slate-500">
+                        El enlace de recuperación ya no es válido o expiró.
+                        Vuelve a pedir uno nuevo.
+                    </p>
+                    <a
+                        href="/"
+                        className="mt-6 inline-block rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+                    >
+                        Volver al inicio
+                    </a>
+                </div>
+            </div>
+        );
+    }
 
     const handleUpdatePassword = async (e) => {
         e.preventDefault();
-
-        if (!password || !passwordConfirm) {
-            alert("Debes ingresar y confirmar la nueva contraseña");
-            return;
-        }
+        setError(null);
 
         const errorValidacion = validarPassword(password);
         if (errorValidacion) {
-            alert(errorValidacion);
+            setError(errorValidacion);
             return;
         }
 
         if (password !== passwordConfirm) {
-            alert("Las contraseñas no coinciden");
+            setError("Las contraseñas no coinciden");
             return;
         }
 
@@ -40,12 +89,18 @@ function UpdatePassword() {
         setLoading(false);
 
         if (error) {
-            alert("No se pudo actualizar la contraseña: " + error.message);
+            // Mensaje genérico para no exponer detalles internos
+            setError(
+                "No se pudo actualizar la contraseña. Vuelve a pedir un nuevo enlace."
+            );
             return;
         }
 
-        alert("Contraseña actualizada correctamente. Inicia sesión nuevamente.");
-        await logout();
+        setSuccess(true);
+        // Damos un breve feedback antes de cerrar sesión
+        setTimeout(async () => {
+            await logout();
+        }, 1500);
     };
 
     return (
@@ -65,41 +120,80 @@ function UpdatePassword() {
                     onSubmit={handleUpdatePassword}
                 >
                     <div className="mb-4">
-                        <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-slate-400">
+                        <label
+                            htmlFor="new-password"
+                            className="mb-1 block text-xs font-medium uppercase tracking-wider text-slate-400"
+                        >
                             Nueva contraseña
                         </label>
                         <input
+                            id="new-password"
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-indigo-400 focus:outline-none"
                             placeholder="Mínimo 8 caracteres"
+                            autoComplete="new-password"
+                            maxLength={MAX_PASSWORD_LENGTH}
+                            disabled={loading || success}
                         />
                     </div>
 
-                    <div className="mb-6">
-                        <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-slate-400">
+                    <div className="mb-4">
+                        <label
+                            htmlFor="confirm-password"
+                            className="mb-1 block text-xs font-medium uppercase tracking-wider text-slate-400"
+                        >
                             Repetir contraseña
                         </label>
                         <input
+                            id="confirm-password"
                             type="password"
                             value={passwordConfirm}
-                            onChange={(e) => setPasswordConfirm(e.target.value)}
+                            onChange={(e) =>
+                                setPasswordConfirm(e.target.value)
+                            }
                             className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-indigo-400 focus:outline-none"
                             placeholder="Repite la nueva contraseña"
+                            autoComplete="new-password"
+                            maxLength={MAX_PASSWORD_LENGTH}
+                            disabled={loading || success}
                         />
                     </div>
 
                     <p className="mb-4 text-xs text-slate-400">
-                        Debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número.
+                        Mínimo 8 caracteres, una mayúscula, una minúscula y un
+                        número. Evita contraseñas comunes.
                     </p>
+
+                    {error && (
+                        <div
+                            role="alert"
+                            className="mb-4 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700"
+                        >
+                            {error}
+                        </div>
+                    )}
+
+                    {success && (
+                        <div
+                            role="status"
+                            className="mb-4 rounded-lg border border-green-100 bg-green-50 px-3 py-2 text-sm text-green-700"
+                        >
+                            Contraseña actualizada. Cerrando sesión...
+                        </div>
+                    )}
 
                     <button
                         type="submit"
-                        disabled={loading}
-                        className="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+                        disabled={loading || success}
+                        className="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                        {loading ? "Actualizando..." : "Actualizar contraseña"}
+                        {loading
+                            ? "Actualizando..."
+                            : success
+                            ? "Listo"
+                            : "Actualizar contraseña"}
                     </button>
                 </form>
             </div>

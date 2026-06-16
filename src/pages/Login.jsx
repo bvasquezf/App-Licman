@@ -11,6 +11,8 @@ function Login() {
   const [isRegister, setIsRegister] = useState(false);
   const [isRecovery, setIsRecovery] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [info, setInfo] = useState(null);
 
   const getRedirectUrl = () => {
     const isLocalhost =
@@ -24,16 +26,28 @@ function Login() {
     return `${window.location.origin}/update-password`;
   };
 
+  const validarEmail = (value) => {
+    // Validación básica de formato; la validación real la hace Supabase
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
+    setInfo(null);
 
     if (!email.trim()) {
-      alert("Debes ingresar tu correo");
+      setError("Debes ingresar tu correo");
+      return;
+    }
+
+    if (!validarEmail(email)) {
+      setError("El formato del correo no es válido");
       return;
     }
 
     if (!isRecovery && !password.trim()) {
-      alert("Debes ingresar tu contraseña");
+      setError("Debes ingresar tu contraseña");
       return;
     }
 
@@ -47,12 +61,16 @@ function Login() {
       setLoading(false);
 
       if (error) {
-        console.error("Error al enviar recuperación:", error);
-        alert("No se pudo enviar el correo de recuperación");
+        // No revelamos si el correo existe o no: siempre el mismo mensaje
+        setInfo(
+          "Si el correo está registrado, te enviaremos un enlace para restablecer tu contraseña."
+        );
         return;
       }
 
-      alert("Te enviamos un correo para restablecer tu contraseña");
+      setInfo(
+        "Si el correo está registrado, te enviaremos un enlace para restablecer tu contraseña."
+      );
       setIsRecovery(false);
       setIsRegister(false);
       return;
@@ -65,7 +83,9 @@ function Login() {
     setLoading(false);
 
     if (response?.error) {
-      alert(response.error.message);
+      // Mensaje genérico para evitar user enumeration
+      // (no decimos "email no existe" vs "contraseña incorrecta")
+      setError("Correo o contraseña incorrectos");
     }
   };
 
@@ -73,18 +93,24 @@ function Login() {
     setIsRegister(false);
     setIsRecovery(false);
     setPassword("");
+    setError(null);
+    setInfo(null);
   };
 
   const cambiarAModoRegistro = () => {
     setIsRegister(true);
     setIsRecovery(false);
     setPassword("");
+    setError(null);
+    setInfo(null);
   };
 
   const cambiarAModoRecuperacion = () => {
     setIsRecovery(true);
     setIsRegister(false);
     setPassword("");
+    setError(null);
+    setInfo(null);
   };
 
   return (
@@ -107,46 +133,77 @@ function Login() {
         <form
           className="rounded-2xl border border-slate-100 bg-white p-8 shadow-sm"
           onSubmit={handleSubmit}
+          noValidate
         >
           <div className="mb-4">
-            <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-slate-400">
+            <label
+              htmlFor="email"
+              className="mb-1 block text-xs font-medium uppercase tracking-wider text-slate-400"
+            >
               Correo
             </label>
             <input
+              id="email"
               type="email"
               placeholder="tucorreo@ejemplo.com"
               className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-indigo-400 focus:outline-none"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              disabled={loading}
             />
           </div>
 
           {!isRecovery && (
-            <div className="mb-6">
-              <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-slate-400">
+            <div className="mb-4">
+              <label
+                htmlFor="password"
+                className="mb-1 block text-xs font-medium uppercase tracking-wider text-slate-400"
+              >
                 Contraseña
               </label>
               <input
+                id="password"
                 type="password"
                 placeholder="••••••••"
                 className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-indigo-400 focus:outline-none"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete={isRegister ? "new-password" : "current-password"}
+                disabled={loading}
               />
             </div>
           )}
 
           {isRecovery && (
-            <p className="mb-6 text-xs leading-relaxed text-slate-500">
+            <p className="mb-4 text-xs leading-relaxed text-slate-500">
               Ingresa tu correo y te enviaremos un enlace para crear una nueva
               contraseña.
             </p>
           )}
 
+          {error && (
+            <div
+              role="alert"
+              className="mb-4 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700"
+            >
+              {error}
+            </div>
+          )}
+
+          {info && (
+            <div
+              role="status"
+              className="mb-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-700"
+            >
+              {info}
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+            className="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading
               ? "Procesando..."

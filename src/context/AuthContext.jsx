@@ -6,6 +6,9 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
     const [session, setSession] = useState(null);
     const [loading, setLoading] = useState(true);
+    // True solo cuando Supabase dispara el evento PASSWORD_RECOVERY
+    // (es decir, el usuario llegó haciendo clic en el link del correo).
+    const [isRecovery, setIsRecovery] = useState(false);
 
     useEffect(() => {
         const obtenerSesion = async () => {
@@ -16,8 +19,18 @@ export const AuthProvider = ({ children }) => {
         obtenerSesion();
 
         const { data: listener } = supabase.auth.onAuthStateChange(
-            (_event, session) => {
+            (event, session) => {
                 setSession(session);
+
+                if (event === "PASSWORD_RECOVERY") {
+                    setIsRecovery(true);
+                }
+
+                // Si el usuario cierra sesión o se completa el recovery,
+                // reseteamos el flag para que no quede "pegado".
+                if (event === "SIGNED_OUT") {
+                    setIsRecovery(false);
+                }
             }
         );
 
@@ -35,17 +48,20 @@ export const AuthProvider = ({ children }) => {
             email,
             password,
             options: {
-                emailRedirectTo: "https://appinventariorepuestos.netlify.app",
+                emailRedirectTo: `${window.location.origin}/`,
             },
         });
     };
 
     const logout = async () => {
         await supabase.auth.signOut();
+        setIsRecovery(false);
     };
 
     return (
-        <AuthContext.Provider value={{ session, loading, login, register, logout }}>
+        <AuthContext.Provider
+            value={{ session, loading, isRecovery, login, register, logout }}
+        >
             {children}
         </AuthContext.Provider>
     );
