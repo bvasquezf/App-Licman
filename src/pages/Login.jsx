@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { supabase } from "../services/supabase";
+import {
+    supabase,
+    getRememberPreference,
+    setRememberPreference,
+} from "../services/supabase";
 
 function Login() {
   const { login, register } = useAuth();
@@ -13,6 +17,9 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [info, setInfo] = useState(null);
+  // Por defecto NO recordar (más seguro). El usuario puede tildarlo
+  // si quiere permanecer logueado entre pestañas.
+  const [remember, setRemember] = useState(getRememberPreference);
 
   const getRedirectUrl = () => {
     const isLocalhost =
@@ -52,6 +59,10 @@ function Login() {
     }
 
     setLoading(true);
+
+    // Guardamos la preferencia ANTES de autenticar para que el storage adapter
+    // de Supabase escriba la sesión en el storage correcto.
+    setRememberPreference(remember);
 
     if (isRecovery) {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -180,6 +191,19 @@ function Login() {
               Ingresa tu correo y te enviaremos un enlace para crear una nueva
               contraseña.
             </p>
+          )}
+
+          {!isRecovery && (
+            <label className="mb-4 flex cursor-pointer items-center gap-2 text-xs text-slate-500">
+              <input
+                type="checkbox"
+                checked={remember}
+                onChange={(e) => setRemember(e.target.checked)}
+                disabled={loading}
+                className="h-4 w-4 cursor-pointer rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span>Recordar sesión en este equipo</span>
+            </label>
           )}
 
           {error && (
