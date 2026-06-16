@@ -48,10 +48,10 @@ function SidebarContent({ onNavigate, collapsed = false }) {
                             to={item.path}
                             onClick={onNavigate}
                             title={collapsed ? item.label : undefined}
-                            className={`group flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                            className={`group flex min-h-[44px] items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200 ${
                                 collapsed
-                                    ? "justify-center px-2 py-2.5"
-                                    : "px-3 py-2.5"
+                                    ? "justify-center px-2 py-3"
+                                    : "px-3 py-3"
                             } ${
                                 active
                                     ? "bg-slate-700/80 text-white shadow-sm"
@@ -80,10 +80,10 @@ function SidebarContent({ onNavigate, collapsed = false }) {
             <button
                 onClick={logout}
                 title={collapsed ? "Cerrar sesión" : undefined}
-                className={`mt-2 flex items-center gap-3 rounded-xl bg-slate-800/60 text-sm font-medium text-slate-300 transition-colors hover:bg-rose-600/90 hover:text-white ${
+                className={`mt-2 flex min-h-[44px] items-center gap-3 rounded-xl bg-slate-800/60 text-sm font-medium text-slate-300 transition-colors hover:bg-rose-600/90 hover:text-white ${
                     collapsed
-                        ? "mt-4 justify-center px-2 py-2.5"
-                        : "px-3 py-2.5"
+                        ? "mt-4 justify-center px-2 py-3"
+                        : "px-3 py-3"
                 }`}
             >
                 <span>🚪</span>
@@ -106,12 +106,18 @@ function Layout({ children }) {
     }, []);
 
     // Bloquear scroll del body cuando el drawer está abierto
+    // En iOS Safari, `overflow: hidden` no es suficiente para impedir
+    // el rubber-band: agregamos `position: relative` para que el body
+    // quede "anclado" durante el modal.
     useEffect(() => {
         if (menuAbierto) {
-            const prev = document.body.style.overflow;
+            const prevOverflow = document.body.style.overflow;
+            const prevPosition = document.body.style.position;
             document.body.style.overflow = "hidden";
+            document.body.style.position = "relative";
             return () => {
-                document.body.style.overflow = prev;
+                document.body.style.overflow = prevOverflow;
+                document.body.style.position = prevPosition;
             };
         }
     }, [menuAbierto]);
@@ -120,7 +126,12 @@ function Layout({ children }) {
         <div className="bg-slate-50 dark:bg-slate-950">
             <OfflineBanner />
             {/* ─── Header móvil (sticky) ──────────────────────────── */}
-            <header className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-slate-200/60 bg-white/80 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80 md:hidden">
+            <header
+                className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-slate-200/60 bg-white/80 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80 md:hidden"
+                style={{
+                    paddingTop: "max(0.75rem, env(safe-area-inset-top))",
+                }}
+            >
                 <div className="flex min-w-0 items-center gap-2">
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-base text-white">
                         📦
@@ -133,7 +144,7 @@ function Layout({ children }) {
                     <ThemeToggle />
                     <button
                         onClick={() => setMenuAbierto(true)}
-                        className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                        className="flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                         aria-label="Abrir menú"
                     >
                         <svg
@@ -177,10 +188,14 @@ function Layout({ children }) {
                 className={`fixed left-0 top-0 z-50 flex h-full w-72 max-w-[85vw] flex-col bg-slate-900 p-6 text-white shadow-2xl transition-transform duration-300 ease-out dark:bg-slate-950 md:hidden ${
                     menuAbierto ? "translate-x-0" : "-translate-x-full"
                 }`}
+                style={{
+                    paddingTop: "max(1.5rem, env(safe-area-inset-top))",
+                }}
             >
                 <button
                     onClick={() => setMenuAbierto(false)}
-                    className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+                    className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+                    style={{ top: "max(0.75rem, env(safe-area-inset-top))" }}
                     aria-label="Cerrar menú"
                 >
                     <svg

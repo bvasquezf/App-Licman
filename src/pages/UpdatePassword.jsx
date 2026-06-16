@@ -128,7 +128,7 @@ function UpdatePassword() {
                     <div className="mb-4">
                         <label
                             htmlFor="new-password"
-                            className="mb-1.5 block text-[10px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                            className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400"
                         >
                             Nueva contraseña
                         </label>
@@ -148,7 +148,7 @@ function UpdatePassword() {
                     <div className="mb-4">
                         <label
                             htmlFor="confirm-password"
-                            className="mb-1.5 block text-[10px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                            className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400"
                         >
                             Repetir contraseña
                         </label>

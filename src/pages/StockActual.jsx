@@ -207,7 +207,7 @@ function StockActual() {
                         >
                             {chip.label}
                             <span
-                                className={`rounded-full px-1.5 text-[10px] font-semibold ${
+                                className={`rounded-full px-1.5 text-xs font-semibold ${
                                     active
                                         ? "bg-white/20 text-white"
                                         : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
@@ -222,7 +222,7 @@ function StockActual() {
 
             {/* Grid de stock */}
             {loading ? (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {Array.from({ length: 6 }).map((_, i) => (
                         <Skeleton key={i} className="h-32" />
                     ))}
@@ -238,7 +238,7 @@ function StockActual() {
                     }
                 />
             ) : (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {stockFiltrado.map((item) => (
                         <div
                             key={item.id}
@@ -247,7 +247,7 @@ function StockActual() {
                             <div className="flex items-start justify-between gap-2">
                                 <div className="min-w-0 flex-1">
                                     {item.codigo && (
-                                        <p className="font-mono text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                        <p className="font-mono text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
                                             {item.codigo}
                                         </p>
                                     )}
@@ -256,7 +256,7 @@ function StockActual() {
                                     </h3>
                                 </div>
                                 <span
-                                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${getEstadoBadge(
+                                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${getEstadoBadge(
                                         item.estado
                                     )}`}
                                 >
@@ -278,7 +278,7 @@ function StockActual() {
                                     </p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                    <p className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
                                         Mínimo
                                     </p>
                                     <p className="text-sm font-medium text-slate-600 tabular-nums dark:text-slate-300">

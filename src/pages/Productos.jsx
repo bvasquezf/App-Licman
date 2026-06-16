@@ -330,7 +330,7 @@ function Productos() {
                                                 </span>
                                             )}
                                             <span
-                                                className={`rounded-full px-2 py-0.5 text-[10px] font-medium sm:text-xs ${
+                                                className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                                                     producto.activo
                                                         ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400"
                                                         : "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300"
@@ -341,7 +341,7 @@ function Productos() {
                                                     : "Inactivo"}
                                             </span>
                                         </div>
-                                        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400 sm:text-xs">
+                                        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
                                             {producto.categoria && (
                                                 <span>📁 {producto.categoria}</span>
                                             )}
@@ -369,7 +369,7 @@ function Productos() {
                                             onClick={() =>
                                                 setProductoEditar(producto)
                                             }
-                                            className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-500/15 sm:px-3"
+                                            className="rounded-lg px-2.5 py-2 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-500/15 sm:px-3 sm:py-1.5"
                                         >
                                             Editar
                                         </button>
@@ -378,7 +378,7 @@ function Productos() {
                                                 onClick={() =>
                                                     desactivarProducto(producto)
                                                 }
-                                                className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-amber-600 transition-colors hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-500/15 sm:px-3"
+                                                className="rounded-lg px-2.5 py-2 text-xs font-medium text-amber-600 transition-colors hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-500/15 sm:px-3 sm:py-1.5"
                                             >
                                                 Desactivar
                                             </button>
@@ -387,7 +387,7 @@ function Productos() {
                                                 onClick={() =>
                                                     activarProducto(producto)
                                                 }
-                                                className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-emerald-600 transition-colors hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-500/15 sm:px-3"
+                                                className="rounded-lg px-2.5 py-2 text-xs font-medium text-emerald-600 transition-colors hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-500/15 sm:px-3 sm:py-1.5"
                                             >
                                                 Activar
                                             </button>

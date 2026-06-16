@@ -187,13 +187,13 @@ function Dashboard() {
 
             {/* KPIs */}
             {loading ? (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 2xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
                     {Array.from({ length: 4 }).map((_, i) => (
                         <Skeleton key={i} className="h-24 sm:h-28" />
                     ))}
                 </div>
             ) : (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 2xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
                     <StatCard
                         label="Total productos"
                         value={totalProductos.toLocaleString("es-CL")}

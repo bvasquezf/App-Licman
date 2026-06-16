@@ -20,7 +20,7 @@ function PageHeader({ title, subtitle, icon, actions }) {
             </div>
 
             {actions && (
-                <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:shrink-0 md:justify-end">
+                <div className="flex w-full flex-wrap items-center justify-start gap-2 md:w-auto md:shrink-0 md:justify-end">
                     {actions}
                 </div>
             )}

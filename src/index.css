@@ -40,6 +40,9 @@ body {
     transition:
         background-color 0.2s ease,
         color 0.2s ease;
+    /* Evita que en iOS Safari el rubber-band muestre el color
+       del sistema (flash claro en dark mode). */
+    overscroll-behavior-y: contain;
 }
 
 html.dark,
@@ -57,6 +60,7 @@ body {
        El scroll vertical es nativo del navegador. */
     min-height: 100vh;
     min-height: 100dvh;
+    overflow-x: clip;
 }
 
 #root {

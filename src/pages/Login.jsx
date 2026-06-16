@@ -112,7 +112,12 @@ function Login() {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-8 dark:bg-slate-950">
+        <div
+            className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-8 dark:bg-slate-950"
+            style={{
+                paddingBottom: "max(2rem, env(safe-area-inset-bottom))",
+            }}
+        >
             <div className="w-full max-w-sm sm:max-w-md">
                 <div className="mb-6 text-center sm:mb-8">
                     <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-2xl text-white shadow-sm sm:mb-4 sm:h-14 sm:w-14">
@@ -138,7 +143,7 @@ function Login() {
                     <div className="mb-4">
                         <label
                             htmlFor="email"
-                            className="mb-1.5 block text-[10px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                            className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400"
                         >
                             Correo
                         </label>
@@ -158,7 +163,7 @@ function Login() {
                         <div className="mb-4">
                             <label
                                 htmlFor="password"
-                                className="mb-1.5 block text-[10px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                                className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400"
                             >
                                 Contraseña
                             </label>

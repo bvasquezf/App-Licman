@@ -36,7 +36,7 @@ function Toast({ message, type = "success", duration = AUTO_CLOSE_MS, onClose })
                 <span className="flex-1 break-words">{message}</span>
                 <button
                     onClick={onClose}
-                    className="shrink-0 rounded p-1 text-white/80 transition-colors hover:bg-white/20 hover:text-white"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded text-white/80 transition-colors hover:bg-white/20 hover:text-white"
                     aria-label="Cerrar notificación"
                 >
                     ✕

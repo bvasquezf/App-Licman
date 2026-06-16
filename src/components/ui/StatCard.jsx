@@ -24,7 +24,7 @@ function StatCard({ label, value, hint, icon, tone = "indigo" }) {
         <div className="group flex h-full flex-col rounded-2xl border border-slate-200/60 bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 sm:p-5">
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                    <p className="truncate text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500 sm:text-xs">
+                    <p className="truncate text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
                         {label}
                     </p>
                     <p
@@ -42,7 +42,7 @@ function StatCard({ label, value, hint, icon, tone = "indigo" }) {
                 )}
             </div>
             {hint && (
-                <p className="mt-1.5 truncate text-[10px] text-slate-400 dark:text-slate-500 sm:text-xs">
+                <p className="mt-1.5 truncate text-xs text-slate-500 dark:text-slate-400">
                     {hint}
                 </p>
             )}

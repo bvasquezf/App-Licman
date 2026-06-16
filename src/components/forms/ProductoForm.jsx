@@ -309,7 +309,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                                 )}
                             </div>
                             {codigoLibre === false && (
-                                <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-400">
+                                <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">
                                     Este código ya está en uso por otro producto.
                                 </p>
                             )}
@@ -388,7 +388,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
         <Card padding="p-0" className="overflow-hidden">
             {/* Header con stepper */}
             <div className="border-b border-slate-200/60 bg-gradient-to-br from-indigo-50/40 to-slate-50 px-4 py-3 dark:border-slate-800 dark:from-indigo-500/10 dark:to-slate-800/40 sm:px-5 sm:py-4">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                     <div className="flex items-center gap-2">
                         <div
                             className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold transition-all duration-300 ${
@@ -414,13 +414,13 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                             2
                         </div>
                     </div>
-                    <div className="ml-2">
+                    <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                             {paso === 1
                                 ? "Datos del producto"
                                 : "Stock inicial"}
                         </p>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
                             Paso {paso} de 2
                         </p>
                     </div>
@@ -483,7 +483,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                                     }}
                                     title="Regenerar código sugerido"
                                     aria-label="Regenerar código sugerido"
-                                    className="shrink-0 rounded-xl border border-slate-200/60 bg-white px-3 text-slate-500 transition-colors hover:bg-slate-50 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
+                                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200/60 bg-white text-slate-500 transition-colors hover:bg-slate-50 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
                                 >
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
@@ -503,13 +503,13 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                                 </button>
                             </div>
                             {codigoLibre === false && (
-                                <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-400">
+                                <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">
                                     Este código ya está en uso. Elegí otro o
                                     regenerá la sugerencia.
                                 </p>
                             )}
                             {prefijo && !codigoEsManual && (
-                                <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                     Sugerido automáticamente · prefijo{" "}
                                     <span className="font-mono font-semibold">
                                         {prefijo}
@@ -544,7 +544,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                                 {productoData.categoria && !categoriaEsManual && (
                                     <span
                                         aria-hidden="true"
-                                        className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-medium text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300"
+                                        className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300"
                                     >
                                         auto
                                     </span>

@@ -216,7 +216,7 @@ function Historial() {
                         >
                             {chip.label}
                             <span
-                                className={`rounded-full px-1.5 text-[10px] font-semibold ${
+                                className={`rounded-full px-1.5 text-xs font-semibold ${
                                     active
                                         ? "bg-white/20 text-white"
                                         : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
@@ -232,7 +232,7 @@ function Historial() {
             {/* Filtros de fecha */}
             <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/60 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:flex-wrap sm:items-end sm:p-4">
                 <div className="flex flex-1 flex-col sm:flex-none">
-                    <label className="mb-1 px-1 text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    <label className="mb-1 px-1 text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
                         Desde
                     </label>
                     <input
@@ -243,7 +243,7 @@ function Historial() {
                     />
                 </div>
                 <div className="flex flex-1 flex-col sm:flex-none">
-                    <label className="mb-1 px-1 text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    <label className="mb-1 px-1 text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
                         Hasta
                     </label>
                     <input
@@ -330,7 +330,7 @@ function Historial() {
                                                         "Producto sin nombre"}
                                                 </p>
                                                 {mov.productos?.codigo && (
-                                                    <span className="rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                                    <span className="rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                                                         {mov.productos.codigo}
                                                     </span>
                                                 )}
@@ -363,7 +363,7 @@ function Historial() {
                                                     : "−"}
                                                 {mov.cantidad}
                                             </p>
-                                            <p className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                                 {mov.tipo_movimiento}
                                             </p>
                                         </div>
@@ -393,7 +393,7 @@ function Historial() {
                                             <div className="grid gap-3 text-xs sm:grid-cols-2">
                                                 {mov.precio_unitario && (
                                                     <div>
-                                                        <p className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                                        <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                                             Precio unitario
                                                         </p>
                                                         <p className="font-medium text-slate-700 dark:text-slate-200">
@@ -405,7 +405,7 @@ function Historial() {
                                                 )}
                                                 {mov.proveedor && (
                                                     <div>
-                                                        <p className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                                        <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                                             Proveedor
                                                         </p>
                                                         <p className="font-medium text-slate-700 dark:text-slate-200">
@@ -415,7 +415,7 @@ function Historial() {
                                                 )}
                                                 {mov.tipo_documento && (
                                                     <div>
-                                                        <p className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                                        <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                                             Tipo documento
                                                         </p>
                                                         <p className="font-medium text-slate-700 dark:text-slate-200">
@@ -425,7 +425,7 @@ function Historial() {
                                                 )}
                                                 {mov.numero_documento && (
                                                     <div>
-                                                        <p className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                                        <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                                             N° documento
                                                         </p>
                                                         <p className="font-medium text-slate-700 dark:text-slate-200">
@@ -437,7 +437,7 @@ function Historial() {
                                                 )}
                                                 {mov.solicitante && (
                                                     <div>
-                                                        <p className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                                        <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                                             Solicitante
                                                         </p>
                                                         <p className="font-medium text-slate-700 dark:text-slate-200">
@@ -447,7 +447,7 @@ function Historial() {
                                                 )}
                                                 {mov.destino && (
                                                     <div>
-                                                        <p className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                                        <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                                             Destino
                                                         </p>
                                                         <p className="font-medium text-slate-700 dark:text-slate-200">

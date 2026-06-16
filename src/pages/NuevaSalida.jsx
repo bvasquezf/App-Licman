@@ -154,7 +154,7 @@ function NuevaSalida() {
                             <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                                 📦 Stock en bodega
                             </h3>
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                                 {productosConStock.length}
                             </span>
                         </div>
@@ -185,13 +185,13 @@ function NuevaSalida() {
                                                     {p.nombre}
                                                 </p>
                                                 {p.codigo && (
-                                                    <p className="font-mono text-[10px] text-slate-400 dark:text-slate-500">
+                                                    <p className="font-mono text-xs text-slate-500 dark:text-slate-400">
                                                         {p.codigo}
                                                     </p>
                                                 )}
                                             </div>
                                             <span
-                                                className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold tabular-nums ${
+                                                className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${
                                                     p.stock <= p.stock_minimo
                                                         ? "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"
                                                         : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400"
@@ -203,7 +203,7 @@ function NuevaSalida() {
                                     ))}
                                 {productosSinStock.length > 0 && (
                                     <li className="border-t border-slate-100 pt-2 dark:border-slate-800">
-                                        <p className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                        <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                             Sin stock ({productosSinStock.length})
                                         </p>
                                         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
