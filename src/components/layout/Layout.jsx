@@ -189,7 +189,7 @@ function Layout({ children }) {
 
             {/* ─── Contenido ──────────────────────────────────────── */}
             <main
-                className="mx-auto w-full max-w-7xl p-4 pb-8 md:ml-16 md:p-6 md:pl-6 md:pb-10 lg:ml-72 lg:p-8 lg:pb-12"
+                className="w-full max-w-7xl overflow-x-hidden px-4 pb-8 md:ml-16 md:max-w-[calc(100vw-4rem)] md:px-6 md:pl-6 md:pb-10 lg:ml-72 lg:max-w-[calc(100vw-18rem)] lg:px-8 lg:pb-12"
                 style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
             >
                 {children}

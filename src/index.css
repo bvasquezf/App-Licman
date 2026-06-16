@@ -31,12 +31,12 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 html {
     scroll-behavior: smooth;
-    /* Prevenir scroll horizontal SIN crear scrollport (que rompe la rueda) */
-    overflow-x: clip;
 }
 
 body {
@@ -49,6 +49,25 @@ body {
 #root {
     min-height: 100vh;
     min-height: 100dvh;
+    max-width: 100vw;
+    overflow-x: clip;
+}
+
+/* Prevenir que cualquier elemento desborde su contenedor */
+img,
+table,
+pre,
+code,
+svg {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Inputs y textareas no deben crecer más que su contenedor */
+input,
+textarea,
+select {
+    max-width: 100%;
 }
 
 /* Botones e inputs: evitar zoom forzado en iOS al enfocar */
