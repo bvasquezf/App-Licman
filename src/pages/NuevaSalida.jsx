@@ -46,7 +46,6 @@ function NuevaSalida() {
     const {
         data: productos = [],
         loading: loadingStock,
-        refetch,
     } = useAsync(cargarDatos, {
         errorContexto: "cargar datos de salida",
         onError: (err) => showToast(err.message, "error"),

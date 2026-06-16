@@ -22,11 +22,7 @@ function NuevaEntrada() {
         []
     );
 
-    const {
-        data: productos = [],
-        loading,
-        refetch,
-    } = useAsync(cargarProductos, {
+    const { data: productos = [] } = useAsync(cargarProductos, {
         errorContexto: "cargar productos",
         onError: (err) => showToast(err.message, "error"),
     });

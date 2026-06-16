@@ -40,11 +40,7 @@ function StockActual() {
         };
     }, []);
 
-    const {
-        data,
-        loading,
-        refetch: cargarStockRefetch,
-    } = useAsync(cargarStock, {
+    const { data, loading } = useAsync(cargarStock, {
         errorContexto: "cargar stock",
         onError: (err) => showToast(err.message, "error"),
     });

@@ -3,7 +3,7 @@
 // y un `refetch`/`execute` que evita race conditions con un flag `cancelado`.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { handleSupabaseError, isAuthError } from "../utils/handleSupabaseError";
+import { handleSupabaseError } from "../utils/handleSupabaseError";
 import { supabase } from "../services/supabase";
 
 /**
@@ -132,10 +132,5 @@ export function useAsync(asyncFn, options = {}) {
         loading,
         error,
         refetch: run,
-        execute: run,
-        setData,
     };
 }
-
-/** Re-exporta isAuthError por conveniencia. */
-export { isAuthError };

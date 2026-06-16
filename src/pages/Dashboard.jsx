@@ -52,11 +52,7 @@ function Dashboard() {
         };
     }, []);
 
-    const {
-        data,
-        loading,
-        refetch: cargarDataRefetch,
-    } = useAsync(cargarData, {
+    const { data, loading } = useAsync(cargarData, {
         errorContexto: "cargar el dashboard",
         onError: (err) => showToast(err.message, "error"),
     });

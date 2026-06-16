@@ -6,7 +6,7 @@
 // La PRIMERA coincidencia (en el orden definido) gana.
 // Algunas palabras llevan un espacio al final a propósito para evitar
 // falsos positivos por substring (ej: "led " vs "leds", "tee " vs "street").
-export const PALABRAS_CLAVE = [
+const PALABRAS_CLAVE = [
     {
         prefijo: "PER",
         categoria: "Pernos",
@@ -224,7 +224,7 @@ export const PALABRAS_CLAVE = [
 ];
 
 // Fallback cuando el nombre no contiene ninguna palabra clave.
-export const FALLBACK = { prefijo: "GEN", categoria: "General" };
+const FALLBACK = { prefijo: "GEN", categoria: "General" };
 
 /** Normaliza un texto: minúsculas + sin acentos. */
 function normalizar(texto) {

@@ -16,7 +16,6 @@ import { supabase } from "../services/supabase";
  *   disponible: boolean|null, // null = aún no se sabe
  *   loading: boolean,
  *   error: string|null,
- *   refetch: () => void,
  * }}
  */
 export function useCodigoDisponible(codigo, options = {}) {
@@ -89,10 +88,5 @@ export function useCodigoDisponible(codigo, options = {}) {
 
     return {
         ...state,
-        refetch: () => {
-            // Forzar recálculo con los valores actuales: re-montamos el effect
-            // cambiando una key ficticia no es trivial; el debounce ya cubre
-            // el reintento. Aquí lo dejamos como noop semántico.
-        },
     };
 }
