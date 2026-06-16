@@ -108,7 +108,7 @@ function Layout({ children }) {
     }, [menuAbierto]);
 
     return (
-        <div className="min-h-screen bg-slate-50">
+        <div className="bg-slate-50">
             {/* ─── Header móvil (sticky) ──────────────────────────── */}
             <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200/60 bg-white/80 px-4 py-3 backdrop-blur md:hidden">
                 <div className="flex min-w-0 items-center gap-2">
@@ -190,8 +190,12 @@ function Layout({ children }) {
 
             {/* ─── Contenido ──────────────────────────────────────── */}
             <main
-                className="mx-auto w-full max-w-7xl p-4 md:ml-16 md:p-6 md:pl-6 lg:ml-72 lg:p-8"
-                style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
+                className="mx-auto w-full max-w-7xl p-4 pb-8 md:ml-16 md:p-6 md:pl-6 md:pb-10 lg:ml-72 lg:p-8 lg:pb-12"
+                style={{
+                    minHeight: "100vh",
+                    minHeight: "100dvh",
+                    paddingTop: "max(1rem, env(safe-area-inset-top))",
+                }}
             >
                 {children}
             </main>

@@ -13,7 +13,17 @@
     box-sizing: border-box;
 }
 
-html,
+html {
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+    /* Permitir scroll vertical siempre; prevenir solo el horizontal */
+    overflow-x: clip;
+}
+
 body {
     margin: 0;
     padding: 0;
@@ -28,17 +38,12 @@ body {
         "Helvetica Neue",
         Arial,
         sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
+    min-height: 100vh;
+    min-height: 100dvh;
+    /* El body debe ser scrollable verticalmente */
+    overflow-x: clip;
+    overflow-y: auto;
     overscroll-behavior-y: none;
-}
-
-/* Prevenir scroll horizontal accidental en mobile */
-html,
-body {
-    overflow-x: hidden;
-    max-width: 100vw;
 }
 
 #root {
@@ -71,11 +76,6 @@ button {
     padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
 }
 
-/* Scroll suave en toda la app */
-html {
-    scroll-behavior: smooth;
-}
-
 /* Tap highlight en mobile */
 button,
 a {
@@ -91,9 +91,9 @@ select {
     appearance: none;
 }
 
-/* Select arrow personalizado (Tailwind ya lo estiliza, pero reforzar) */
+/* Select arrow personalizado */
 select {
-    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000/svg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2364748b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2364748b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
     background-repeat: no-repeat;
     background-position: right 0.75rem center;
     background-size: 12px 12px;
