@@ -14,6 +14,7 @@ import { useToast } from "../../context/ToastContext";
 import { useNetwork } from "../../context/NetworkContext";
 import { supabase } from "../../services/supabase";
 import { getFotoUrlCached, replaceFotoEquipo } from "../../lib/equiposStorage";
+import { formatearFecha, formatearFechaCorta } from "../../utils/format";
 import {
     cacheEquipos,
     enqueuePendingWrite,
@@ -112,36 +113,6 @@ function Paginacion({ pagina, totalPaginas, desde, hasta, total, onCambiar }) {
             </div>
         </nav>
     );
-}
-
-function formatearFecha(iso) {
-    if (!iso) return "";
-    try {
-        const d = new Date(iso);
-        return d.toLocaleString("es-CL", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        });
-    } catch {
-        return iso;
-    }
-}
-
-function formatearFechaCorta(iso) {
-    if (!iso) return "";
-    try {
-        const d = new Date(iso);
-        return d.toLocaleDateString("es-CL", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "2-digit",
-        });
-    } catch {
-        return iso;
-    }
 }
 
 function parseFaltantes(valor) {

@@ -1,22 +1,7 @@
 import { useCallback, useEffect } from "react";
 import { useAsync } from "../../hooks/useAsync";
 import { supabase } from "../../services/supabase";
-
-function formatearFecha(iso) {
-    if (!iso) return "";
-    try {
-        const d = new Date(iso);
-        return d.toLocaleString("es-CL", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        });
-    } catch {
-        return iso;
-    }
-}
+import { formatearFecha } from "../../utils/format";
 
 const CATEGORIA_LABEL = {
     renovacion: "Renovación",

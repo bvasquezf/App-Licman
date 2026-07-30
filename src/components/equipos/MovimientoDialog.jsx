@@ -537,9 +537,9 @@ function CamposPorMotivo({
                             name="bodega_destino"
                             value={form.bodega_destino}
                             onChange={onChange}
-                            ref={(el) =>
-                                (refs.current.bodega_destino = el)
-                            }
+                            ref={(el) => {
+                                refs.current.bodega_destino = el;
+                            }}
                             className={clasesInput}
                         >
                             <option value="">— Selecciona —</option>
@@ -566,9 +566,9 @@ function CamposPorMotivo({
                             name="ubicacion_destino"
                             value={form.ubicacion_destino}
                             onChange={onChange}
-                            ref={(el) =>
-                                (refs.current.ubicacion_destino = el)
-                            }
+                            ref={(el) => {
+                                refs.current.ubicacion_destino = el;
+                            }}
                             placeholder="Ej. Patio norte, Galpón 2"
                             className={clasesInput}
                         />
@@ -590,9 +590,9 @@ function CamposPorMotivo({
                             name="ubicacion_destino"
                             value={form.ubicacion_destino}
                             onChange={onChange}
-                            ref={(el) =>
-                                (refs.current.ubicacion_destino = el)
-                            }
+                            ref={(el) => {
+                                refs.current.ubicacion_destino = el;
+                            }}
                             placeholder="Ej. Patio norte, Galpón 2"
                             className={clasesInput}
                         />
@@ -611,7 +611,9 @@ function CamposPorMotivo({
                             name="categoria"
                             value={form.categoria}
                             onChange={onChange}
-                            ref={(el) => (refs.current.categoria = el)}
+                            ref={(el) => {
+                                refs.current.categoria = el;
+                            }}
                             className={clasesInput}
                         >
                             <option value="">— Selecciona —</option>
@@ -634,9 +636,9 @@ function CamposPorMotivo({
                             name="equipo_recibe_id"
                             value={form.equipo_recibe_id}
                             onChange={onChange}
-                            ref={(el) =>
-                                (refs.current.equipo_recibe_id = el)
-                            }
+                            ref={(el) => {
+                                refs.current.equipo_recibe_id = el;
+                            }}
                             className={clasesInput}
                             disabled={
                                 !form.cliente_id || cargandoEquiposCliente
@@ -681,9 +683,9 @@ function CamposPorMotivo({
                             name="bodega_recibe_destino"
                             value={form.bodega_recibe_destino}
                             onChange={onChange}
-                            ref={(el) =>
-                                (refs.current.bodega_recibe_destino = el)
-                            }
+                            ref={(el) => {
+                                refs.current.bodega_recibe_destino = el;
+                            }}
                             className={clasesInput}
                         >
                             <option value="">— Selecciona —</option>
@@ -710,9 +712,9 @@ function CamposPorMotivo({
                             name="ubicacion_destino"
                             value={form.ubicacion_destino}
                             onChange={onChange}
-                            ref={(el) =>
-                                (refs.current.ubicacion_destino = el)
-                            }
+                            ref={(el) => {
+                                refs.current.ubicacion_destino = el;
+                            }}
                             placeholder="Ej. Patio norte, Galpón 2"
                             className={clasesInput}
                         />
@@ -738,9 +740,9 @@ function CamposPorMotivo({
                             name="destino_externo"
                             value={form.destino_externo}
                             onChange={onChange}
-                            ref={(el) =>
-                                (refs.current.destino_externo = el)
-                            }
+                            ref={(el) => {
+                                refs.current.destino_externo = el;
+                            }}
                             placeholder="Ej. Servicio Técnico XYZ"
                             className={clasesInput}
                         />
@@ -760,9 +762,9 @@ function CamposPorMotivo({
                             name="ubicacion_destino"
                             value={form.ubicacion_destino}
                             onChange={onChange}
-                            ref={(el) =>
-                                (refs.current.ubicacion_destino = el)
-                            }
+                            ref={(el) => {
+                                refs.current.ubicacion_destino = el;
+                            }}
                             placeholder="Detalle adicional"
                             className={clasesInput}
                         />
@@ -782,7 +784,9 @@ function CamposPorMotivo({
                         name="ubicacion_destino"
                         value={form.ubicacion_destino}
                         onChange={onChange}
-                        ref={(el) => (refs.current.ubicacion_destino = el)}
+                        ref={(el) => {
+                            refs.current.ubicacion_destino = el;
+                        }}
                         placeholder="Detalle de ubicación"
                         className={clasesInput}
                     />

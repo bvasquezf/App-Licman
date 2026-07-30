@@ -131,7 +131,7 @@ export async function getPendingCount() {
     try {
         const db = await getDB();
         return await db.count(STORE_PENDING);
-    } catch (err) {
+    } catch {
         return 0;
     }
 }

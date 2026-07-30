@@ -42,7 +42,6 @@ const MONTHS_ES = [
 // === Estado module-scope (no React) — circuit breaker + load guard ===
 
 let isLoading = false;
-let currentLoadController = null;
 let currentLoadGen = 0;
 let consecutiveErrors = 0;
 let circuitOpenedAt = 0;
@@ -98,8 +97,6 @@ export async function loadData({ force = false } = {}) {
         return { data: [], metadata: null, source: "fallback" };
     }
 
-    const controller = new AbortController();
-    currentLoadController = controller;
     const myGen = ++currentLoadGen;
     isLoading = true;
 
@@ -172,7 +169,6 @@ export async function loadData({ force = false } = {}) {
     } finally {
         if (myGen === currentLoadGen) {
             isLoading = false;
-            currentLoadController = null;
         }
     }
 }
@@ -236,7 +232,7 @@ export function parseChileanDate(str) {
     if (!s) return null;
 
     const dmyMatch = s.match(
-        /^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})(?:[ T](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/,
+        /^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})(?:[ T](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/,
     );
     if (dmyMatch) {
         let [, d, m, y, hh, mm, ss] = dmyMatch;

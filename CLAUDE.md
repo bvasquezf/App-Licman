@@ -47,7 +47,8 @@ src/
 ├── shell/              # AppShell (sidebar + topbar mobile), Sidebar, SubNavBar,
 │                       #   subNavConfig (secciones y sub-nav por ruta)
 ├── utils/              # handleSupabaseError, withRetry, productCodeUtils,
-│                       #   exportToExcel, exportWorkbook
+│                       #   exportToExcel, exportWorkbook, format (formatCLP,
+│                       #   formatearFecha, formatearFechaCorta)
 ├── App.jsx             # Router. SIN authGuard (ver "Auth" abajo)
 └── main.jsx            # ToastProvider > NetworkProvider > App
 ```
@@ -160,22 +161,27 @@ useUnsavedChanges(formData, {
 
 - **Idempotencia de la cola offline**: si un request llega al server pero la respuesta
   se pierde, el reintento duplica (falta token único por operación).
-- **Cola solo flushea en evento `online`**: pendientes no se sincronizan al abrir la app
-  con conexión (falta flush al montar + botón manual de sync).
 - **ListView/FormView** (equipos): fetch crudo sin `useAsync`/`withRetry`; FormView sin
   `useUnsavedChanges`. Bloque "cache → fetch" duplicado entre ambos (candidato a hook).
-- **SourceConfigPanel** (mantenimiento): UI zombie de la era Google Sheets/Apps Script,
-  borrar junto con el botón "⚙ Fuente".
-- **Duplicación**: `formatearFecha` ×3, `formatCLP` ×4 (falta `utils/format.js`);
-  mapeo de params del RPC `registrar_movimiento` ×3 (candidato a `buildMovimientoParams`).
-- **Toast spam en mantenimiento**: "Datos actualizados" en cada auto-refresh;
-  `key={location.pathname}` en AppShell remonta el DashboardProvider al cambiar de tab.
+- **Duplicación restante**: mapeo de params del RPC `registrar_movimiento` ×3
+  (candidato a `buildMovimientoParams`).
+- **`key={location.pathname}` en AppShell** remonta el DashboardProvider al cambiar de tab.
 - **Dashboard/Historial de bodega** traen TODOS los movimientos sin `.limit()`.
 - **Tipografía**: chips de equipos bajo el mínimo de 12px; `validarEquipo` exige bodega
   aunque el modelo Fase 2 permite NULL con cliente.
 - **Tests**: sin tests unitarios ni E2E.
 - **PWA**: no hay service worker ni instalabilidad.
 - **Auditoría**: no se trackea quién modificó qué.
+
+## Lint / ESLint
+
+- El React Compiler **no está en el build** (vite usa `@vitejs/plugin-react` plano),
+  así que en `eslint.config.js` están OFF sus reglas ruidosas: `react-hooks/immutability`,
+  `preserve-manual-memoization`, `set-state-in-effect`, `refs`.
+- `react-refresh/only-export-components` quedó en `warn` (los contextos exportan
+  hooks junto a componentes, patrón intencional).
+- Los ref callbacks NUNCA deben retornar valor (React 19 lo toma como cleanup):
+  siempre con llaves `ref={(el) => { refs.current.x = el; }}` (ver MovimientoDialog).
 
 ## Memoria persistente
 

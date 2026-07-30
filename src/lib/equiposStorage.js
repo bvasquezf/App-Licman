@@ -151,7 +151,7 @@ export async function replaceFotoEquipo(file, correlativo, oldPath) {
             await deleteFotoEquipo(oldPath);
         } catch (err) {
             // No bloquear el flujo principal por un huérfano
-            // eslint-disable-next-line no-console
+             
             console.warn(
                 `[equiposStorage] No se pudo borrar foto anterior ${oldPath}:`,
                 err?.message ?? err,

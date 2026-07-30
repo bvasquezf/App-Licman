@@ -77,7 +77,7 @@ export function useAsync(asyncFn, options = {}) {
                 if (!canceladoRef.current) setLoading(false);
             }
         },
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
         [errorContexto]
     );
 

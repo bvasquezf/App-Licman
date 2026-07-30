@@ -11,12 +11,7 @@ import Card from "../components/ui/Card";
 import EmptyState from "../components/ui/EmptyState";
 import Skeleton from "../components/ui/Skeleton";
 
-const formatCLP = (value) =>
-    new Intl.NumberFormat("es-CL", {
-        style: "currency",
-        currency: "CLP",
-        maximumFractionDigits: 0,
-    }).format(value || 0);
+import { formatCLP } from "../utils/format";
 
 function Productos() {
     const [productoEditar, setProductoEditar] = useState(null);

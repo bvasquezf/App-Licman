@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { supabase } from "../services/supabase";
 import { exportWorkbook } from "../utils/exportWorkbook";
+import { formatCLP } from "../utils/format";
 import { useToast } from "../context/ToastContext";
 import { useAsync } from "../hooks/useAsync";
 import { withRetry } from "../utils/withRetry";
@@ -134,13 +135,6 @@ function Dashboard() {
         );
         showToast("Reporte maestro exportado");
     };
-
-    const formatCLP = (value) =>
-        new Intl.NumberFormat("es-CL", {
-            style: "currency",
-            currency: "CLP",
-            maximumFractionDigits: 0,
-        }).format(value);
 
     const getTipoBadge = (tipo) => {
         if (tipo === "entrada")

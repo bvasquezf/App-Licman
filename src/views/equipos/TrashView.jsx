@@ -8,6 +8,7 @@ import { useNetwork } from "../../context/NetworkContext";
 import { withRetry } from "../../utils/withRetry";
 import { supabase } from "../../services/supabase";
 import { enqueuePendingWrite } from "../../lib/offlineDb";
+import { formatearFecha } from "../../utils/format";
 
 const CAMPOS_BUSQUEDA = [
     "numero_interno",
@@ -17,22 +18,6 @@ const CAMPOS_BUSQUEDA = [
     "tipo_equipo",
     "responsable",
 ];
-
-function formatearFecha(iso) {
-    if (!iso) return "";
-    try {
-        const d = new Date(iso);
-        return d.toLocaleString("es-CL", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        });
-    } catch {
-        return iso;
-    }
-}
 
 /**
  * Vista de papelera: muestra los equipos con `deleted_at` no nulo.
