@@ -9,20 +9,30 @@ import { useEffect, useRef } from "react";
  *   menos UNO de los valores trackeados no está vacío.
  * @param {Object} [options]
  * @param {boolean} [options.habilitado=true] - Permite activar/desactivar.
- *
- * El snapshot se captura en el PRIMER render. Esto es importante para
- * ProductoForm en modo edición: el snapshot debe tener los valores del
- * producto original, no los vacíos.
+ *   El snapshot solo se captura en un render donde `habilitado` es true,
+ *   así el consumidor puede posponer la captura hasta que el form esté
+ *   cargado (ej: modo edición).
+ * @param {*} [options.resetKey] - Cuando cambia, el snapshot se RECAPTURA
+ *   en el próximo render habilitado. Usar el id del registro en edición
+ *   para que cada registro tenga su propio estado "limpio".
  */
 export function useUnsavedChanges(formData, options = {}) {
-    const { habilitado = true } = options;
+    const { habilitado = true, resetKey } = options;
 
     const values = Array.isArray(formData) ? formData : [formData];
 
-    // Snapshot inmutable del primer render válido.
+    // Snapshot del estado "limpio". Se captura en el primer render
+    // habilitado y se recaptura al cambiar resetKey, de modo que siempre
+    // refleje los valores originales del form (no los vacíos iniciales
+    // ni los de un registro anterior).
     const snapshotRef = useRef(null);
-    if (snapshotRef.current === null) {
+    const lastKeyRef = useRef(resetKey);
+    if (
+        habilitado &&
+        (snapshotRef.current === null || lastKeyRef.current !== resetKey)
+    ) {
         snapshotRef.current = values.map(clonarValor);
+        lastKeyRef.current = resetKey;
     }
 
     useEffect(() => {

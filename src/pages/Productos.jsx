@@ -59,19 +59,18 @@ function Productos() {
                 .eq("id", productoEditar.id);
 
             if (error) {
-                console.error("Error al actualizar producto:", error);
                 showToast(
                     handleSupabaseError(error, "actualizar el producto")
                         .message,
                     "error"
                 );
-                return;
+                return false;
             }
 
             showToast("Producto actualizado correctamente");
             setProductoEditar(null);
             await cargarProductosRefetch();
-            return;
+            return true;
         }
 
         const { data: productoInsertado, error } = await supabase
@@ -81,12 +80,11 @@ function Productos() {
             .single();
 
         if (error) {
-            console.error("Error al guardar producto:", error);
             showToast(
                 handleSupabaseError(error, "guardar el producto").message,
                 "error"
             );
-            return;
+            return false;
         }
 
         if (stockInicial && stockInicial.cantidad > 0) {
@@ -101,14 +99,10 @@ function Productos() {
             };
 
             const { error: movError } = await supabase
-                .from("movimientos")
+                .from("bodega_movimientos")
                 .insert([movimientoPayload]);
 
             if (movError) {
-                console.error(
-                    "Error al registrar stock inicial:",
-                    movError
-                );
                 showToast(
                     `Producto creado, pero falló el stock inicial: ${
                         handleSupabaseError(movError, "registrar el stock inicial")
@@ -117,7 +111,9 @@ function Productos() {
                     "error"
                 );
                 await cargarProductosRefetch();
-                return;
+                // El producto SÍ quedó creado: true para que el form se
+                // limpie (si no, un reintento duplicaría el producto).
+                return true;
             }
 
             showToast("Producto creado con stock inicial");
@@ -126,6 +122,7 @@ function Productos() {
         }
 
         await cargarProductosRefetch();
+        return true;
     };
 
     const desactivarProducto = async (producto) => {
@@ -141,7 +138,6 @@ function Productos() {
             .eq("id", producto.id);
 
         if (error) {
-            console.error("Error al desactivar producto:", error);
             showToast(
                 handleSupabaseError(error, "desactivar el producto").message,
                 "error"
@@ -165,7 +161,6 @@ function Productos() {
             .eq("id", producto.id);
 
         if (error) {
-            console.error("Error al activar producto:", error);
             showToast(
                 handleSupabaseError(error, "activar el producto").message,
                 "error"
@@ -215,20 +210,20 @@ function Productos() {
                 subtitle="Crea y administra la ficha de cada producto"
                 actions={
                     <>
-                        <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-xl border border-slate-200/60 bg-white px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 sm:text-sm">
+                        <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-[10px] border border-slate-200/60 bg-white px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-slate-50 sm:text-sm">
                             <input
                                 type="checkbox"
                                 checked={mostrarInactivos}
                                 onChange={(e) =>
                                     setMostrarInactivos(e.target.checked)
                                 }
-                                className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800"
+                                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                             />
                             Inactivos
                         </label>
                         <button
                             onClick={exportarProductos}
-                            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl bg-slate-800 px-3 py-2 text-xs font-medium text-white shadow-sm transition-all duration-200 hover:bg-slate-900 hover:shadow-md active:scale-95 dark:bg-slate-700 dark:hover:bg-slate-600 sm:gap-2 sm:px-4 sm:text-sm"
+                            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[10px] bg-slate-800 px-3 py-2 text-xs font-medium text-white shadow-sm transition-all duration-200 hover:bg-slate-900 hover:shadow-md active:scale-95 sm:gap-2 sm:px-4 sm:text-sm"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -255,7 +250,7 @@ function Productos() {
             {/* Búsqueda */}
             <div className="relative">
                 <svg
-                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
                     xmlns="http://www.w3.org/2000/svg"
                     width="18"
                     height="18"
@@ -274,7 +269,7 @@ function Productos() {
                     placeholder="Buscar por nombre, código o categoría..."
                     value={busqueda}
                     onChange={(e) => setBusqueda(e.target.value)}
-                    className="w-full rounded-2xl border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 shadow-sm transition-colors placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-indigo-500 dark:focus:ring-indigo-500/20 sm:text-base"
+                    className="w-full rounded-[14px] border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 shadow-[0_10px_30px_rgba(15,23,42,0.10)] transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 sm:text-base"
                 />
             </div>
 
@@ -287,10 +282,10 @@ function Productos() {
             {/* Listado */}
             <Card padding="p-4 sm:p-5">
                 <div className="mb-3 flex items-center justify-between sm:mb-4">
-                    <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
+                    <h2 className="text-base font-semibold text-slate-800">
                         Listado
                     </h2>
-                    <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                    <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
                         {productosFiltrados.length}
                     </span>
                 </div>
@@ -312,28 +307,28 @@ function Productos() {
                         {productosFiltrados.map((producto) => (
                             <li
                                 key={producto.id}
-                                className={`group rounded-2xl border p-3 transition-all duration-200 hover:shadow-sm dark:hover:shadow-none sm:p-4 ${
+                                className={`group rounded-[14px] border p-3 transition-all duration-200 hover:shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:p-4 ${
                                     producto.activo
-                                        ? "border-slate-200/60 bg-white dark:border-slate-800 dark:bg-slate-900"
-                                        : "border-amber-200/60 bg-amber-50/40 dark:border-amber-500/30 dark:bg-amber-500/10"
+                                        ? "border-slate-200/60 bg-white"
+                                        : "border-amber-200/60 bg-amber-50/40"
                                 }`}
                             >
                                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                                     <div className="min-w-0 flex-1">
                                         <div className="flex flex-wrap items-center gap-2">
-                                            <h3 className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100 sm:text-base">
+                                            <h3 className="truncate text-sm font-semibold text-slate-800 sm:text-base">
                                                 {producto.nombre}
                                             </h3>
                                             {producto.codigo && (
-                                                <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                                <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-600">
                                                     {producto.codigo}
                                                 </span>
                                             )}
                                             <span
                                                 className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                                                     producto.activo
-                                                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400"
-                                                        : "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300"
+                                                        ? "bg-emerald-50 text-emerald-700"
+                                                        : "bg-amber-100 text-amber-800"
                                                 }`}
                                             >
                                                 {producto.activo
@@ -341,7 +336,7 @@ function Productos() {
                                                     : "Inactivo"}
                                             </span>
                                         </div>
-                                        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
+                                        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 sm:text-sm">
                                             {producto.categoria && (
                                                 <span>📁 {producto.categoria}</span>
                                             )}
@@ -353,11 +348,11 @@ function Productos() {
                                             </span>
                                             {producto.precio_referencia !=
                                             null ? (
-                                                <span className="font-medium text-slate-700 dark:text-slate-200">
+                                                <span className="font-medium text-slate-700">
                                                     💰 {formatCLP(producto.precio_referencia)}
                                                 </span>
                                             ) : (
-                                                <span className="text-amber-600 dark:text-amber-400">
+                                                <span className="text-amber-600">
                                                     💰 Sin precio
                                                 </span>
                                             )}
@@ -369,7 +364,7 @@ function Productos() {
                                             onClick={() =>
                                                 setProductoEditar(producto)
                                             }
-                                            className="rounded-lg px-2.5 py-2 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-500/15 sm:px-3 sm:py-1.5"
+                                            className="rounded-lg px-2.5 py-2 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-50 sm:px-3 sm:py-1.5"
                                         >
                                             Editar
                                         </button>
@@ -378,7 +373,7 @@ function Productos() {
                                                 onClick={() =>
                                                     desactivarProducto(producto)
                                                 }
-                                                className="rounded-lg px-2.5 py-2 text-xs font-medium text-amber-600 transition-colors hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-500/15 sm:px-3 sm:py-1.5"
+                                                className="rounded-lg px-2.5 py-2 text-xs font-medium text-amber-600 transition-colors hover:bg-amber-50 sm:px-3 sm:py-1.5"
                                             >
                                                 Desactivar
                                             </button>
@@ -387,7 +382,7 @@ function Productos() {
                                                 onClick={() =>
                                                     activarProducto(producto)
                                                 }
-                                                className="rounded-lg px-2.5 py-2 text-xs font-medium text-emerald-600 transition-colors hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-500/15 sm:px-3 sm:py-1.5"
+                                                className="rounded-lg px-2.5 py-2 text-xs font-medium text-emerald-600 transition-colors hover:bg-emerald-50 sm:px-3 sm:py-1.5"
                                             >
                                                 Activar
                                             </button>

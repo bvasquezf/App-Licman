@@ -8,23 +8,11 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 // y la preferencia no sobreviviría entre sesiones.
 const REMEMBER_KEY = "app_bodega_remember_session";
 
-export const getRememberPreference = () => {
+const getRememberPreference = () => {
     try {
         return localStorage.getItem(REMEMBER_KEY) === "true";
     } catch {
         return false;
-    }
-};
-
-export const setRememberPreference = (value) => {
-    try {
-        if (value) {
-            localStorage.setItem(REMEMBER_KEY, "true");
-        } else {
-            localStorage.removeItem(REMEMBER_KEY);
-        }
-    } catch {
-        // Si localStorage no está disponible, ignoramos
     }
 };
 

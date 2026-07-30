@@ -1,46 +1,103 @@
-// Toast queue: muestra hasta 4 toasts apilados. Los nuevos se agregan al
-// final (FIFO). Si hay más, el resto queda pendiente.
+// Toast queue: muestra hasta 4 toasts apilados como pills en bottom-center.
+// API:
+//   const toast = useToast();
+//   toast.success("Equipo guardado");            // default 4s
+//   toast.error("Error al guardar", 6000);       // custom duration
+//   toast.warning("Casi sin stock");
+//   toast.info("Sincronizando…");
+//   toast.showToast("mensaje", "success");       // API legacy
+//   toast.cerrar(id);
+//
+// Máximo por defecto: 8s (errors). Si necesitas más, pasa el 2º arg como
+// `toast.error(msg, 10000)` o usa `options.persist: true` para que no se
+// cierre solo (requiere que el usuario apriete la X).
 
-import { createContext, useCallback, useContext, useState } from "react";
-import Toast from "../components/ui/Toast";
+import {
+    createContext,
+    useCallback,
+    useContext,
+    useState,
+} from "react";
+import PillToast from "../components/ui/PillToast";
 
-const ToastContext = createContext();
+const ToastContext = createContext(null);
+
+const DURACIONES_DEFAULT = {
+    success: 4000,
+    error: 8000,
+    warning: 6000,
+    info: 4000,
+};
 
 export const ToastProvider = ({ children }) => {
     const [toasts, setToasts] = useState([]);
 
-    const showToast = useCallback((message, type = "success", options = {}) => {
-        if (!message) return;
-        setToasts((prev) => [
-            ...prev,
-            {
-                id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-                message,
-                type,
-                duration: options.duration ?? 3500,
-            },
-        ]);
-    }, []);
+    const showToast = useCallback(
+        (message, type = "success", options = {}) => {
+            if (!message) return null;
+            const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+            // `persist: true` → no auto-cierra (PillToast detecta duration falsy).
+            // `duration` explícito gana sobre persist.
+            const duration = options.persist
+                ? 0
+                : (options.duration ?? DURACIONES_DEFAULT[type] ?? 4000);
+            setToasts((prev) => [
+                ...prev,
+                {
+                    id,
+                    message,
+                    type,
+                    duration,
+                },
+            ]);
+            return id;
+        },
+        [],
+    );
 
-    const closeToast = useCallback((id) => {
+    const cerrar = useCallback((id) => {
         setToasts((prev) => prev.filter((t) => t.id !== id));
     }, []);
 
-    const clearToasts = useCallback(() => setToasts([]), []);
+    const cerrarTodos = useCallback(() => setToasts([]), []);
+
+    const success = useCallback(
+        (msg, dur) => showToast(msg, "success", { duration: dur }),
+        [showToast],
+    );
+    const error = useCallback(
+        (msg, dur) => showToast(msg, "error", { duration: dur }),
+        [showToast],
+    );
+    const warning = useCallback(
+        (msg, dur) => showToast(msg, "warning", { duration: dur }),
+        [showToast],
+    );
+    const info = useCallback(
+        (msg, dur) => showToast(msg, "info", { duration: dur }),
+        [showToast],
+    );
 
     return (
         <ToastContext.Provider
-            value={{ showToast, closeToast, clearToasts }}
+            value={{
+                showToast,
+                cerrar,
+                cerrarTodos,
+                success,
+                error,
+                warning,
+                info,
+            }}
         >
             {children}
-            <ToastStack toasts={toasts} onClose={closeToast} />
+            <ToastStack toasts={toasts} onCerrar={cerrar} />
         </ToastContext.Provider>
     );
 };
 
-function ToastStack({ toasts, onClose }) {
+function ToastStack({ toasts, onCerrar }) {
     if (!toasts || toasts.length === 0) return null;
-    // Hasta 4 visibles. Si hay más, mostramos un "+N más".
     const VISIBLES = 4;
     const visibles = toasts.slice(0, VISIBLES);
     const restantes = toasts.length - visibles.length;
@@ -49,22 +106,23 @@ function ToastStack({ toasts, onClose }) {
         <div
             aria-live="polite"
             aria-atomic="true"
-            className="pointer-events-none fixed inset-x-3 top-3 z-[55] flex flex-col gap-2 sm:left-auto sm:right-4 sm:top-4 sm:max-w-sm sm:gap-2.5"
-            style={{ top: "max(0.75rem, env(safe-area-inset-top))" }}
+            className="pointer-events-none fixed inset-x-3 bottom-3 z-[55] flex flex-col items-center gap-2 sm:bottom-6"
+            style={{
+                paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
+            }}
         >
             {visibles.map((t) => (
-                <div key={t.id} className="pointer-events-auto">
-                    <Toast
-                        message={t.message}
-                        type={t.type}
-                        duration={t.duration}
-                        onClose={() => onClose(t.id)}
-                    />
-                </div>
+                <PillToast
+                    key={t.id}
+                    type={t.type}
+                    message={t.message}
+                    duration={t.duration}
+                    onClose={() => onCerrar(t.id)}
+                />
             ))}
             {restantes > 0 && (
-                <div className="pointer-events-auto rounded-xl bg-slate-800/90 px-3 py-1.5 text-center text-xs font-medium text-white shadow-md dark:bg-slate-700/90">
-                    Hay {restantes} {restantes === 1 ? "notificación" : "notificaciones"} más…
+                <div className="pointer-events-auto rounded-full bg-slate-800/90 px-3 py-1 text-center text-[0.72rem] font-bold text-white shadow-md">
+                    +{restantes} más
                 </div>
             )}
         </div>

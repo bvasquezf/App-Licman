@@ -82,11 +82,10 @@ function NuevaSalida() {
         }
 
         const { error } = await supabase
-            .from("movimientos")
+            .from("bodega_movimientos")
             .insert([salida]);
 
         if (error) {
-            console.error("Error al registrar salida:", error);
             const normalizado = handleSupabaseError(error, "registrar la salida");
             // Si el trigger devolvió "Stock insuficiente", respetamos el
             // mensaje crudo (es el más claro).
@@ -151,10 +150,10 @@ function NuevaSalida() {
                 <div className="space-y-4">
                     <Card padding="p-4 sm:p-5">
                         <div className="mb-3 flex items-center justify-between">
-                            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                            <h3 className="text-sm font-semibold text-slate-800">
                                 📦 Stock en bodega
                             </h3>
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
                                 {productosConStock.length}
                             </span>
                         </div>
@@ -178,14 +177,14 @@ function NuevaSalida() {
                                     .map((p) => (
                                         <li
                                             key={p.id}
-                                            className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                                            className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-xs hover:bg-slate-50"
                                         >
                                             <div className="min-w-0 flex-1">
-                                                <p className="truncate text-slate-700 dark:text-slate-200">
+                                                <p className="truncate text-slate-700">
                                                     {p.nombre}
                                                 </p>
                                                 {p.codigo && (
-                                                    <p className="font-mono text-xs text-slate-500 dark:text-slate-400">
+                                                    <p className="font-mono text-xs text-slate-500">
                                                         {p.codigo}
                                                     </p>
                                                 )}
@@ -193,8 +192,8 @@ function NuevaSalida() {
                                             <span
                                                 className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${
                                                     p.stock <= p.stock_minimo
-                                                        ? "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"
-                                                        : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400"
+                                                        ? "bg-amber-50 text-amber-700"
+                                                        : "bg-emerald-50 text-emerald-700"
                                                 }`}
                                             >
                                                 {p.stock}
@@ -202,11 +201,11 @@ function NuevaSalida() {
                                         </li>
                                     ))}
                                 {productosSinStock.length > 0 && (
-                                    <li className="border-t border-slate-100 pt-2 dark:border-slate-800">
-                                        <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                    <li className="border-t border-slate-100 pt-2">
+                                        <p className="text-xs uppercase tracking-wide text-slate-500">
                                             Sin stock ({productosSinStock.length})
                                         </p>
-                                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                        <p className="mt-1 text-xs text-slate-500">
                                             No se pueden retirar hasta que
                                             registres un ingreso.
                                         </p>
@@ -217,10 +216,10 @@ function NuevaSalida() {
                     </Card>
 
                     <Card>
-                        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                        <h3 className="text-sm font-semibold text-slate-800">
                             💡 Tip
                         </h3>
-                        <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                        <p className="mt-2 text-xs leading-relaxed text-slate-500">
                             El sistema valida automáticamente que la cantidad no
                             supere el stock disponible. Si ves el campo en
                             rojo, reduce la cantidad.

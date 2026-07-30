@@ -19,7 +19,7 @@ function Dashboard() {
             withRetry(() => supabase.from("stock_actual").select("*")),
             withRetry(() =>
                 supabase
-                    .from("movimientos")
+                    .from("bodega_movimientos")
                     .select(`
                         id,
                         tipo_movimiento,
@@ -144,10 +144,10 @@ function Dashboard() {
 
     const getTipoBadge = (tipo) => {
         if (tipo === "entrada")
-            return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/60 dark:bg-emerald-500/15 dark:text-emerald-400 dark:ring-emerald-500/30";
+            return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/60";
         if (tipo === "salida")
-            return "bg-rose-50 text-rose-700 ring-1 ring-rose-200/60 dark:bg-rose-500/15 dark:text-rose-400 dark:ring-rose-500/30";
-        return "bg-amber-50 text-amber-700 ring-1 ring-amber-200/60 dark:bg-amber-500/15 dark:text-amber-400 dark:ring-amber-500/30";
+            return "bg-rose-50 text-rose-700 ring-1 ring-rose-200/60";
+        return "bg-amber-50 text-amber-700 ring-1 ring-amber-200/60";
     };
 
     return (
@@ -159,7 +159,7 @@ function Dashboard() {
                 actions={
                     <button
                         onClick={exportarReporteMaestro}
-                        className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl bg-indigo-600 px-3 py-2 text-xs font-medium text-white shadow-sm transition-all duration-200 hover:bg-indigo-700 hover:shadow-md active:scale-95 sm:gap-2 sm:px-4 sm:text-sm"
+                        className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[10px] bg-blue-600 px-3 py-2 text-xs font-medium text-white shadow-sm transition-all duration-200 hover:bg-blue-700 hover:shadow-md active:scale-95 sm:gap-2 sm:px-4 sm:text-sm"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -198,7 +198,7 @@ function Dashboard() {
                         label="Total productos"
                         value={totalProductos.toLocaleString("es-CL")}
                         icon="📦"
-                        tone="indigo"
+                        tone="blue"
                     />
                     <StatCard
                         label="Stock bajo mínimo"
@@ -227,10 +227,10 @@ function Dashboard() {
                 {/* Stock bajo */}
                 <Card>
                     <div className="mb-4 flex items-center justify-between">
-                        <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
+                        <h2 className="text-base font-semibold text-slate-800">
                             Stock bajo mínimo
                         </h2>
-                        <span className="rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-medium text-rose-700 dark:bg-rose-500/15 dark:text-rose-400">
+                        <span className="rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-medium text-rose-700">
                             {stockBajo.length}
                         </span>
                     </div>
@@ -248,7 +248,7 @@ function Dashboard() {
                             description="Ningún producto está bajo su stock mínimo"
                         />
                     ) : (
-                        <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+                        <ul className="divide-y divide-slate-100">
                             {stockBajo.slice(0, 6).map((item) => {
                                 const producto = productos.find(
                                     (p) => p.id === item.id
@@ -259,14 +259,14 @@ function Dashboard() {
                                         className="flex items-center justify-between py-2.5 sm:py-3"
                                     >
                                         <div className="min-w-0 flex-1">
-                                            <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
+                                            <p className="truncate text-sm font-medium text-slate-800">
                                                 {producto?.nombre}
                                             </p>
-                                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                            <p className="text-xs text-slate-500">
                                                 Stock: {item.stock}
                                             </p>
                                         </div>
-                                        <span className="ml-3 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700 dark:bg-rose-500/15 dark:text-rose-400">
+                                        <span className="ml-3 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700">
                                             Mín: {producto?.stock_minimo}
                                         </span>
                                     </li>
@@ -279,7 +279,7 @@ function Dashboard() {
                 {/* Últimos movimientos */}
                 <Card>
                     <div className="mb-4 flex items-center justify-between">
-                        <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
+                        <h2 className="text-base font-semibold text-slate-800">
                             Últimos movimientos
                         </h2>
                     </div>
@@ -297,7 +297,7 @@ function Dashboard() {
                             description="Aún no se han registrado movimientos"
                         />
                     ) : (
-                        <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+                        <ul className="divide-y divide-slate-100">
                             {movimientos.slice(0, 5).map((mov) => (
                                 <li
                                     key={mov.id}
@@ -311,18 +311,18 @@ function Dashboard() {
                                         {mov.tipo_movimiento}
                                     </span>
                                     <div className="min-w-0 flex-1">
-                                        <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
+                                        <p className="truncate text-sm font-medium text-slate-800">
                                             {mov.productos?.nombre}
                                         </p>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                                        <p className="text-xs text-slate-500">
                                             {mov.fecha}
                                         </p>
                                     </div>
                                     <span
                                         className={`shrink-0 text-sm font-semibold tabular-nums ${
                                             mov.tipo_movimiento === "entrada"
-                                                ? "text-emerald-600 dark:text-emerald-400"
-                                                : "text-rose-600 dark:text-rose-400"
+                                                ? "text-emerald-600"
+                                                : "text-rose-600"
                                         }`}
                                     >
                                         {mov.tipo_movimiento === "entrada"

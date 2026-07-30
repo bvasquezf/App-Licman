@@ -4,12 +4,12 @@ import { useUnsavedChanges } from "../../hooks/useUnsavedChanges";
 import Card from "../ui/Card";
 
 const inputClass =
-    "w-full rounded-xl border border-slate-200/60 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm transition-colors placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-indigo-500 dark:focus:ring-indigo-500/20 sm:text-base";
+    "w-full rounded-[10px] border border-slate-200/60 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 sm:text-base";
 
 function Field({ label, required, children, className = "" }) {
     return (
         <div className={className}>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-200">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
                 {label} {required && <span className="text-rose-500">*</span>}
             </label>
             {children}
@@ -93,15 +93,15 @@ function SalidaForm({ productos, onGuardar, stockActual = {} }) {
     return (
         <Card padding="p-0" className="overflow-hidden">
             {/* Header con color sólido (sin gradiente translúcido) */}
-            <div className="flex items-center gap-3 border-b border-slate-200/60 bg-rose-50 px-4 py-3 dark:border-slate-800 dark:bg-rose-500/10 sm:px-5 sm:py-4">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-lg dark:bg-rose-500/20">
+            <div className="flex items-center gap-3 border-b border-slate-200/60 bg-rose-50 px-4 py-3 sm:px-5 sm:py-4">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-rose-100 text-lg">
                     ⬆️
                 </div>
                 <div className="min-w-0 flex-1">
-                    <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
+                    <h2 className="text-base font-semibold text-slate-800">
                         Registrar salida de stock
                     </h2>
-                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                    <p className="mt-0.5 text-xs text-slate-500">
                         Consumos internos, entregas a terreno o cualquier
                         egreso
                     </p>
@@ -136,7 +136,7 @@ function SalidaForm({ productos, onGuardar, stockActual = {} }) {
                             onChange={handleChange}
                             className={`${inputClass} ${
                                 excedeStock
-                                    ? "border-rose-400 focus:border-rose-500 focus:ring-rose-500/20 dark:border-rose-500"
+                                    ? "border-rose-400 focus:border-rose-500 focus:ring-rose-500/20"
                                     : ""
                             }`}
                             placeholder="Ej: 5"
@@ -145,8 +145,8 @@ function SalidaForm({ productos, onGuardar, stockActual = {} }) {
                             <p
                                 className={`mt-1.5 text-xs ${
                                     excedeStock
-                                        ? "text-rose-600 dark:text-rose-400"
-                                        : "text-slate-500 dark:text-slate-400"
+                                        ? "text-rose-600"
+                                        : "text-slate-500"
                                 }`}
                             >
                                 Stock disponible:{" "}
@@ -200,7 +200,7 @@ function SalidaForm({ productos, onGuardar, stockActual = {} }) {
                     <button
                         type="submit"
                         disabled={loading || excedeStock}
-                        className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-rose-700 hover:shadow-md active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex items-center gap-2 rounded-[10px] bg-rose-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-rose-700 hover:shadow-md active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {loading ? "Guardando..." : "Registrar salida"}
                     </button>

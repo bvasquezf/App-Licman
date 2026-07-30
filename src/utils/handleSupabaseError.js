@@ -1,6 +1,6 @@
 // Mapea errores de Supabase, red y auth a mensajes legibles en español.
 // Devuelve un objeto normalizado que el caller puede usar para decidir
-// si muestra toast, redirige al login, reintenta, etc.
+// si muestra toast, reintenta, etc.
 
 /**
  * @typedef {Object} NormalizedError
@@ -109,12 +109,6 @@ function esErrorDeAuth(code, message) {
         texto.includes("not authenticated") ||
         texto.includes("unauthorized")
     );
-}
-
-/** Helper de compatibilidad: ¿es un error de auth? */
-export function isAuthError(error) {
-    if (!error) return false;
-    return esErrorDeAuth(error?.code, error?.message || error?.rawMessage);
 }
 
 /** Capitaliza la primera letra de un mensaje. */

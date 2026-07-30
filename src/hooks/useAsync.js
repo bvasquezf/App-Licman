@@ -4,7 +4,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { handleSupabaseError } from "../utils/handleSupabaseError";
-import { supabase } from "../services/supabase";
 
 /**
  * @template T
@@ -14,19 +13,13 @@ import { supabase } from "../services/supabase";
  * @param {Array<any>} [options.deps=[]] - Dependencias para re-ejecución automática.
  * @param {(err: import('../utils/handleSupabaseError').NormalizedError) => void} [options.onError]
  *   - Callback con el error YA normalizado.
- * @param {boolean} [options.showErrorToast=false] - Si true, también emite toast (vía callback).
- * @param {(msg: string, type?: 'success'|'error'|'warning'|'info') => void} [options.toastFn]
- *   - Si showErrorToast=true, el toast se emite a través de esta función.
  * @param {string} [options.errorContexto] - Contexto del error en español (ej: "cargar productos").
- * @param {boolean} [options.signOutOnAuth=true] - Si true, hace signOut al detectar 401/403.
  *
  * @returns {{
  *   data: T|undefined,
  *   loading: boolean,
  *   error: import('../utils/handleSupabaseError').NormalizedError|null,
  *   refetch: (...args: any[]) => Promise<T|null|undefined>,
- *   execute: (...args: any[]) => Promise<T|null|undefined>,
- *   setData: (next: T|undefined) => void,
  * }}
  */
 export function useAsync(asyncFn, options = {}) {
@@ -34,10 +27,7 @@ export function useAsync(asyncFn, options = {}) {
         immediate = true,
         deps = [],
         onError,
-        showErrorToast = false,
-        toastFn,
         errorContexto = "operación",
-        signOutOnAuth = true,
     } = options;
 
     const [data, setData] = useState(undefined);
@@ -82,39 +72,13 @@ export function useAsync(asyncFn, options = {}) {
                     }
                 }
 
-                // Toast opcional.
-                if (showErrorToast && toastFn) {
-                    toastFn(normalizado.message, "error");
-                }
-
-                // Auth → signOut para que App.jsx redirija a Login.
-                if (normalizado?.isAuth && signOutOnAuth) {
-                    // Aviso al usuario (warning) si el caller inyectó un toast.
-                    // Usamos un setTimeout para que se vea después de que el
-                    // navigate a /login haya desmontado este componente.
-                    if (toastFn) {
-                        setTimeout(() => {
-                            toastFn(
-                                "Tu sesión expiró. Vuelve a iniciar sesión.",
-                                "warning",
-                                { duration: 5000 }
-                            );
-                        }, 50);
-                    }
-                    try {
-                        await supabase.auth.signOut();
-                    } catch (signOutErr) {
-                        console.error("useAsync signOut failed:", signOutErr);
-                    }
-                }
-
                 return null;
             } finally {
                 if (!canceladoRef.current) setLoading(false);
             }
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [errorContexto, showErrorToast, signOutOnAuth]
+        [errorContexto]
     );
 
     useEffect(() => {

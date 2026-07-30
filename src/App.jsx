@@ -1,75 +1,82 @@
-import { useEffect } from "react";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "./context/AuthContext";
-import Layout from "./components/layout/Layout";
-import Login from "./pages/Login";
+import { Routes, Route, Navigate } from "react-router-dom";
+
+import { AppShell } from "./shell/AppShell";
+import { DashboardProvider } from "./context/DashboardContext";
+
+// Sección Bodega (páginas existentes en /pages, rediseñadas)
 import Dashboard from "./pages/Dashboard";
 import Productos from "./pages/Productos";
 import NuevaEntrada from "./pages/NuevaEntrada";
 import NuevaSalida from "./pages/NuevaSalida";
 import StockActual from "./pages/StockActual";
 import Historial from "./pages/Historial";
-import UpdatePassword from "./pages/UpdatePassword";
 
+// Sección Equipos (port del inventario)
+import FormViewEquipos from "./views/equipos/FormView";
+import ListViewEquipos from "./views/equipos/ListView";
+import TrashViewEquipos from "./views/equipos/TrashView";
+import ExportViewEquipos from "./views/equipos/ExportView";
+import ClientesViewEquipos from "./views/equipos/ClientesView";
+
+// Sección Mantenimiento (port del dashboard)
+import ResumenViewMant from "./views/mantenimiento/ResumenView";
+import TecnicosViewMant from "./views/mantenimiento/TecnicosView";
+import ReincidenciaViewMant from "./views/mantenimiento/ReincidenciaView";
+import TiemposViewMant from "./views/mantenimiento/TiemposView";
+
+/**
+ * App
+ * ---
+ * Router raíz. Todas las rutas viven dentro de <AppShell> que provee
+ * el sidebar + topbar mobile. No hay authGuard por ahora — la app es
+ * accesible para cualquiera con el link. Si en el futuro se reactiva
+ * auth, se vuelve a envolver con un componente de guard.
+ *
+ * Las 4 rutas de Mantenimiento comparten <DashboardProvider> (data +
+ * filtros + KPIs + auto-refresh). Las otras secciones no lo necesitan.
+ */
 function App() {
-    const { session, loading, isRecovery } = useAuth();
-    const location = useLocation();
-
-    // Limpia el hash si viene con error (ej: link de recovery inválido/expirado)
-    useEffect(() => {
-        if (window.location.hash.includes("error=")) {
-            window.history.replaceState(
-                null,
-                "",
-                window.location.pathname + window.location.search
-            );
-        }
-    }, []);
-
-    if (loading) {
-        return (
-            <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-slate-50 p-6 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-600 text-3xl text-white shadow-lg">
-                        📦
-                    </div>
-                    <div className="h-1.5 w-48 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
-                        <div className="h-full w-1/3 animate-[shimmer_1.2s_infinite] rounded-full bg-indigo-500" />
-                    </div>
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                        Cargando Control de Bodega…
-                    </p>
-                </div>
-            </div>
-        );
-    }
-
-    const enUpdatePassword = location.pathname === "/update-password";
-
-    // /update-password SOLO se renderiza si el usuario llegó desde el link
-    // del correo (evento PASSWORD_RECOVERY) y tiene sesión activa.
-    if (enUpdatePassword) {
-        if (session && isRecovery) {
-            return <UpdatePassword />;
-        }
-        // Sin sesión de recovery → lo mandamos al login.
-        return <Navigate to="/" replace />;
-    }
-
-    if (!session) return <Login />;
-
     return (
-        <Layout>
-            <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/productos" element={<Productos />} />
-                <Route path="/entradas" element={<NuevaEntrada />} />
-                <Route path="/salidas" element={<NuevaSalida />} />
-                <Route path="/stock" element={<StockActual />} />
-                <Route path="/historial" element={<Historial />} />
-                <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
-        </Layout>
+        <Routes>
+            <Route element={<AppShell />}>
+                <Route index element={<Navigate to="/bodega" replace />} />
+
+                {/* Bodega */}
+                <Route path="/bodega" element={<Dashboard />} />
+                <Route path="/bodega/productos" element={<Productos />} />
+                <Route path="/bodega/nueva-entrada" element={<NuevaEntrada />} />
+                <Route path="/bodega/nueva-salida" element={<NuevaSalida />} />
+                <Route path="/bodega/stock" element={<StockActual />} />
+                <Route path="/bodega/historial" element={<Historial />} />
+
+                {/* Equipos */}
+                <Route path="/equipos" element={<FormViewEquipos />} />
+                <Route path="/equipos/inventario" element={<ListViewEquipos />} />
+                <Route path="/equipos/clientes" element={<ClientesViewEquipos />} />
+                <Route path="/equipos/papelera" element={<TrashViewEquipos />} />
+                <Route path="/equipos/exportar" element={<ExportViewEquipos />} />
+
+                {/* Mantenimiento — comparten DashboardProvider */}
+                <Route element={<DashboardProvider />}>
+                    <Route path="/mantenimiento" element={<ResumenViewMant />} />
+                    <Route
+                        path="/mantenimiento/tecnicos"
+                        element={<TecnicosViewMant />}
+                    />
+                    <Route
+                        path="/mantenimiento/reincidencia"
+                        element={<ReincidenciaViewMant />}
+                    />
+                    <Route
+                        path="/mantenimiento/tiempos"
+                        element={<TiemposViewMant />}
+                    />
+                </Route>
+
+                {/* Fallback → bodega */}
+                <Route path="*" element={<Navigate to="/bodega" replace />} />
+            </Route>
+        </Routes>
     );
 }
 

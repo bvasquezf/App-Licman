@@ -1,15 +1,15 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useToast } from "../../context/ToastContext";
 import { useUnsavedChanges } from "../../hooks/useUnsavedChanges";
 import Card from "../ui/Card";
 
 const inputClass =
-    "w-full rounded-xl border border-slate-200/60 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm transition-colors placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-indigo-500 dark:focus:ring-indigo-500/20 sm:text-base";
+    "w-full rounded-[10px] border border-slate-200/60 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 sm:text-base";
 
 function Field({ label, required, children, className = "" }) {
     return (
         <div className={className}>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-200">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
                 {label} {required && <span className="text-rose-500">*</span>}
             </label>
             {children}
@@ -38,14 +38,6 @@ function EntradaForm({ productos, onGuardar }) {
     const esCompra = formData.motivo_movimiento === "compra";
     const requiereObservacion =
         formData.motivo_movimiento === "ajuste_positivo";
-
-    const productoSeleccionado = useMemo(() => {
-        return (
-            productos.find(
-                (p) => String(p.id) === String(formData.producto_id)
-            ) || null
-        );
-    }, [productos, formData.producto_id]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -146,15 +138,15 @@ function EntradaForm({ productos, onGuardar }) {
     return (
         <Card padding="p-0" className="overflow-hidden">
             {/* Header con color sólido (sin gradiente translúcido) */}
-            <div className="flex items-center gap-3 border-b border-slate-200/60 bg-emerald-50 px-4 py-3 dark:border-slate-800 dark:bg-emerald-500/10 sm:px-5 sm:py-4">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-lg dark:bg-emerald-500/20">
+            <div className="flex items-center gap-3 border-b border-slate-200/60 bg-emerald-50 px-4 py-3 sm:px-5 sm:py-4">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-emerald-100 text-lg">
                     ⬇️
                 </div>
                 <div className="min-w-0 flex-1">
-                    <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
+                    <h2 className="text-base font-semibold text-slate-800">
                         Registrar ingreso de stock
                     </h2>
-                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                    <p className="mt-0.5 text-xs text-slate-500">
                         Compras, stock inicial, devoluciones o ajustes
                         positivos
                     </p>
@@ -293,7 +285,7 @@ function EntradaForm({ productos, onGuardar }) {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-emerald-700 hover:shadow-md active:scale-95 disabled:opacity-50"
+                        className="inline-flex items-center gap-2 rounded-[10px] bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-emerald-700 hover:shadow-md active:scale-95 disabled:opacity-50"
                     >
                         {loading ? "Guardando..." : "Guardar ingreso"}
                     </button>
