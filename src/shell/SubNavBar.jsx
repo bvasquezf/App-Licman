@@ -42,8 +42,8 @@ export function SubNavBar() {
                         className={({ isActive }) =>
                             `flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition min-h-[40px] sm:min-h-[44px] ${
                                 isActive
-                                    ? "border-blue-600 bg-blue-600 text-white shadow-[0_2px_8px_rgba(37,99,235,0.25)]"
-                                    : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-100"
+                                    ? "border-brand-600 bg-brand-600 text-white shadow-[0_2px_8px_rgba(134,59,255,0.35)]"
+                                    : "border-transparent text-slate-600 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700"
                             }`
                         }
                     >

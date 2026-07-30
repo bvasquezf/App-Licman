@@ -1,5 +1,20 @@
 @import "tailwindcss";
 
+/* === Marca Licman — escala violeta derivada del logo (#863bff) === */
+@theme {
+    --color-brand-50: #f6f2ff;
+    --color-brand-100: #ede6ff;
+    --color-brand-200: #ddceff;
+    --color-brand-300: #c5a9ff;
+    --color-brand-400: #a87fff;
+    --color-brand-500: #863bff;
+    --color-brand-600: #7524ee;
+    --color-brand-700: #6218d0;
+    --color-brand-800: #5117a6;
+    --color-brand-900: #451a80;
+    --color-brand-950: #2a0d52;
+}
+
 *,
 *::before,
 *::after {
@@ -26,9 +41,8 @@ body {
     text-rendering: optimizeLegibility;
     word-wrap: break-word;
     overflow-wrap: break-word;
-    /* Gradiente de fondo: blanco → azul muy suave (índigo-50).
-       Coincide con el diseño del Inventario de Equipos. */
-    background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+    /* Fondo lavanda suave acorde a la marca (logo violeta). */
+    background: linear-gradient(180deg, #faf9ff 0%, #f0ebff 100%);
     background-attachment: fixed;
     color: #0f172a; /* slate-900 */
     /* Evita que en iOS Safari el rubber-band muestre el color

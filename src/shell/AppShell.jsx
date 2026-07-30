@@ -39,14 +39,10 @@ export function AppShell() {
                     </button>
                     <div className="flex items-center gap-2">
                         <div
-                            className="flex h-7 w-7 items-center justify-center rounded-[8px] text-xs font-bold text-white"
-                            style={{
-                                background:
-                                    "linear-gradient(135deg, #2563eb 0%, #06b6d4 100%)",
-                            }}
+                            className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-brand-100 ring-1 ring-brand-200/60"
                             aria-hidden="true"
                         >
-                            IL
+                            <img src="/favicon.svg" alt="" className="h-4.5 w-4.5" />
                         </div>
                         <p className="text-sm font-bold tracking-wide text-slate-900">
                             LICMAN
