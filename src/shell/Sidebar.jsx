@@ -116,7 +116,7 @@ function SidebarContenido({ expandido, onCerrarMobile }) {
                 }`}
             >
                 <div
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] bg-white shadow-lg"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] bg-white shadow-lg animate-pop-in"
                     aria-hidden="true"
                 >
                     <img

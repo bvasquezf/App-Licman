@@ -52,7 +52,7 @@ export default function PillToast({
     return (
         <div
             role="status"
-            className={`pointer-events-auto flex max-w-md items-center gap-2 rounded-full px-4 py-2 text-sm font-medium shadow-lg backdrop-blur ${estilo}`}
+            className={`pointer-events-auto flex max-w-md items-center gap-2 rounded-full px-4 py-2 text-sm font-medium shadow-lg backdrop-blur animate-toast-in ${estilo}`}
         >
             <span aria-hidden="true">{icono}</span>
             <span className="flex-1">{message}</span>

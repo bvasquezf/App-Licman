@@ -152,8 +152,88 @@ select {
     }
 }
 
+/* `both`: respeta el estado inicial durante animation-delay,
+   clave para las entradas en cascada (stagger). */
 .animate-fade-in {
-    animation: fade-in 0.25s ease-out;
+    animation: fade-in 0.25s ease-out both;
+}
+
+/* Pop para el logo del sidebar: fade + leve escala */
+@keyframes pop-in {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.animate-pop-in {
+    animation: pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* El logo (wordmark) se "dibuja" de izquierda a derecha,
+   como el trazo del swoosh rojo. */
+@keyframes logo-reveal {
+    from {
+        opacity: 0;
+        clip-path: inset(0 100% 0 0);
+    }
+    to {
+        opacity: 1;
+        clip-path: inset(0 0 0 0);
+    }
+}
+
+.animate-logo-reveal {
+    animation: logo-reveal 0.7s ease-out both;
+}
+
+/* Toasts: entran deslizando desde abajo con fade */
+@keyframes toast-in {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.animate-toast-in {
+    animation: toast-in 0.25s ease-out both;
+}
+
+/* Shimmer para skeletons: brillo que barre de izquierda a derecha */
+@keyframes shimmer {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(100%);
+    }
+}
+
+.skeleton-shimmer {
+    position: relative;
+    overflow: hidden;
+}
+
+.skeleton-shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.65),
+        transparent
+    );
+    animation: shimmer 1.4s ease-in-out infinite;
 }
 
 /* Soporte para prefers-reduced-motion */

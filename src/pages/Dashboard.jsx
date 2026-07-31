@@ -4,6 +4,7 @@ import { exportWorkbook } from "../utils/exportWorkbook";
 import { formatCLP } from "../utils/format";
 import { useToast } from "../context/ToastContext";
 import { useAsync } from "../hooks/useAsync";
+import { useCountUp } from "../hooks/useCountUp";
 import { withRetry } from "../utils/withRetry";
 import PageHeader from "../components/ui/PageHeader";
 import StatCard from "../components/ui/StatCard";
@@ -90,6 +91,14 @@ function Dashboard() {
 
         return total + item.stock * producto.precio_referencia;
     }, 0);
+
+    // Valores animados: cuentan desde 0 (o el valor previo) al llegar la data
+    const totalProductosAnim = useCountUp(totalProductos);
+    const stockBajoAnim = useCountUp(stockBajo.length);
+    const valorInventarioAnim = useCountUp(valorInventario, {
+        format: formatCLP,
+    });
+    const sinPrecioAnim = useCountUp(productosSinPrecio.length);
 
     const exportarReporteMaestro = () => {
         const productosSheet = productos.map((p) => ({
@@ -188,38 +197,61 @@ function Dashboard() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
-                    <StatCard
-                        label="Total productos"
-                        value={totalProductos.toLocaleString("es-CL")}
-                        icon="📦"
-                        tone="brand"
-                    />
-                    <StatCard
-                        label="Stock bajo mínimo"
-                        value={stockBajo.length.toLocaleString("es-CL")}
-                        icon="⚠️"
-                        tone="rose"
-                    />
-                    <StatCard
-                        label="Valor inventario"
-                        value={formatCLP(valorInventario)}
-                        hint="Solo productos con precio"
-                        icon="💰"
-                        tone="emerald"
-                    />
-                    <StatCard
-                        label="Sin precio"
-                        value={productosSinPrecio.length.toLocaleString("es-CL")}
-                        icon="🏷️"
-                        tone="amber"
-                    />
+                    <div
+                        className="animate-fade-in"
+                        style={{ animationDelay: "0ms" }}
+                    >
+                        <StatCard
+                            label="Total productos"
+                            value={totalProductosAnim}
+                            icon="📦"
+                            tone="brand"
+                        />
+                    </div>
+                    <div
+                        className="animate-fade-in"
+                        style={{ animationDelay: "60ms" }}
+                    >
+                        <StatCard
+                            label="Stock bajo mínimo"
+                            value={stockBajoAnim}
+                            icon="⚠️"
+                            tone="rose"
+                        />
+                    </div>
+                    <div
+                        className="animate-fade-in"
+                        style={{ animationDelay: "120ms" }}
+                    >
+                        <StatCard
+                            label="Valor inventario"
+                            value={valorInventarioAnim}
+                            hint="Solo productos con precio"
+                            icon="💰"
+                            tone="emerald"
+                        />
+                    </div>
+                    <div
+                        className="animate-fade-in"
+                        style={{ animationDelay: "180ms" }}
+                    >
+                        <StatCard
+                            label="Sin precio"
+                            value={sinPrecioAnim}
+                            icon="🏷️"
+                            tone="amber"
+                        />
+                    </div>
                 </div>
             )}
 
             {/* Secciones */}
             <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
                 {/* Stock bajo */}
-                <Card>
+                <Card
+                    className="animate-fade-in"
+                    style={{ animationDelay: "240ms" }}
+                >
                     <div className="mb-4 flex items-center justify-between">
                         <h2 className="text-base font-semibold text-slate-800">
                             Stock bajo mínimo
@@ -271,7 +303,10 @@ function Dashboard() {
                 </Card>
 
                 {/* Últimos movimientos */}
-                <Card>
+                <Card
+                    className="animate-fade-in"
+                    style={{ animationDelay: "320ms" }}
+                >
                     <div className="mb-4 flex items-center justify-between">
                         <h2 className="text-base font-semibold text-slate-800">
                             Últimos movimientos

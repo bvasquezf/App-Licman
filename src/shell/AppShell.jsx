@@ -41,7 +41,7 @@ export function AppShell() {
                         <img
                             src="/logo.png"
                             alt="Licman"
-                            className="h-6 w-auto"
+                            className="h-6 w-auto animate-logo-reveal"
                         />
                     </div>
                 </div>
