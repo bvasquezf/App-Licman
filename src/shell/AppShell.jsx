@@ -38,15 +38,11 @@ export function AppShell() {
                         ☰
                     </button>
                     <div className="flex items-center gap-2">
-                        <div
-                            className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-brand-100 ring-1 ring-brand-200/60"
-                            aria-hidden="true"
-                        >
-                            <img src="/favicon.svg" alt="" className="h-4.5 w-4.5" />
-                        </div>
-                        <p className="text-sm font-bold tracking-wide text-slate-900">
-                            LICMAN
-                        </p>
+                        <img
+                            src="/logo.png"
+                            alt="Licman"
+                            className="h-6 w-auto"
+                        />
                     </div>
                 </div>
                 <p className="text-xs font-medium text-slate-500">

@@ -62,7 +62,7 @@ export function Sidebar({ abiertoMobile, onCerrarMobile }) {
 
             {/* Sidebar mobile (drawer) */}
             <aside
-                className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] transform bg-gradient-to-b from-brand-950 to-[#1e0840] p-5 text-white shadow-2xl transition-transform duration-300 ease-in-out md:hidden ${
+                className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] transform bg-gradient-to-b from-carbon-900 to-carbon-950 p-5 text-white shadow-2xl transition-transform duration-300 ease-in-out md:hidden ${
                     abiertoMobile ? "translate-x-0" : "-translate-x-full"
                 }`}
                 style={{
@@ -82,7 +82,7 @@ export function Sidebar({ abiertoMobile, onCerrarMobile }) {
                 onMouseLeave={() => setExpandidoDesktop(false)}
                 onFocus={() => setExpandidoDesktop(true)}
                 onBlur={() => setExpandidoDesktop(false)}
-                className={`fixed inset-y-0 left-0 z-30 hidden overflow-hidden bg-gradient-to-b from-brand-950 to-[#1e0840] text-white shadow-[8px_0_24px_rgba(42,13,82,0.18)] transition-[width] duration-200 ease-out md:flex md:flex-col ${
+                className={`fixed inset-y-0 left-0 z-30 hidden overflow-hidden bg-gradient-to-b from-carbon-900 to-carbon-950 text-white shadow-[8px_0_24px_rgba(27,26,26,0.20)] transition-[width] duration-200 ease-out md:flex md:flex-col ${
                     expandidoDesktop ? "md:w-60" : "md:w-16"
                 }`}
                 aria-label="Navegación principal"
@@ -116,13 +116,13 @@ function SidebarContenido({ expandido, onCerrarMobile }) {
                 }`}
             >
                 <div
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] bg-white/10 ring-1 ring-white/15 shadow-lg"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] bg-white shadow-lg"
                     aria-hidden="true"
                 >
                     <img
-                        src="/favicon.svg"
-                        alt=""
-                        className="h-7 w-7"
+                        src="/favicon.png"
+                        alt="Licman"
+                        className="h-8 w-8 object-contain"
                     />
                 </div>
                 {expandido && (
@@ -130,7 +130,7 @@ function SidebarContenido({ expandido, onCerrarMobile }) {
                         <p className="truncate text-base font-extrabold tracking-wide text-white">
                             LICMAN
                         </p>
-                        <p className="truncate text-[11px] text-brand-300">
+                        <p className="truncate text-[11px] text-neutral-400">
                             Gestión integral
                         </p>
                     </div>
@@ -139,7 +139,7 @@ function SidebarContenido({ expandido, onCerrarMobile }) {
                     <button
                         type="button"
                         onClick={onCerrarMobile}
-                        className="ml-auto flex h-11 w-11 items-center justify-center rounded-[10px] text-brand-300 hover:bg-white/10 hover:text-white"
+                        className="ml-auto flex h-11 w-11 items-center justify-center rounded-[10px] text-neutral-400 hover:bg-white/10 hover:text-white"
                         aria-label="Cerrar menú"
                     >
                         ✕
@@ -171,8 +171,8 @@ function SidebarContenido({ expandido, onCerrarMobile }) {
                                     expandido ? "px-3" : "justify-center px-2"
                                 } ${
                                     activa
-                                        ? "bg-gradient-to-r from-brand-500/30 via-brand-500/10 to-transparent text-white shadow-[inset_3px_0_0_#a87fff]"
-                                        : "text-brand-100/80 hover:bg-white/10 hover:text-white"
+                                        ? "bg-gradient-to-r from-brand-500/25 via-brand-500/10 to-transparent text-white shadow-[inset_3px_0_0_#ff1a22]"
+                                        : "text-neutral-300 hover:bg-white/10 hover:text-white"
                                 }`
                             }
                         >
@@ -200,7 +200,7 @@ function SidebarContenido({ expandido, onCerrarMobile }) {
                 }`}
             >
                 <div
-                    className={`flex items-center gap-2 text-[11px] font-medium text-brand-300/70 ${
+                    className={`flex items-center gap-2 text-[11px] font-medium text-neutral-500 ${
                         expandido ? "" : "justify-center"
                     }`}
                 >

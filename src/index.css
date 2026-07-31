@@ -1,18 +1,22 @@
 @import "tailwindcss";
 
-/* === Marca Licman — escala violeta derivada del logo (#863bff) === */
+/* === Marca Licman — rojo del logo (#ff1a22) + carbón (#313030) === */
 @theme {
-    --color-brand-50: #f6f2ff;
-    --color-brand-100: #ede6ff;
-    --color-brand-200: #ddceff;
-    --color-brand-300: #c5a9ff;
-    --color-brand-400: #a87fff;
-    --color-brand-500: #863bff;
-    --color-brand-600: #7524ee;
-    --color-brand-700: #6218d0;
-    --color-brand-800: #5117a6;
-    --color-brand-900: #451a80;
-    --color-brand-950: #2a0d52;
+    --color-brand-50: #fff1f1;
+    --color-brand-100: #ffe0e1;
+    --color-brand-200: #ffc6c8;
+    --color-brand-300: #ff9ba0;
+    --color-brand-400: #ff5f66;
+    --color-brand-500: #ff1a22;
+    --color-brand-600: #e8121a;
+    --color-brand-700: #c30e16;
+    --color-brand-800: #a01118;
+    --color-brand-900: #85171c;
+    --color-brand-950: #490a0d;
+    --color-carbon-700: #4a4949;
+    --color-carbon-800: #313030;
+    --color-carbon-900: #242323;
+    --color-carbon-950: #1b1a1a;
 }
 
 *,
@@ -41,8 +45,8 @@ body {
     text-rendering: optimizeLegibility;
     word-wrap: break-word;
     overflow-wrap: break-word;
-    /* Fondo lavanda suave acorde a la marca (logo violeta). */
-    background: linear-gradient(180deg, #faf9ff 0%, #f0ebff 100%);
+    /* Fondo neutro cálido con un dejo del rojo de marca. */
+    background: linear-gradient(180deg, #fbfbfa 0%, #f7f3f3 100%);
     background-attachment: fixed;
     color: #0f172a; /* slate-900 */
     /* Evita que en iOS Safari el rubber-band muestre el color

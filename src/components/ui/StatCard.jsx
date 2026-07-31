@@ -21,7 +21,7 @@ function StatCard({ label, value, hint, icon, tone = "brand" }) {
     const t = tones[tone] || tones.brand;
 
     return (
-        <div className="group flex h-full flex-col rounded-[18px] border border-brand-100/80 bg-white p-4 shadow-[0_10px_30px_rgba(90,50,180,0.08)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(90,50,180,0.14)] sm:p-5">
+        <div className="group flex h-full flex-col rounded-[18px] border border-stone-200/80 bg-white p-4 shadow-[0_10px_30px_rgba(49,48,48,0.07)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(49,48,48,0.12)] sm:p-5">
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                     <p className="truncate text-xs font-medium uppercase tracking-wider text-slate-500">
