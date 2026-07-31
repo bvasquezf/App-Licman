@@ -29,7 +29,7 @@ const ESTADO_DESCRIPCIONES = {
 };
 
 const clasesInput =
-    "mt-1.5 block w-full rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2.5 text-base font-medium text-slate-900 outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15";
+    "mt-1.5 block w-full rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2.5 text-base font-medium text-slate-900 outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500";
 
 /**
  * Formulario de registro de equipos.
@@ -267,12 +267,12 @@ export default function FormView() {
                 autoComplete="off"
             >
             {/* Card: Identificación */}
-            <fieldset className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:p-6">
-                <legend className="px-2 text-[0.78rem] font-bold uppercase tracking-wider text-slate-500">
+            <fieldset className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] dark:border-white/10 dark:bg-carbon-900 sm:p-6">
+                <legend className="px-2 text-[0.78rem] font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400">
                     Identificación
                 </legend>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <label className="block text-[0.85rem] font-semibold text-slate-900">
+                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Bodega
                         <select
                             value={form.bodega}
@@ -291,7 +291,7 @@ export default function FormView() {
                         </select>
                     </label>
 
-                    <label className="block text-[0.85rem] font-semibold text-slate-900">
+                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Tipo de equipo
                         <select
                             value={form.tipo_equipo}
@@ -310,7 +310,7 @@ export default function FormView() {
                         </select>
                     </label>
 
-                    <label className="block text-[0.85rem] font-semibold text-slate-900">
+                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         N° interno
                         <input
                             type="text"
@@ -339,7 +339,7 @@ export default function FormView() {
                         )}
                     </label>
 
-                    <label className="block text-[0.85rem] font-semibold text-slate-900">
+                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         N° de serie
                         <input
                             type="text"
@@ -353,7 +353,7 @@ export default function FormView() {
                         />
                     </label>
 
-                    <label className="block text-[0.85rem] font-semibold text-slate-900">
+                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Marca
                         <select
                             value={form.marca}
@@ -373,7 +373,7 @@ export default function FormView() {
                     </label>
 
                     {form.marca === MARCA_OTRA && (
-                        <label className="block text-[0.85rem] font-semibold text-slate-900">
+                        <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                             Especifica la marca
                             <input
                                 type="text"
@@ -387,7 +387,7 @@ export default function FormView() {
                         </label>
                     )}
 
-                    <label className="block text-[0.85rem] font-semibold text-slate-900">
+                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Modelo
                         <input
                             type="text"
@@ -400,7 +400,7 @@ export default function FormView() {
                         />
                     </label>
 
-                    <label className="block text-[0.85rem] font-semibold text-slate-900">
+                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Ubicación actual
                         <input
                             type="text"
@@ -419,8 +419,8 @@ export default function FormView() {
             </fieldset>
 
             {/* Card: Estado operacional */}
-            <fieldset className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:p-6">
-                <legend className="px-2 text-[0.78rem] font-bold uppercase tracking-wider text-slate-500">
+            <fieldset className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] dark:border-white/10 dark:bg-carbon-900 sm:p-6">
+                <legend className="px-2 text-[0.78rem] font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400">
                     Estado operacional
                 </legend>
 
@@ -430,8 +430,8 @@ export default function FormView() {
                             key={est}
                             className={`flex cursor-pointer flex-col gap-1 rounded-[10px] border-[1.5px] p-3 transition ${
                                 form.estado_operacional === est
-                                    ? "border-blue-600 bg-blue-50/40"
-                                    : "border-slate-200 bg-white hover:border-slate-300"
+                                    ? "border-blue-600 bg-blue-50/40 dark:bg-blue-500/10"
+                                    : "border-slate-200 bg-white hover:border-slate-300 dark:border-white/10 dark:bg-carbon-800 dark:hover:border-white/20"
                             }`}
                         >
                             <span className="flex items-center gap-2">
@@ -448,11 +448,11 @@ export default function FormView() {
                                     }
                                     className="h-4 w-4 accent-blue-600"
                                 />
-                                <span className="text-sm font-bold text-slate-900">
+                                <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
                                     {est}
                                 </span>
                             </span>
-                            <span className="text-xs text-slate-500">
+                            <span className="text-xs text-slate-500 dark:text-neutral-400">
                                 {ESTADO_DESCRIPCIONES[est]}
                             </span>
                         </label>
@@ -460,7 +460,7 @@ export default function FormView() {
                 </div>
 
                 <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <label className="block text-[0.85rem] font-semibold text-slate-900">
+                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Horómetro
                         <input
                             type="number"
@@ -474,7 +474,7 @@ export default function FormView() {
                         />
                     </label>
 
-                    <label className="block text-[0.85rem] font-semibold text-slate-900">
+                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Responsable
                         <input
                             type="text"
@@ -489,14 +489,14 @@ export default function FormView() {
                 </div>
 
                 <div className="mt-4">
-                    <p className="text-[0.85rem] font-semibold text-slate-900">
+                    <p className="text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Elementos faltantes
                     </p>
                     <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
                         {ELEMENTOS_FALTANTES.map((el) => (
                             <label
                                 key={el}
-                                className="flex cursor-pointer items-center gap-2 rounded-[10px] border border-slate-200 bg-white px-3 py-2 text-sm transition hover:bg-slate-50"
+                                className="flex cursor-pointer items-center gap-2 rounded-[10px] border border-slate-200 bg-white px-3 py-2 text-sm transition hover:bg-slate-50 dark:border-white/10 dark:bg-carbon-800 dark:hover:bg-white/5"
                             >
                                 <input
                                     type="checkbox"
@@ -504,15 +504,15 @@ export default function FormView() {
                                         form.elementos_faltantes ?? []
                                     ).includes(el)}
                                     onChange={() => toggleElementoFaltante(el)}
-                                    className="h-4 w-4 rounded border-slate-300 accent-blue-600"
+                                    className="h-4 w-4 rounded border-slate-300 accent-blue-600 dark:border-white/15"
                                 />
-                                <span className="text-slate-700">{el}</span>
+                                <span className="text-slate-700 dark:text-slate-200">{el}</span>
                             </label>
                         ))}
                     </div>
                 </div>
 
-                <label className="mt-4 block text-[0.85rem] font-semibold text-slate-900">
+                <label className="mt-4 block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                     Observaciones
                     <textarea
                         rows={3}
@@ -525,13 +525,13 @@ export default function FormView() {
                     />
                 </label>
 
-                <label className="mt-4 flex items-center gap-2 text-[0.85rem] font-semibold text-slate-900">
+                <label className="mt-4 flex items-center gap-2 text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                     <span>Foto del equipo</span>
                 </label>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-slate-500 dark:text-neutral-400">
                     Antes se enviaba al correo <strong>{PHOTO_EMAIL}</strong>.
                     Ahora se sube directamente al bucket{" "}
-                    <code className="rounded bg-slate-100 px-1 text-[0.7rem]">
+                    <code className="rounded bg-slate-100 px-1 text-[0.7rem] dark:bg-white/10">
                         equipos-fotos
                     </code>{" "}
                     en Supabase Storage.
@@ -550,12 +550,12 @@ export default function FormView() {
             </fieldset>
 
             {/* Footer con preview correlativo + submit */}
-            <div className="flex flex-col gap-3 rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:flex-row sm:items-center sm:justify-between sm:p-6">
-                <div className="text-sm text-slate-600">
+            <div className="flex flex-col gap-3 rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] dark:border-white/10 dark:bg-carbon-900 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                <div className="text-sm text-slate-600 dark:text-neutral-400">
                     {estadoCorrelativo === "listo" && proximoCorrelativo && (
                         <>
                             Próximo correlativo disponible:{" "}
-                            <strong className="font-extrabold text-slate-900 tabular-nums">
+                            <strong className="font-extrabold text-slate-900 tabular-nums dark:text-slate-100">
                                 #{String(proximoCorrelativo).padStart(4, "0")}
                             </strong>
                         </>
@@ -564,7 +564,7 @@ export default function FormView() {
                         <>Consultando correlativo…</>
                     )}
                     {estadoCorrelativo === "error" && (
-                        <span className="text-amber-700">
+                        <span className="text-amber-700 dark:text-amber-400">
                             No se pudo consultar correlativo. Se asignará al
                             guardar.
                         </span>

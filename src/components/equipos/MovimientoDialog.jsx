@@ -12,7 +12,7 @@ import EquipoFoto from "./EquipoFoto";
 import PhotoUpload from "./PhotoUpload";
 
 const clasesInput =
-    "mt-1 block w-full rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2.5 text-base font-medium text-slate-900 outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15";
+    "mt-1 block w-full rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2.5 text-base font-medium text-slate-900 outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500";
 
 const estadoInicial = {
     motivo: "",
@@ -268,30 +268,30 @@ export default function MovimientoDialog({
                 if (e.target === e.currentTarget && !guardando) onCancel();
             }}
         >
-            <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl sm:rounded-2xl sm:p-6">
+            <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl sm:rounded-2xl sm:p-6 dark:bg-carbon-900">
                 <header className="mb-4">
                     <h2
                         id="movimiento-titulo"
-                        className="text-[1.15rem] font-bold text-slate-900"
+                        className="text-[1.15rem] font-bold text-slate-900 dark:text-slate-100"
                     >
                         🔄 Registrar movimiento
                     </h2>
-                    <p className="mt-1 text-sm text-slate-600">
+                    <p className="mt-1 text-sm text-slate-600 dark:text-neutral-400">
                         {equipo.marca} {equipo.modelo} ·{" "}
                         <span className="font-mono font-semibold">
                             {equipo.numero_interno}
                         </span>
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-slate-500 dark:text-neutral-400">
                         Origen actual:{" "}
                         {origenCliente ? (
                             <>
-                                <span className="rounded-full bg-sky-100 px-2 py-0.5 font-semibold text-sky-800">
+                                <span className="rounded-full bg-sky-100 px-2 py-0.5 font-semibold text-sky-800 dark:bg-sky-500/10 dark:text-sky-400">
                                     🏢 En cliente
                                 </span>
                             </>
                         ) : (
-                            <strong className="text-slate-700">
+                            <strong className="text-slate-700 dark:text-slate-200">
                                 {equipo.bodega}
                             </strong>
                         )}
@@ -308,22 +308,22 @@ export default function MovimientoDialog({
                 </header>
 
                 {/* Foto actual del equipo — solo referencia visual */}
-                <section className="mb-4 flex items-start gap-3 rounded-[10px] border border-slate-200 bg-slate-50 p-3">
+                <section className="mb-4 flex items-start gap-3 rounded-[10px] border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/5">
                     <EquipoFoto
                         path={equipo.foto_url || null}
                         size="sm"
                         alt="Foto actual del equipo"
                     />
                     <div className="min-w-0 flex-1">
-                        <p className="text-[0.78rem] font-bold uppercase tracking-wider text-slate-500">
+                        <p className="text-[0.78rem] font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400">
                             Foto actual
                         </p>
                         {equipo.foto_url ? (
-                            <p className="mt-0.5 truncate text-xs text-slate-600">
+                            <p className="mt-0.5 truncate text-xs text-slate-600 dark:text-neutral-400">
                                 {equipo.foto_url}
                             </p>
                         ) : (
-                            <p className="mt-0.5 text-xs text-slate-500">
+                            <p className="mt-0.5 text-xs text-slate-500 dark:text-neutral-400">
                                 Este equipo aún no tiene foto.
                             </p>
                         )}
@@ -332,7 +332,7 @@ export default function MovimientoDialog({
 
                 <form onSubmit={handleSubmit} className="space-y-3" noValidate>
                     {/* Motivo (siempre visible) */}
-                    <label className="block text-[0.85rem] font-semibold text-slate-900">
+                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Motivo
                         <select
                             name="motivo"
@@ -369,7 +369,7 @@ export default function MovimientoDialog({
                     />
 
                     {/* Responsable (siempre) */}
-                    <label className="block text-[0.85rem] font-semibold text-slate-900">
+                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Responsable
                         <input
                             type="text"
@@ -388,12 +388,12 @@ export default function MovimientoDialog({
                     </label>
 
                     {/* Notas — opcional general, requerido si motivo es "Otro" */}
-                    <label className="block text-[0.85rem] font-semibold text-slate-900">
+                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Notas{" "}
                         {form.motivo === "Otro" ? (
                             <span className="font-normal text-rose-600">*</span>
                         ) : (
-                            <span className="font-normal text-slate-500">
+                            <span className="font-normal text-slate-500 dark:text-neutral-400">
                                 (opcional)
                             </span>
                         )}
@@ -414,7 +414,7 @@ export default function MovimientoDialog({
                     </label>
 
                     {/* Foto nueva (opcional) */}
-                    <div className="rounded-[10px] border border-slate-200 bg-white p-3">
+                    <div className="rounded-[10px] border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-carbon-800">
                         <PhotoUpload
                             value={fotoFile}
                             onChange={(f) => {
@@ -424,14 +424,14 @@ export default function MovimientoDialog({
                             error={fotoError}
                             disabled={guardando}
                         />
-                        <p className="mt-2 text-[0.7rem] text-slate-500">
+                        <p className="mt-2 text-[0.7rem] text-slate-500 dark:text-neutral-400">
                             Si subes una foto nueva, reemplazará la actual.
                             Si no subes nada, se mantiene la foto existente.
                         </p>
                     </div>
 
                     {swapRequiereRed && (
-                        <div className="rounded-[10px] border-l-4 border-amber-500 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                        <div className="rounded-[10px] border-l-4 border-amber-500 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-500/10 dark:text-amber-300">
                             Los cambios de equipo requieren conexión. Espera
                             a tener red para enviarlo.
                         </div>
@@ -449,7 +449,7 @@ export default function MovimientoDialog({
                             type="button"
                             onClick={onCancel}
                             disabled={guardando}
-                            className="flex-1 rounded-[10px] bg-slate-100 px-4 py-3 text-base font-bold text-slate-900 transition hover:bg-slate-200 disabled:opacity-50"
+                            className="flex-1 rounded-[10px] bg-slate-100 px-4 py-3 text-base font-bold text-slate-900 transition hover:bg-slate-200 disabled:opacity-50 dark:bg-carbon-800 dark:text-slate-200 dark:hover:bg-white/10"
                         >
                             Cancelar
                         </button>
@@ -490,7 +490,7 @@ function CamposPorMotivo({
     const ClienteSelect = ({ name }) => (
         <div>
             <div className="flex items-end gap-2">
-                <label className="flex-1 text-[0.85rem] font-semibold text-slate-900">
+                <label className="flex-1 text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                     Cliente
                     <select
                         name={name}
@@ -511,7 +511,7 @@ function CamposPorMotivo({
                     <button
                         type="button"
                         onClick={onCrearCliente}
-                        className="mb-1 inline-flex h-[44px] shrink-0 items-center gap-1.5 rounded-[10px] border-[1.5px] border-sky-300 bg-sky-50 px-3 text-[0.82rem] font-bold text-sky-800 transition hover:bg-sky-100 active:scale-95"
+                        className="mb-1 inline-flex h-[44px] shrink-0 items-center gap-1.5 rounded-[10px] border-[1.5px] border-sky-300 bg-sky-50 px-3 text-[0.82rem] font-bold text-sky-800 transition hover:bg-sky-100 active:scale-95 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-400 dark:hover:bg-sky-500/20"
                         title="Crear un cliente nuevo en el catálogo"
                     >
                         + Nuevo
@@ -531,7 +531,7 @@ function CamposPorMotivo({
             {/* Bodega destino (cambio de bodega / devolución) */}
             {tipo === "bodega" && (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <label className="block text-[0.85rem] font-semibold text-slate-900">
+                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Bodega destino
                         <select
                             name="bodega_destino"
@@ -559,7 +559,7 @@ function CamposPorMotivo({
                             </p>
                         )}
                     </label>
-                    <label className="block text-[0.85rem] font-semibold text-slate-900">
+                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Ubicación destino
                         <input
                             type="text"
@@ -580,9 +580,9 @@ function CamposPorMotivo({
             {tipo === "cliente" && (
                 <>
                     <ClienteSelect name="cliente_id" />
-                    <label className="block text-[0.85rem] font-semibold text-slate-900">
+                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Ubicación{" "}
-                        <span className="font-normal text-slate-500">
+                        <span className="font-normal text-slate-500 dark:text-neutral-400">
                             (opcional)
                         </span>
                         <input
@@ -605,7 +605,7 @@ function CamposPorMotivo({
                 <>
                     <ClienteSelect name="cliente_id" />
 
-                    <label className="block text-[0.85rem] font-semibold text-slate-900">
+                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Categoría
                         <select
                             name="categoria"
@@ -630,7 +630,7 @@ function CamposPorMotivo({
                         )}
                     </label>
 
-                    <label className="block text-[0.85rem] font-semibold text-slate-900">
+                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Equipo que recibe del cliente
                         <select
                             name="equipo_recibe_id"
@@ -669,7 +669,7 @@ function CamposPorMotivo({
                         {form.cliente_id &&
                             !cargandoEquiposCliente &&
                             equiposDelCliente.length === 0 && (
-                                <p className="mt-1 text-xs text-slate-500">
+                                <p className="mt-1 text-xs text-slate-500 dark:text-neutral-400">
                                     Este cliente no tiene equipos para
                                     recibir. Verifica que esté en arriendo o
                                     venta.
@@ -677,7 +677,7 @@ function CamposPorMotivo({
                             )}
                     </label>
 
-                    <label className="block text-[0.85rem] font-semibold text-slate-900">
+                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Bodega destino del equipo recibido
                         <select
                             name="bodega_recibe_destino"
@@ -702,9 +702,9 @@ function CamposPorMotivo({
                         )}
                     </label>
 
-                    <label className="block text-[0.85rem] font-semibold text-slate-900">
+                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Ubicación{" "}
-                        <span className="font-normal text-slate-500">
+                        <span className="font-normal text-slate-500 dark:text-neutral-400">
                             (opcional)
                         </span>
                         <input
@@ -720,7 +720,7 @@ function CamposPorMotivo({
                         />
                     </label>
 
-                    <div className="rounded-[10px] border border-amber-200 bg-amber-50 px-3 py-2 text-[0.78rem] text-amber-900">
+                    <div className="rounded-[10px] border border-amber-200 bg-amber-50 px-3 py-2 text-[0.78rem] text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
                         <strong>Cambio de equipo:</strong> se registrará el
                         envío de este equipo al cliente y, simultáneamente,
                         la recepción del equipo seleccionado. Ambas piernas
@@ -732,7 +732,7 @@ function CamposPorMotivo({
             {/* Mantención externa */}
             {tipo === "externo" && (
                 <>
-                    <label className="block text-[0.85rem] font-semibold text-slate-900">
+                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Proveedor / destino externo{" "}
                         <span className="font-normal text-rose-600">*</span>
                         <input
@@ -752,9 +752,9 @@ function CamposPorMotivo({
                             </p>
                         )}
                     </label>
-                    <label className="block text-[0.85rem] font-semibold text-slate-900">
+                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Ubicación{" "}
-                        <span className="font-normal text-slate-500">
+                        <span className="font-normal text-slate-500 dark:text-neutral-400">
                             (opcional)
                         </span>
                         <input
@@ -774,9 +774,9 @@ function CamposPorMotivo({
 
             {/* Libre (motivo = "Otro") — solo notas se pide abajo */}
             {tipo === "libre" && (
-                <label className="block text-[0.85rem] font-semibold text-slate-900">
+                <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                     Ubicación{" "}
-                    <span className="font-normal text-slate-500">
+                    <span className="font-normal text-slate-500 dark:text-neutral-400">
                         (opcional)
                     </span>
                     <input

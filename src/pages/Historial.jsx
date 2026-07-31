@@ -172,7 +172,7 @@ function Historial() {
                     placeholder="Buscar por producto, código, proveedor..."
                     value={busqueda}
                     onChange={(e) => setBusqueda(e.target.value)}
-                    className="w-full rounded-[14px] border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 shadow-[0_10px_30px_rgba(15,23,42,0.10)] transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 sm:text-base"
+                    className="w-full rounded-[14px] border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 shadow-[0_10px_30px_rgba(15,23,42,0.10)] transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/10 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500 sm:text-base"
                 />
             </div>
 
@@ -187,13 +187,13 @@ function Historial() {
                     const tones = {
                         slate: active
                             ? "bg-slate-800 text-white border-slate-800"
-                            : "bg-white text-slate-700 border-slate-200/60 hover:bg-slate-50",
+                            : "bg-white text-slate-700 border-slate-200/60 hover:bg-slate-50 dark:bg-carbon-800 dark:text-slate-200 dark:border-white/10 dark:hover:bg-white/5",
                         emerald: active
                             ? "bg-emerald-500 text-white border-emerald-500"
-                            : "bg-white text-emerald-700 border-emerald-200/60 hover:bg-emerald-50",
+                            : "bg-white text-emerald-700 border-emerald-200/60 hover:bg-emerald-50 dark:bg-carbon-800 dark:text-emerald-400 dark:border-emerald-500/20 dark:hover:bg-emerald-500/10",
                         rose: active
                             ? "bg-rose-500 text-white border-rose-500"
-                            : "bg-white text-rose-700 border-rose-200/60 hover:bg-rose-50",
+                            : "bg-white text-rose-700 border-rose-200/60 hover:bg-rose-50 dark:bg-carbon-800 dark:text-rose-400 dark:border-rose-500/20 dark:hover:bg-rose-500/10",
                     };
                     return (
                         <button
@@ -206,7 +206,7 @@ function Historial() {
                                 className={`rounded-full px-1.5 text-xs font-semibold ${
                                     active
                                         ? "bg-white/20 text-white"
-                                        : "bg-slate-100 text-slate-600"
+                                        : "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-neutral-300"
                                 }`}
                             >
                                 {counts[chip.key]}
@@ -217,33 +217,33 @@ function Historial() {
             </div>
 
             {/* Filtros de fecha */}
-            <div className="flex flex-col gap-3 rounded-[14px] border border-slate-200/60 bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:flex-row sm:flex-wrap sm:items-end sm:p-4">
+            <div className="flex flex-col gap-3 rounded-[14px] border border-slate-200/60 bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.10)] dark:border-white/10 dark:bg-carbon-900 sm:flex-row sm:flex-wrap sm:items-end sm:p-4">
                 <div className="flex flex-1 flex-col sm:flex-none">
-                    <label className="mb-1 px-1 text-xs font-medium uppercase tracking-wider text-slate-500">
+                    <label className="mb-1 px-1 text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-neutral-400">
                         Desde
                     </label>
                     <input
                         type="date"
                         value={fechaDesde}
                         onChange={(e) => setFechaDesde(e.target.value)}
-                        className="w-full rounded-[10px] border border-slate-200/60 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 sm:w-auto"
+                        className="w-full rounded-[10px] border border-slate-200/60 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/10 dark:bg-carbon-800 dark:text-slate-100 sm:w-auto"
                     />
                 </div>
                 <div className="flex flex-1 flex-col sm:flex-none">
-                    <label className="mb-1 px-1 text-xs font-medium uppercase tracking-wider text-slate-500">
+                    <label className="mb-1 px-1 text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-neutral-400">
                         Hasta
                     </label>
                     <input
                         type="date"
                         value={fechaHasta}
                         onChange={(e) => setFechaHasta(e.target.value)}
-                        className="w-full rounded-[10px] border border-slate-200/60 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 sm:w-auto"
+                        className="w-full rounded-[10px] border border-slate-200/60 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/10 dark:bg-carbon-800 dark:text-slate-100 sm:w-auto"
                     />
                 </div>
                 {filtrosActivos && (
                     <button
                         onClick={limpiarFiltros}
-                        className="rounded-[10px] border border-slate-200/60 bg-white px-3 py-2 text-sm text-slate-500 transition-colors hover:bg-slate-50"
+                        className="rounded-[10px] border border-slate-200/60 bg-white px-3 py-2 text-sm text-slate-500 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-carbon-800 dark:text-neutral-400 dark:hover:bg-white/5"
                     >
                         Limpiar todo
                     </button>
@@ -282,7 +282,7 @@ function Historial() {
                             return (
                                 <li
                                     key={mov.id}
-                                    className="overflow-hidden rounded-[14px] border border-slate-200/60 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.10)] transition-all duration-200 hover:border-slate-300"
+                                    className="overflow-hidden rounded-[14px] border border-slate-200/60 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.10)] transition-all duration-200 hover:border-slate-300 dark:border-white/10 dark:bg-carbon-900 dark:hover:border-white/20"
                                 >
                                     <button
                                         onClick={() =>
@@ -301,8 +301,8 @@ function Historial() {
                                         <div
                                             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] text-lg ${
                                                 mov.tipo_movimiento === "entrada"
-                                                    ? "bg-emerald-50 text-emerald-600"
-                                                    : "bg-rose-50 text-rose-600"
+                                                    ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
+                                                    : "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400"
                                             }`}
                                         >
                                             {mov.tipo_movimiento === "entrada"
@@ -312,17 +312,17 @@ function Historial() {
 
                                         <div className="min-w-0 flex-1">
                                             <div className="flex flex-wrap items-center gap-2">
-                                                <p className="truncate text-sm font-semibold text-slate-800">
+                                                <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
                                                     {mov.productos?.nombre ||
                                                         "Producto sin nombre"}
                                                 </p>
                                                 {mov.productos?.codigo && (
-                                                    <span className="rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-600">
+                                                    <span className="rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-600 dark:bg-white/10 dark:text-neutral-300">
                                                         {mov.productos.codigo}
                                                     </span>
                                                 )}
                                             </div>
-                                            <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                                            <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-neutral-400">
                                                 <span>{mov.fecha}</span>
                                                 {mov.motivo_movimiento && (
                                                     <>
@@ -340,8 +340,8 @@ function Historial() {
                                         <div
                                             className={`shrink-0 text-right ${
                                                 mov.tipo_movimiento === "entrada"
-                                                    ? "text-emerald-600"
-                                                    : "text-rose-600"
+                                                    ? "text-emerald-600 dark:text-emerald-400"
+                                                    : "text-rose-600 dark:text-rose-400"
                                             }`}
                                         >
                                             <p className="text-base font-semibold tabular-nums">
@@ -350,7 +350,7 @@ function Historial() {
                                                     : "−"}
                                                 {mov.cantidad}
                                             </p>
-                                            <p className="text-xs uppercase tracking-wide text-slate-500">
+                                            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-neutral-400">
                                                 {mov.tipo_movimiento}
                                             </p>
                                         </div>
@@ -376,14 +376,14 @@ function Historial() {
                                     </button>
 
                                     {isExpanded && hasDetails && (
-                                        <div className="border-t border-slate-100 bg-slate-50/50 p-3 sm:p-4">
+                                        <div className="border-t border-slate-100 bg-slate-50/50 p-3 dark:border-white/10 dark:bg-white/5 sm:p-4">
                                             <div className="grid gap-3 text-xs sm:grid-cols-2">
                                                 {mov.precio_unitario && (
                                                     <div>
-                                                        <p className="text-xs uppercase tracking-wide text-slate-500">
+                                                        <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-neutral-400">
                                                             Precio unitario
                                                         </p>
-                                                        <p className="font-medium text-slate-700">
+                                                        <p className="font-medium text-slate-700 dark:text-slate-200">
                                                             {formatCLP(
                                                                 mov.precio_unitario
                                                             )}
@@ -392,30 +392,30 @@ function Historial() {
                                                 )}
                                                 {mov.proveedor && (
                                                     <div>
-                                                        <p className="text-xs uppercase tracking-wide text-slate-500">
+                                                        <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-neutral-400">
                                                             Proveedor
                                                         </p>
-                                                        <p className="font-medium text-slate-700">
+                                                        <p className="font-medium text-slate-700 dark:text-slate-200">
                                                             {mov.proveedor}
                                                         </p>
                                                     </div>
                                                 )}
                                                 {mov.tipo_documento && (
                                                     <div>
-                                                        <p className="text-xs uppercase tracking-wide text-slate-500">
+                                                        <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-neutral-400">
                                                             Tipo documento
                                                         </p>
-                                                        <p className="font-medium text-slate-700">
+                                                        <p className="font-medium text-slate-700 dark:text-slate-200">
                                                             {mov.tipo_documento}
                                                         </p>
                                                     </div>
                                                 )}
                                                 {mov.numero_documento && (
                                                     <div>
-                                                        <p className="text-xs uppercase tracking-wide text-slate-500">
+                                                        <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-neutral-400">
                                                             N° documento
                                                         </p>
-                                                        <p className="font-medium text-slate-700">
+                                                        <p className="font-medium text-slate-700 dark:text-slate-200">
                                                             {
                                                                 mov.numero_documento
                                                             }
@@ -424,27 +424,27 @@ function Historial() {
                                                 )}
                                                 {mov.solicitante && (
                                                     <div>
-                                                        <p className="text-xs uppercase tracking-wide text-slate-500">
+                                                        <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-neutral-400">
                                                             Solicitante
                                                         </p>
-                                                        <p className="font-medium text-slate-700">
+                                                        <p className="font-medium text-slate-700 dark:text-slate-200">
                                                             {mov.solicitante}
                                                         </p>
                                                     </div>
                                                 )}
                                                 {mov.destino && (
                                                     <div>
-                                                        <p className="text-xs uppercase tracking-wide text-slate-500">
+                                                        <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-neutral-400">
                                                             Destino
                                                         </p>
-                                                        <p className="font-medium text-slate-700">
+                                                        <p className="font-medium text-slate-700 dark:text-slate-200">
                                                             {mov.destino}
                                                         </p>
                                                     </div>
                                                 )}
                                             </div>
                                             {mov.observacion && (
-                                                <div className="mt-3 rounded-[10px] bg-white p-3 text-xs italic text-slate-600">
+                                                <div className="mt-3 rounded-[10px] bg-white p-3 text-xs italic text-slate-600 dark:bg-white/5 dark:text-neutral-400">
                                                     "{mov.observacion}"
                                                 </div>
                                             )}

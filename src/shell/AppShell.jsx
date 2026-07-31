@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { SubNavBar } from "./SubNavBar";
+import ThemeToggle from "../components/ui/ThemeToggle";
 
 /**
  * AppShell
@@ -25,14 +26,14 @@ export function AppShell() {
         <div className="min-h-screen">
             {/* Topbar mobile (solo <md) */}
             <header
-                className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200/60 bg-white/80 px-4 py-3 backdrop-blur md:hidden"
+                className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200/60 bg-white/80 px-4 py-3 backdrop-blur dark:border-white/10 dark:bg-carbon-900/80 md:hidden"
                 style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
             >
                 <div className="flex items-center gap-2">
                     <button
                         type="button"
                         onClick={() => setMenuAbierto(true)}
-                        className="flex h-11 w-11 items-center justify-center rounded-[10px] border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                        className="flex h-11 w-11 items-center justify-center rounded-[10px] border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-carbon-900 dark:text-neutral-200 dark:hover:bg-carbon-800"
                         aria-label="Abrir menú"
                     >
                         ☰
@@ -41,13 +42,16 @@ export function AppShell() {
                         <img
                             src="/logo.png"
                             alt="Licman"
-                            className="h-6 w-auto animate-logo-reveal"
+                            className="h-6 w-auto animate-logo-reveal dark:rounded dark:bg-white dark:p-0.5"
                         />
                     </div>
                 </div>
-                <p className="text-xs font-medium text-slate-500">
-                    {TITULO_POR_RUTA(location.pathname)}
-                </p>
+                <div className="flex items-center gap-1">
+                    <p className="text-xs font-medium text-slate-500 dark:text-neutral-400">
+                        {TITULO_POR_RUTA(location.pathname)}
+                    </p>
+                    <ThemeToggle />
+                </div>
             </header>
 
             {/* Sidebar */}

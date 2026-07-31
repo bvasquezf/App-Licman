@@ -97,10 +97,10 @@ function StockActual() {
 
     const getEstadoBadge = (estado) => {
         if (estado === "sin_stock")
-            return "bg-rose-50 text-rose-700 ring-1 ring-rose-200/60";
+            return "bg-rose-50 text-rose-700 ring-1 ring-rose-200/60 dark:bg-rose-500/10 dark:text-rose-400 dark:ring-rose-500/20";
         if (estado === "bajo")
-            return "bg-amber-50 text-amber-700 ring-1 ring-amber-200/60";
-        return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/60";
+            return "bg-amber-50 text-amber-700 ring-1 ring-amber-200/60 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/20";
+        return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/60 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20";
     };
 
     const getEstadoLabel = (estado) => {
@@ -110,9 +110,9 @@ function StockActual() {
     };
 
     const getStockColor = (estado) => {
-        if (estado === "sin_stock") return "text-rose-600";
-        if (estado === "bajo") return "text-amber-600";
-        return "text-slate-800";
+        if (estado === "sin_stock") return "text-rose-600 dark:text-rose-400";
+        if (estado === "bajo") return "text-amber-600 dark:text-amber-400";
+        return "text-slate-800 dark:text-slate-100";
     };
 
     return (
@@ -170,7 +170,7 @@ function StockActual() {
                         placeholder="Buscar por nombre o código..."
                         value={busqueda}
                         onChange={(e) => setBusqueda(e.target.value)}
-                        className="w-full rounded-[14px] border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 shadow-[0_10px_30px_rgba(15,23,42,0.10)] transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 sm:text-base"
+                        className="w-full rounded-[14px] border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 shadow-[0_10px_30px_rgba(15,23,42,0.10)] transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/10 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500 sm:text-base"
                     />
                 </div>
             </div>
@@ -186,13 +186,13 @@ function StockActual() {
                     const tones = {
                         slate: active
                             ? "bg-slate-800 text-white border-slate-800"
-                            : "bg-white text-slate-700 border-slate-200/60 hover:bg-slate-50",
+                            : "bg-white text-slate-700 border-slate-200/60 hover:bg-slate-50 dark:bg-carbon-800 dark:text-slate-200 dark:border-white/10 dark:hover:bg-white/5",
                         amber: active
                             ? "bg-amber-500 text-white border-amber-500"
-                            : "bg-white text-amber-700 border-amber-200/60 hover:bg-amber-50",
+                            : "bg-white text-amber-700 border-amber-200/60 hover:bg-amber-50 dark:bg-carbon-800 dark:text-amber-400 dark:border-amber-500/20 dark:hover:bg-amber-500/10",
                         rose: active
                             ? "bg-rose-500 text-white border-rose-500"
-                            : "bg-white text-rose-700 border-rose-200/60 hover:bg-rose-50",
+                            : "bg-white text-rose-700 border-rose-200/60 hover:bg-rose-50 dark:bg-carbon-800 dark:text-rose-400 dark:border-rose-500/20 dark:hover:bg-rose-500/10",
                     };
                     return (
                         <button
@@ -205,7 +205,7 @@ function StockActual() {
                                 className={`rounded-full px-1.5 text-xs font-semibold ${
                                     active
                                         ? "bg-white/20 text-white"
-                                        : "bg-slate-100 text-slate-600"
+                                        : "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-neutral-300"
                                 }`}
                             >
                                 {counts[chip.key]}
@@ -237,16 +237,16 @@ function StockActual() {
                     {stockFiltrado.map((item) => (
                         <div
                             key={item.id}
-                            className="group rounded-[14px] border border-slate-200/60 bg-white p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] transition-all duration-200 hover:border-slate-300 hover:shadow-md sm:p-4"
+                            className="group rounded-[14px] border border-slate-200/60 bg-white p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] transition-all duration-200 hover:border-slate-300 hover:shadow-md dark:border-white/10 dark:bg-carbon-900 dark:hover:border-white/20 sm:p-4"
                         >
                             <div className="flex items-start justify-between gap-2">
                                 <div className="min-w-0 flex-1">
                                     {item.codigo && (
-                                        <p className="font-mono text-xs uppercase tracking-wide text-slate-400">
+                                        <p className="font-mono text-xs uppercase tracking-wide text-slate-400 dark:text-neutral-500">
                                             {item.codigo}
                                         </p>
                                     )}
-                                    <h3 className="mt-0.5 truncate text-sm font-semibold text-slate-800">
+                                    <h3 className="mt-0.5 truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
                                         {item.nombre}
                                     </h3>
                                 </div>
@@ -268,24 +268,24 @@ function StockActual() {
                                     >
                                         {item.stock}
                                     </p>
-                                    <p className="text-xs text-slate-500">
+                                    <p className="text-xs text-slate-500 dark:text-neutral-400">
                                         {item.producto?.unidad || "unidades"}
                                     </p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-xs uppercase tracking-wide text-slate-400">
+                                    <p className="text-xs uppercase tracking-wide text-slate-400 dark:text-neutral-500">
                                         Mínimo
                                     </p>
-                                    <p className="text-sm font-medium text-slate-600 tabular-nums">
+                                    <p className="text-sm font-medium text-slate-600 tabular-nums dark:text-neutral-400">
                                         {item.stockMin}
                                     </p>
                                 </div>
                             </div>
 
                             {item.producto?.precio_referencia != null && (
-                                <div className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-500">
+                                <div className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-500 dark:border-white/10 dark:text-neutral-400">
                                     Ref:{" "}
-                                    <span className="font-medium text-slate-700">
+                                    <span className="font-medium text-slate-700 dark:text-slate-200">
                                         {formatCLP(
                                             item.producto.precio_referencia
                                         )}

@@ -22,7 +22,7 @@ export default function TiemposView() {
     const t = kpis.tiempos;
 
     const columns = [
-        { key: "nombre", header: "Técnico", render: (r) => <span className="font-medium text-slate-900">{r.nombre}</span> },
+        { key: "nombre", header: "Técnico", render: (r) => <span className="font-medium text-slate-900 dark:text-slate-100">{r.nombre}</span> },
         { key: "count", header: "OTs", align: "right", render: (r) => <span className="font-mono">{r.count}</span> },
         { key: "diasProm", header: "Días prom.", align: "right", render: (r) => <span className="font-mono">{r.diasProm}</span> },
         { key: "horasProm", header: "Horas prom.", align: "right", render: (r) => <span className="font-mono">{r.horasProm}</span> },
@@ -32,7 +32,7 @@ export default function TiemposView() {
             header: "OT más larga",
             align: "right",
             render: (r) => (
-                <span className={`font-mono ${r.maxDias >= 10 ? "font-bold text-rose-600" : ""}`}>
+                <span className={`font-mono ${r.maxDias >= 10 ? "font-bold text-rose-600 dark:text-rose-400" : ""}`}>
                     {r.maxDias} días
                 </span>
             ),
@@ -44,7 +44,7 @@ export default function TiemposView() {
             title="Tiempos de trabajo"
             subtitle="Duración y horas-hombre dedicadas a las OTs de taller."
         >
-            <div className="rounded-[14px] border-l-4 border-sky-600 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+            <div className="rounded-[14px] border-l-4 border-sky-600 bg-sky-50 px-4 py-3 text-sm text-sky-900 dark:bg-sky-500/10 dark:text-sky-300">
                 Esta vista considera únicamente OTs de Taller (excluye Informes
                 Terreno, que no registran horas).
             </div>
@@ -57,8 +57,8 @@ export default function TiemposView() {
             </div>
 
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-                <article className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:p-6">
-                    <h2 className="text-[1.05rem] font-bold text-slate-900">
+                <article className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:p-6 dark:border-white/10 dark:bg-carbon-900">
+                    <h2 className="text-[1.05rem] font-bold text-slate-900 dark:text-slate-100">
                         Duración promedio por técnico
                     </h2>
                     <div className="mt-3">
@@ -70,8 +70,8 @@ export default function TiemposView() {
                         />
                     </div>
                 </article>
-                <article className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:p-6">
-                    <h2 className="text-[1.05rem] font-bold text-slate-900">
+                <article className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:p-6 dark:border-white/10 dark:bg-carbon-900">
+                    <h2 className="text-[1.05rem] font-bold text-slate-900 dark:text-slate-100">
                         Distribución de duración de OTs
                     </h2>
                     <div className="mt-3">
@@ -85,8 +85,8 @@ export default function TiemposView() {
                 </article>
             </div>
 
-            <article className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:p-6">
-                <h2 className="text-[1.05rem] font-bold text-slate-900">
+            <article className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:p-6 dark:border-white/10 dark:bg-carbon-900">
+                <h2 className="text-[1.05rem] font-bold text-slate-900 dark:text-slate-100">
                     Detalle de tiempos por técnico
                 </h2>
                 <div className="mt-3">

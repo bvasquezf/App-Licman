@@ -562,8 +562,8 @@ export function tableReincidencia(filtered) {
             intervaloTitle: intervaloBadge.title,
             statusClass:
                 e.reincMax >= 4
-                    ? "bg-rose-100 text-rose-700"
-                    : "bg-amber-100 text-amber-700",
+                    ? "bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400"
+                    : "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
             statusText: e.reincMax >= 4 ? "Crítico" : "Alerta",
         };
     });

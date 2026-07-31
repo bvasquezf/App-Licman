@@ -60,13 +60,13 @@ export default function EquipoFoto({
     }, [path]);
 
     const cfg = SIZES[size] ?? SIZES.md;
-    const baseClasses = `${cfg.box} ${cfg.rounded} overflow-hidden border border-slate-200 bg-slate-100 shrink-0`;
+    const baseClasses = `${cfg.box} ${cfg.rounded} overflow-hidden border border-slate-200 bg-slate-100 shrink-0 dark:border-white/10 dark:bg-carbon-800`;
 
     // Placeholder: sin foto o error cargando
     if (!path || estado === "error") {
         return (
             <div
-                className={`${baseClasses} flex items-center justify-center text-slate-400 ${
+                className={`${baseClasses} flex items-center justify-center text-slate-400 dark:text-neutral-500 ${
                     className}
                 `}
                 aria-label={path ? "Sin foto disponible" : "Sin foto"}
@@ -82,7 +82,7 @@ export default function EquipoFoto({
     if (estado !== "ok" || !url) {
         return (
             <div
-                className={`${baseClasses} animate-pulse bg-slate-200 ${className}`}
+                className={`${baseClasses} animate-pulse bg-slate-200 dark:bg-white/10 ${className}`}
                 aria-label="Cargando foto..."
             />
         );

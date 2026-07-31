@@ -32,20 +32,20 @@ export default function ConfirmDialog({
                 aria-modal="true"
                 aria-labelledby="confirm-title"
                 onClick={(e) => e.stopPropagation()}
-                className="w-full max-w-sm rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_20px_50px_rgba(15,23,42,0.25)]"
+                className="w-full max-w-sm rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_20px_50px_rgba(15,23,42,0.25)] dark:border-white/10 dark:bg-carbon-900"
             >
                 <h2
                     id="confirm-title"
-                    className="text-base font-bold text-slate-900"
+                    className="text-base font-bold text-slate-900 dark:text-slate-100"
                 >
                     {title}
                 </h2>
-                <p className="mt-2 text-sm text-slate-600">{message}</p>
+                <p className="mt-2 text-sm text-slate-600 dark:text-neutral-400">{message}</p>
                 <div className="mt-5 flex gap-2">
                     <button
                         type="button"
                         onClick={onCancel}
-                        className="flex-1 rounded-[10px] bg-slate-100 px-3 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
+                        className="flex-1 rounded-[10px] bg-slate-100 px-3 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-200 dark:bg-carbon-800 dark:text-slate-200 dark:hover:bg-white/10"
                     >
                         {cancelLabel}
                     </button>

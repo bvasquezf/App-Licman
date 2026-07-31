@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Dark mode por clase (.dark en <html>), controlado por ThemeContext.
+   Sin esta línea Tailwind 4 usa prefers-color-scheme (solo sistema). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* === Marca Licman — rojo del logo (#ff1a22) + carbón (#313030) === */
 @theme {
     --color-brand-50: #fff1f1;
@@ -52,6 +56,12 @@ body {
     /* Evita que en iOS Safari el rubber-band muestre el color
        del sistema (flash claro en dark mode). */
     overscroll-behavior-y: contain;
+}
+
+/* Modo nocturno: carbón profundo acorde a la marca */
+html.dark body {
+    background: linear-gradient(180deg, #161515 0%, #1b1a1a 100%);
+    color: #e7e5e4; /* stone-200 */
 }
 
 html {

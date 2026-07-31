@@ -62,10 +62,10 @@ function NuevaEntrada() {
 
                 <div className="space-y-4">
                     <Card>
-                        <h3 className="text-sm font-semibold text-slate-800">
+                        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                             💡 ¿Qué es una entrada?
                         </h3>
-                        <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                        <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-neutral-400">
                             Las entradas suman unidades al stock. Usá este
                             formulario para compras a proveedores, conteos
                             iniciales, devoluciones o ajustes de inventario.
@@ -73,31 +73,31 @@ function NuevaEntrada() {
                     </Card>
 
                     <Card>
-                        <h3 className="text-sm font-semibold text-slate-800">
+                        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                             📋 Tipos de ingreso
                         </h3>
-                        <ul className="mt-2 space-y-1.5 text-xs text-slate-500">
+                        <ul className="mt-2 space-y-1.5 text-xs text-slate-500 dark:text-neutral-400">
                             <li>
-                                <span className="font-medium text-slate-700">
+                                <span className="font-medium text-slate-700 dark:text-slate-200">
                                     Compra
                                 </span>{" "}
                                 — requiere proveedor y N° de documento.
                             </li>
                             <li>
-                                <span className="font-medium text-slate-700">
+                                <span className="font-medium text-slate-700 dark:text-slate-200">
                                     Stock inicial
                                 </span>{" "}
                                 — para cargar el conteo al implementar el
                                 sistema.
                             </li>
                             <li>
-                                <span className="font-medium text-slate-700">
+                                <span className="font-medium text-slate-700 dark:text-slate-200">
                                     Ajuste positivo
                                 </span>{" "}
                                 — diferencias detectadas en conteo físico.
                             </li>
                             <li>
-                                <span className="font-medium text-slate-700">
+                                <span className="font-medium text-slate-700 dark:text-slate-200">
                                     Devolución
                                 </span>{" "}
                                 — material que vuelve a bodega desde terreno.

@@ -4,12 +4,12 @@ import { useUnsavedChanges } from "../../hooks/useUnsavedChanges";
 import Card from "../ui/Card";
 
 const inputClass =
-    "w-full rounded-[10px] border border-slate-200/60 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 sm:text-base";
+    "w-full rounded-[10px] border border-slate-200/60 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500 sm:text-base";
 
 function Field({ label, required, children, className = "" }) {
     return (
         <div className={className}>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-200">
                 {label} {required && <span className="text-rose-500">*</span>}
             </label>
             {children}
@@ -93,15 +93,15 @@ function SalidaForm({ productos, onGuardar, stockActual = {} }) {
     return (
         <Card padding="p-0" className="overflow-hidden">
             {/* Header con color sólido (sin gradiente translúcido) */}
-            <div className="flex items-center gap-3 border-b border-slate-200/60 bg-rose-50 px-4 py-3 sm:px-5 sm:py-4">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-rose-100 text-lg">
+            <div className="flex items-center gap-3 border-b border-slate-200/60 bg-rose-50 px-4 py-3 dark:border-white/10 dark:bg-rose-500/10 sm:px-5 sm:py-4">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-rose-100 text-lg dark:bg-rose-500/15">
                     ⬆️
                 </div>
                 <div className="min-w-0 flex-1">
-                    <h2 className="text-base font-semibold text-slate-800">
+                    <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
                         Registrar salida de stock
                     </h2>
-                    <p className="mt-0.5 text-xs text-slate-500">
+                    <p className="mt-0.5 text-xs text-slate-500 dark:text-neutral-400">
                         Consumos internos, entregas a terreno o cualquier
                         egreso
                     </p>
@@ -145,8 +145,8 @@ function SalidaForm({ productos, onGuardar, stockActual = {} }) {
                             <p
                                 className={`mt-1.5 text-xs ${
                                     excedeStock
-                                        ? "text-rose-600"
-                                        : "text-slate-500"
+                                        ? "text-rose-600 dark:text-rose-400"
+                                        : "text-slate-500 dark:text-neutral-400"
                                 }`}
                             >
                                 Stock disponible:{" "}

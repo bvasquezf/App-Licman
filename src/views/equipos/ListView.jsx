@@ -60,20 +60,20 @@ function Paginacion({ pagina, totalPaginas, desde, hasta, total, onCambiar }) {
 
     return (
         <nav
-            className="mt-4 flex flex-col items-center gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-between"
+            className="mt-4 flex flex-col items-center gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-between dark:border-white/10"
             aria-label="Paginación del inventario"
         >
-            <p className="text-[0.78rem] font-medium text-slate-600 tabular-nums">
-                Mostrando <strong className="text-slate-900">{desde}</strong>–
-                <strong className="text-slate-900">{hasta}</strong> de{" "}
-                <strong className="text-slate-900">{total}</strong>
+            <p className="text-[0.78rem] font-medium text-slate-600 tabular-nums dark:text-neutral-400">
+                Mostrando <strong className="text-slate-900 dark:text-slate-100">{desde}</strong>–
+                <strong className="text-slate-900 dark:text-slate-100">{hasta}</strong> de{" "}
+                <strong className="text-slate-900 dark:text-slate-100">{total}</strong>
             </p>
             <div className="flex flex-wrap items-center gap-1.5">
                 <button
                     type="button"
                     onClick={() => onCambiar(pagina - 1)}
                     disabled={!hayAnterior}
-                    className="rounded-lg border-[1.5px] border-slate-300 bg-white px-2.5 py-1.5 text-[0.78rem] font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-lg border-[1.5px] border-slate-300 bg-white px-2.5 py-1.5 text-[0.78rem] font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-200 dark:hover:bg-white/10"
                 >
                     ← Anterior
                 </button>
@@ -81,7 +81,7 @@ function Paginacion({ pagina, totalPaginas, desde, hasta, total, onCambiar }) {
                     p === "…" ? (
                         <span
                             key={`ellipsis-${i}`}
-                            className="px-1 text-[0.78rem] font-bold text-slate-400"
+                            className="px-1 text-[0.78rem] font-bold text-slate-400 dark:text-neutral-500"
                             aria-hidden
                         >
                             …
@@ -95,7 +95,7 @@ function Paginacion({ pagina, totalPaginas, desde, hasta, total, onCambiar }) {
                             className={`min-w-[2.25rem] rounded-lg border-[1.5px] px-2 py-1.5 text-[0.78rem] font-bold tabular-nums transition ${
                                 p === pagina
                                     ? "border-blue-600 bg-blue-600 text-white"
-                                    : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                                    : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-200 dark:hover:bg-white/10"
                             }`}
                         >
                             {p}
@@ -106,7 +106,7 @@ function Paginacion({ pagina, totalPaginas, desde, hasta, total, onCambiar }) {
                     type="button"
                     onClick={() => onCambiar(pagina + 1)}
                     disabled={!haySiguiente}
-                    className="rounded-lg border-[1.5px] border-slate-300 bg-white px-2.5 py-1.5 text-[0.78rem] font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-lg border-[1.5px] border-slate-300 bg-white px-2.5 py-1.5 text-[0.78rem] font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-200 dark:hover:bg-white/10"
                 >
                     Siguiente →
                 </button>
@@ -550,16 +550,16 @@ export default function ListView() {
                 showCorrelativo={false}
             />
 
-            <div className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:p-6">
+            <div className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:p-6 dark:border-white/10 dark:bg-carbon-900">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h2 className="w-full text-[1.2rem] font-bold text-slate-900 sm:w-auto">
+                    <h2 className="w-full text-[1.2rem] font-bold text-slate-900 sm:w-auto dark:text-slate-100">
                         Inventario registrado
                     </h2>
                     <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                         <select
                             value={filtroBodega}
                             onChange={(e) => setFiltroBodega(e.target.value)}
-                            className="rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2 text-[0.92rem] font-medium text-slate-900 outline-none focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15"
+                            className="rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2 text-[0.92rem] font-medium text-slate-900 outline-none focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100"
                             aria-label="Filtrar por bodega"
                         >
                             <option value="todas">Todas las ubicaciones</option>
@@ -579,13 +579,13 @@ export default function ListView() {
                             value={busqueda}
                             onChange={(e) => setBusqueda(e.target.value)}
                             placeholder="🔍 Buscar (N° interno, serie, marca...)"
-                            className="min-w-0 flex-1 rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2 text-[0.92rem] font-medium text-slate-900 outline-none focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15 sm:w-72"
+                            className="min-w-0 flex-1 rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2 text-[0.92rem] font-medium text-slate-900 outline-none focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15 sm:w-72 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500"
                         />
                     </div>
                 </div>
 
                 {duplicados.size > 0 && (
-                    <div className="mt-3 flex items-start gap-2.5 rounded-[10px] border-l-4 border-red-600 bg-red-50 px-3 py-2.5 text-[0.85rem] text-red-900">
+                    <div className="mt-3 flex items-start gap-2.5 rounded-[10px] border-l-4 border-red-600 bg-red-50 px-3 py-2.5 text-[0.85rem] text-red-900 dark:bg-red-500/10 dark:text-red-300">
                         <span className="text-base">⚠️</span>
                         <div className="min-w-0 flex-1">
                             <p className="font-bold">
@@ -593,7 +593,7 @@ export default function ListView() {
                                     ? "Hay 1 N° interno repetido en una bodega"
                                     : `Hay ${duplicados.size} N° internos repetidos`}
                             </p>
-                            <p className="mt-0.5 text-[0.8rem] text-red-800">
+                            <p className="mt-0.5 text-[0.8rem] text-red-800 dark:text-red-300">
                                 Revisá los equipos marcados en rojo. El mismo N°
                                 interno en la misma bodega indica que el equipo
                                 fue registrado más de una vez o que hay un error
@@ -604,7 +604,7 @@ export default function ListView() {
                 )}
 
                 <div className="mt-3 flex flex-wrap items-center gap-3">
-                    <label className="flex cursor-pointer items-center gap-2 text-[0.85rem] font-medium text-slate-700">
+                    <label className="flex cursor-pointer items-center gap-2 text-[0.85rem] font-medium text-slate-700 dark:text-slate-200">
                         <input
                             type="checkbox"
                             checked={soloDuplicados}
@@ -615,7 +615,7 @@ export default function ListView() {
                         />
                         Solo mostrar con N° interno repetido
                         {duplicados.size > 0 && (
-                            <span className="rounded-full bg-red-100 px-2 py-0.5 text-[0.68rem] font-bold text-red-700">
+                            <span className="rounded-full bg-red-100 px-2 py-0.5 text-[0.68rem] font-bold text-red-700 dark:bg-red-500/10 dark:text-red-400">
                                 {duplicados.size}
                             </span>
                         )}
@@ -639,19 +639,19 @@ export default function ListView() {
                         const colorClasses = {
                             slate: activo
                                 ? "border-slate-700 bg-slate-900 text-white"
-                                : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100",
+                                : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-200 dark:hover:bg-white/10",
                             green: activo
                                 ? "border-green-700 bg-green-600 text-white"
-                                : "border-green-300 bg-green-50 text-green-800 hover:bg-green-100",
+                                : "border-green-300 bg-green-50 text-green-800 hover:bg-green-100 dark:border-green-500/30 dark:bg-green-500/10 dark:text-green-400 dark:hover:bg-green-500/20",
                             red: activo
                                 ? "border-red-700 bg-red-600 text-white"
-                                : "border-red-300 bg-red-50 text-red-800 hover:bg-red-100",
+                                : "border-red-300 bg-red-50 text-red-800 hover:bg-red-100 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20",
                             amber: activo
                                 ? "border-amber-700 bg-amber-600 text-white"
-                                : "border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100",
+                                : "border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400 dark:hover:bg-amber-500/20",
                             blue: activo
                                 ? "border-blue-700 bg-blue-600 text-white"
-                                : "border-blue-300 bg-blue-50 text-blue-800 hover:bg-blue-100",
+                                : "border-blue-300 bg-blue-50 text-blue-800 hover:bg-blue-100 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20",
                         }[chip.color];
                         return (
                             <button
@@ -664,7 +664,7 @@ export default function ListView() {
                                 <span>{chip.label}</span>
                                 <span
                                     className={`rounded-full px-1.5 py-0 text-[0.68rem] tabular-nums ${
-                                        activo ? "bg-white/25" : "bg-black/10"
+                                        activo ? "bg-white/25" : "bg-black/10 dark:bg-white/15"
                                     }`}
                                 >
                                     {count}
@@ -675,23 +675,23 @@ export default function ListView() {
                 </div>
 
                 <div className="mt-3 flex flex-wrap gap-2">
-                    <span className="rounded-full bg-green-100 px-2.5 py-1 text-[0.7rem] font-bold uppercase tracking-wide text-green-700">
+                    <span className="rounded-full bg-green-100 px-2.5 py-1 text-[0.7rem] font-bold uppercase tracking-wide text-green-700 dark:bg-green-500/10 dark:text-green-400">
                         Operativo
                     </span>
-                    <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[0.7rem] font-bold uppercase tracking-wide text-amber-700">
+                    <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[0.7rem] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
                         Op. c/ obs.
                     </span>
-                    <span className="rounded-full bg-red-100 px-2.5 py-1 text-[0.7rem] font-bold uppercase tracking-wide text-red-700">
+                    <span className="rounded-full bg-red-100 px-2.5 py-1 text-[0.7rem] font-bold uppercase tracking-wide text-red-700 dark:bg-red-500/10 dark:text-red-400">
                         Inoperativo
                     </span>
                 </div>
 
                 {cargando && equipos.length === 0 ? (
-                    <div className="mt-4 rounded-[10px] border-2 border-dashed border-slate-300 px-5 py-7 text-center text-sm text-slate-500">
+                    <div className="mt-4 rounded-[10px] border-2 border-dashed border-slate-300 px-5 py-7 text-center text-sm text-slate-500 dark:border-white/15 dark:text-neutral-400">
                         Cargando inventario…
                     </div>
                 ) : equiposFiltrados.length === 0 ? (
-                    <div className="mt-4 rounded-[10px] border-2 border-dashed border-slate-300 px-5 py-7 text-center text-sm text-slate-500">
+                    <div className="mt-4 rounded-[10px] border-2 border-dashed border-slate-300 px-5 py-7 text-center text-sm text-slate-500 dark:border-white/15 dark:text-neutral-400">
                         {equiposActivos.length === 0
                             ? 'Aún no hay registros. Ve a "Registrar" para empezar.'
                             : "No se encontraron equipos con los filtros actuales."}
@@ -708,8 +708,8 @@ export default function ListView() {
                                     key={e.id}
                                     className={`group grid grid-cols-[60px_1fr] items-center gap-3 rounded-[10px] border p-3.5 transition sm:grid-cols-[60px_96px_1fr] sm:gap-4 sm:p-4 ${
                                         esDuplicado
-                                            ? "border-red-300 bg-red-50/40 hover:shadow-[0_14px_30px_rgba(220,38,38,0.10)]"
-                                            : "border-slate-200 bg-white hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(16,24,40,0.06)]"
+                                            ? "border-red-300 bg-red-50/40 hover:shadow-[0_14px_30px_rgba(220,38,38,0.10)] dark:border-red-500/30 dark:bg-red-500/10"
+                                            : "border-slate-200 bg-white hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(16,24,40,0.06)] dark:border-white/10 dark:bg-carbon-900"
                                     }`}
                                 >
                                     <div className="self-center rounded-[10px] bg-slate-900 px-1 py-2 text-center font-extrabold text-white">
@@ -738,14 +738,14 @@ export default function ListView() {
                                     <div className="min-w-0">
                                         <div className="flex items-start gap-3">
                                             <div className="min-w-0 flex-1">
-                                                <div className="flex flex-wrap items-center gap-2 text-base font-bold text-slate-900">
+                                                <div className="flex flex-wrap items-center gap-2 text-base font-bold text-slate-900 dark:text-slate-100">
                                             <span>
                                                 {e.marca} {e.modelo}
                                             </span>
                                             <EstadoBadge estado={e.estado_operacional} />
                                             {e.cliente_id ? (
                                                 <span
-                                                    className="rounded-full bg-sky-100 px-2 py-0.5 text-[0.7rem] font-bold text-sky-800"
+                                                    className="rounded-full bg-sky-100 px-2 py-0.5 text-[0.7rem] font-bold text-sky-800 dark:bg-sky-500/10 dark:text-sky-400"
                                                     title={`En cliente: ${clientesById.get(e.cliente_id)?.razon_social ?? `#${e.cliente_id}`}`}
                                                 >
                                                     🏢{" "}
@@ -755,27 +755,27 @@ export default function ListView() {
                                                         `Cliente #${e.cliente_id}`}
                                                 </span>
                                             ) : (
-                                                <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[0.7rem] font-bold text-sky-800">
+                                                <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[0.7rem] font-bold text-sky-800 dark:bg-sky-500/10 dark:text-sky-400">
                                                     {e.bodega}
                                                 </span>
                                             )}
                                             {e.tipo_equipo && (
-                                                <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[0.7rem] font-bold text-violet-800">
+                                                <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[0.7rem] font-bold text-violet-800 dark:bg-violet-500/10 dark:text-violet-400">
                                                     {e.tipo_equipo}
                                                 </span>
                                             )}
                                             {esDuplicado && (
                                                 <span
-                                                    className="rounded-full bg-red-100 px-2 py-0.5 text-[0.7rem] font-bold uppercase tracking-wide text-red-700"
+                                                    className="rounded-full bg-red-100 px-2 py-0.5 text-[0.7rem] font-bold uppercase tracking-wide text-red-700 dark:bg-red-500/10 dark:text-red-400"
                                                     title={`El N° interno "${e.numero_interno}" está repetido en ${e.bodega}`}
                                                 >
                                                     ⚠ N° interno repetido
                                                 </span>
                                             )}
                                         </div>
-                                        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[0.82rem] text-slate-600">
+                                        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[0.82rem] text-slate-600 dark:text-neutral-400">
                                             <span>
-                                                <b className="font-semibold text-slate-900">
+                                                <b className="font-semibold text-slate-900 dark:text-slate-100">
                                                     N° int:
                                                 </b>{" "}
                                                 <span className="font-mono">
@@ -783,14 +783,14 @@ export default function ListView() {
                                                 </span>
                                             </span>
                                             <span>
-                                                <b className="font-semibold text-slate-900">
+                                                <b className="font-semibold text-slate-900 dark:text-slate-100">
                                                     Serie:
                                                 </b>{" "}
                                                 {e.numero_serie || "—"}
                                             </span>
                                             {e.ubicacion_actual && (
                                                 <span>
-                                                    <b className="font-semibold text-slate-900">
+                                                    <b className="font-semibold text-slate-900 dark:text-slate-100">
                                                         Ubicación:
                                                     </b>{" "}
                                                     {e.ubicacion_actual}
@@ -800,7 +800,7 @@ export default function ListView() {
                                                 e.horometro !== undefined &&
                                                 e.horometro !== "" && (
                                                     <span>
-                                                        <b className="font-semibold text-slate-900">
+                                                        <b className="font-semibold text-slate-900 dark:text-slate-100">
                                                             Horómetro:
                                                         </b>{" "}
                                                         {e.horometro}
@@ -813,8 +813,8 @@ export default function ListView() {
                                                 className={`mt-1.5 rounded border-l-[3px] px-2.5 py-1.5 text-[0.85rem] ${
                                                     e.estado_operacional ===
                                                     "Operativo con observaciones"
-                                                        ? "border-amber-600 bg-amber-50"
-                                                        : "border-slate-300 bg-slate-50"
+                                                        ? "border-amber-600 bg-amber-50 dark:bg-amber-500/10 dark:text-slate-200"
+                                                        : "border-slate-300 bg-slate-50 dark:border-white/15 dark:bg-white/5 dark:text-slate-200"
                                                 }`}
                                             >
                                                 {e.observaciones}
@@ -823,14 +823,14 @@ export default function ListView() {
 
                                         {(e.ubicacion_actual ||
                                             e.ultimo_movimiento) && (
-                                            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.82rem] text-slate-700">
+                                            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.82rem] text-slate-700 dark:text-slate-200">
                                                 <span className="font-semibold">
                                                     📍 {e.ubicacion_actual || e.bodega}
                                                 </span>
                                                 {e.ultimo_movimiento && (
-                                                    <span className="text-[0.78rem] text-slate-500">
+                                                    <span className="text-[0.78rem] text-slate-500 dark:text-neutral-400">
                                                         · Movido a{" "}
-                                                        <strong className="text-slate-700">
+                                                        <strong className="text-slate-700 dark:text-slate-200">
                                                             {
                                                                 e.ultimo_movimiento
                                                                     .bodega_destino
@@ -841,13 +841,13 @@ export default function ListView() {
                                                             e.ultimo_movimiento.fecha,
                                                         )}{" "}
                                                         por{" "}
-                                                        <strong className="text-slate-700">
+                                                        <strong className="text-slate-700 dark:text-slate-200">
                                                             {
                                                                 e.ultimo_movimiento
                                                                     .responsable
                                                             }
                                                         </strong>{" "}
-                                                        <span className="rounded-full bg-violet-100 px-1.5 py-0.5 text-[0.68rem] font-bold text-violet-800">
+                                                        <span className="rounded-full bg-violet-100 px-1.5 py-0.5 text-[0.68rem] font-bold text-violet-800 dark:bg-violet-500/10 dark:text-violet-400">
                                                             {
                                                                 e.ultimo_movimiento
                                                                     .motivo
@@ -859,16 +859,16 @@ export default function ListView() {
                                         )}
 
                                         {faltantes.length > 0 && (
-                                            <div className="mt-1.5 text-[0.78rem] font-medium text-red-700">
+                                            <div className="mt-1.5 text-[0.78rem] font-medium text-red-700 dark:text-red-400">
                                                 ⚠ Faltantes:{" "}
                                                 {faltantes.join(", ")}
                                             </div>
                                         )}
 
-                                        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.75rem] text-slate-500">
+                                        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.75rem] text-slate-500 dark:text-neutral-400">
                                             <span>
                                                 👤{" "}
-                                                <b className="font-semibold text-slate-700">
+                                                <b className="font-semibold text-slate-700 dark:text-slate-200">
                                                     {e.responsable}
                                                 </b>
                                             </span>
@@ -881,7 +881,7 @@ export default function ListView() {
                                                     onClick={() =>
                                                         setMovimientoEquipo(e)
                                                     }
-                                                    className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[0.78rem] font-bold text-blue-700 transition hover:-translate-y-px hover:border-blue-300 hover:bg-blue-100"
+                                                    className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[0.78rem] font-bold text-blue-700 transition hover:-translate-y-px hover:border-blue-300 hover:bg-blue-100 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:border-blue-500/50 dark:hover:bg-blue-500/20"
                                                     title="Registrar un traslado o cambio de ubicación"
                                                 >
                                                     🔄 Mover
@@ -891,7 +891,7 @@ export default function ListView() {
                                                     onClick={() =>
                                                         setHistorialEquipo(e)
                                                     }
-                                                    className="rounded-full border border-slate-300 bg-white px-3 py-1 text-[0.78rem] font-bold text-slate-700 transition hover:-translate-y-px hover:bg-slate-50"
+                                                    className="rounded-full border border-slate-300 bg-white px-3 py-1 text-[0.78rem] font-bold text-slate-700 transition hover:-translate-y-px hover:bg-slate-50 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-200 dark:hover:bg-white/10"
                                                     title="Ver historial completo de movimientos"
                                                 >
                                                     📜 Historial
@@ -901,7 +901,7 @@ export default function ListView() {
                                                     onClick={() =>
                                                         setConfirmId(e.id)
                                                     }
-                                                    className="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-[0.78rem] font-bold text-red-700 transition hover:-translate-y-px hover:bg-red-300 hover:bg-red-100"
+                                                    className="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-[0.78rem] font-bold text-red-700 transition hover:-translate-y-px hover:bg-red-300 hover:bg-red-100 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"
                                                 >
                                                     Eliminar
                                                 </button>
@@ -1056,20 +1056,20 @@ function FotoModal({ path, onClose }) {
                 <button
                     type="button"
                     onClick={onClose}
-                    className="absolute -right-3 -top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg transition hover:bg-slate-100"
+                    className="absolute -right-3 -top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg transition hover:bg-slate-100 dark:bg-carbon-800 dark:text-slate-200 dark:hover:bg-white/10"
                     aria-label="Cerrar"
                 >
                     ✕
                 </button>
                 {cargando && (
-                    <div className="flex h-64 w-64 items-center justify-center rounded-[12px] bg-slate-200 text-sm text-slate-500">
+                    <div className="flex h-64 w-64 items-center justify-center rounded-[12px] bg-slate-200 text-sm text-slate-500 dark:bg-carbon-800 dark:text-neutral-400">
                         Cargando…
                     </div>
                 )}
                 {error && !cargando && (
-                    <div className="flex h-64 w-64 flex-col items-center justify-center gap-2 rounded-[12px] bg-white p-6 text-center">
+                    <div className="flex h-64 w-64 flex-col items-center justify-center gap-2 rounded-[12px] bg-white p-6 text-center dark:bg-carbon-900">
                         <span className="text-3xl">⚠️</span>
-                        <p className="text-sm text-slate-700">{error}</p>
+                        <p className="text-sm text-slate-700 dark:text-slate-200">{error}</p>
                     </div>
                 )}
                 {url && !cargando && !error && (

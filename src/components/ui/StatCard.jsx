@@ -1,30 +1,30 @@
 function StatCard({ label, value, hint, icon, tone = "brand" }) {
     const tones = {
         brand: {
-            bg: "bg-brand-100",
-            text: "text-brand-600",
+            bg: "bg-brand-100 dark:bg-brand-500/15",
+            text: "text-brand-600 dark:text-brand-400",
         },
         emerald: {
-            bg: "bg-emerald-50",
-            text: "text-emerald-600",
+            bg: "bg-emerald-50 dark:bg-emerald-500/10",
+            text: "text-emerald-600 dark:text-emerald-400",
         },
         amber: {
-            bg: "bg-amber-50",
-            text: "text-amber-600",
+            bg: "bg-amber-50 dark:bg-amber-500/10",
+            text: "text-amber-600 dark:text-amber-400",
         },
         rose: {
-            bg: "bg-rose-50",
-            text: "text-rose-600",
+            bg: "bg-rose-50 dark:bg-rose-500/10",
+            text: "text-rose-600 dark:text-rose-400",
         },
     };
 
     const t = tones[tone] || tones.brand;
 
     return (
-        <div className="group flex h-full flex-col rounded-[18px] border border-stone-200/80 bg-white p-4 shadow-[0_10px_30px_rgba(49,48,48,0.07)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(49,48,48,0.12)] sm:p-5">
+        <div className="group flex h-full flex-col rounded-[18px] border border-stone-200/80 bg-white p-4 shadow-[0_10px_30px_rgba(49,48,48,0.07)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(49,48,48,0.12)] dark:border-white/10 dark:bg-carbon-900 sm:p-5">
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-medium uppercase tracking-wider text-slate-500">
+                    <p className="truncate text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-neutral-400">
                         {label}
                     </p>
                     <p
@@ -42,7 +42,7 @@ function StatCard({ label, value, hint, icon, tone = "brand" }) {
                 )}
             </div>
             {hint && (
-                <p className="mt-1.5 truncate text-xs text-slate-500">
+                <p className="mt-1.5 truncate text-xs text-slate-500 dark:text-neutral-400">
                     {hint}
                 </p>
             )}

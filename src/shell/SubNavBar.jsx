@@ -30,7 +30,7 @@ export function SubNavBar() {
 
     return (
         <nav
-            className="border-b border-slate-200/60 bg-white/85 backdrop-blur supports-[backdrop-filter]:bg-white/70"
+            className="border-b border-slate-200/60 bg-white/85 backdrop-blur supports-[backdrop-filter]:bg-white/70 dark:border-white/10 dark:bg-carbon-900/85 dark:supports-[backdrop-filter]:bg-carbon-900/70"
             aria-label="Navegación interna"
         >
             <div className="mx-auto flex w-full max-w-screen-xl gap-1.5 overflow-x-auto px-4 py-2.5 sm:px-6">
@@ -43,7 +43,7 @@ export function SubNavBar() {
                             `flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition min-h-[40px] sm:min-h-[44px] ${
                                 isActive
                                     ? "border-brand-600 bg-brand-600 text-white shadow-[0_2px_8px_rgba(232,18,26,0.30)]"
-                                    : "border-transparent text-slate-600 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700"
+                                    : "border-transparent text-slate-600 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700 dark:text-neutral-300 dark:hover:border-white/15 dark:hover:bg-white/10 dark:hover:text-white"
                             }`
                         }
                     >

@@ -205,14 +205,14 @@ function Productos() {
                 subtitle="Crea y administra la ficha de cada producto"
                 actions={
                     <>
-                        <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-[10px] border border-slate-200/60 bg-white px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-slate-50 sm:text-sm">
+                        <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-[10px] border border-slate-200/60 bg-white px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-carbon-800 dark:text-neutral-400 dark:hover:bg-white/5 sm:text-sm">
                             <input
                                 type="checkbox"
                                 checked={mostrarInactivos}
                                 onChange={(e) =>
                                     setMostrarInactivos(e.target.checked)
                                 }
-                                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-white/15 dark:bg-carbon-800"
                             />
                             Inactivos
                         </label>
@@ -264,7 +264,7 @@ function Productos() {
                     placeholder="Buscar por nombre, código o categoría..."
                     value={busqueda}
                     onChange={(e) => setBusqueda(e.target.value)}
-                    className="w-full rounded-[14px] border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 shadow-[0_10px_30px_rgba(15,23,42,0.10)] transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 sm:text-base"
+                    className="w-full rounded-[14px] border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 shadow-[0_10px_30px_rgba(15,23,42,0.10)] transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/10 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500 sm:text-base"
                 />
             </div>
 
@@ -277,10 +277,10 @@ function Productos() {
             {/* Listado */}
             <Card padding="p-4 sm:p-5">
                 <div className="mb-3 flex items-center justify-between sm:mb-4">
-                    <h2 className="text-base font-semibold text-slate-800">
+                    <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
                         Listado
                     </h2>
-                    <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                    <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:bg-white/10 dark:text-neutral-300">
                         {productosFiltrados.length}
                     </span>
                 </div>
@@ -304,26 +304,26 @@ function Productos() {
                                 key={producto.id}
                                 className={`group rounded-[14px] border p-3 transition-all duration-200 hover:shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:p-4 ${
                                     producto.activo
-                                        ? "border-slate-200/60 bg-white"
-                                        : "border-amber-200/60 bg-amber-50/40"
+                                        ? "border-slate-200/60 bg-white dark:border-white/10 dark:bg-carbon-900"
+                                        : "border-amber-200/60 bg-amber-50/40 dark:border-amber-500/20 dark:bg-amber-500/5"
                                 }`}
                             >
                                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                                     <div className="min-w-0 flex-1">
                                         <div className="flex flex-wrap items-center gap-2">
-                                            <h3 className="truncate text-sm font-semibold text-slate-800 sm:text-base">
+                                            <h3 className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100 sm:text-base">
                                                 {producto.nombre}
                                             </h3>
                                             {producto.codigo && (
-                                                <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-600">
+                                                <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-600 dark:bg-white/10 dark:text-neutral-300">
                                                     {producto.codigo}
                                                 </span>
                                             )}
                                             <span
                                                 className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                                                     producto.activo
-                                                        ? "bg-emerald-50 text-emerald-700"
-                                                        : "bg-amber-100 text-amber-800"
+                                                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
+                                                        : "bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-400"
                                                 }`}
                                             >
                                                 {producto.activo
@@ -331,7 +331,7 @@ function Productos() {
                                                     : "Inactivo"}
                                             </span>
                                         </div>
-                                        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 sm:text-sm">
+                                        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-neutral-400 sm:text-sm">
                                             {producto.categoria && (
                                                 <span>📁 {producto.categoria}</span>
                                             )}
@@ -343,11 +343,11 @@ function Productos() {
                                             </span>
                                             {producto.precio_referencia !=
                                             null ? (
-                                                <span className="font-medium text-slate-700">
+                                                <span className="font-medium text-slate-700 dark:text-slate-200">
                                                     💰 {formatCLP(producto.precio_referencia)}
                                                 </span>
                                             ) : (
-                                                <span className="text-amber-600">
+                                                <span className="text-amber-600 dark:text-amber-400">
                                                     💰 Sin precio
                                                 </span>
                                             )}
@@ -359,7 +359,7 @@ function Productos() {
                                             onClick={() =>
                                                 setProductoEditar(producto)
                                             }
-                                            className="rounded-lg px-2.5 py-2 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-50 sm:px-3 sm:py-1.5"
+                                            className="rounded-lg px-2.5 py-2 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-500/10 sm:px-3 sm:py-1.5"
                                         >
                                             Editar
                                         </button>
@@ -368,7 +368,7 @@ function Productos() {
                                                 onClick={() =>
                                                     desactivarProducto(producto)
                                                 }
-                                                className="rounded-lg px-2.5 py-2 text-xs font-medium text-amber-600 transition-colors hover:bg-amber-50 sm:px-3 sm:py-1.5"
+                                                className="rounded-lg px-2.5 py-2 text-xs font-medium text-amber-600 transition-colors hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-500/10 sm:px-3 sm:py-1.5"
                                             >
                                                 Desactivar
                                             </button>
@@ -377,7 +377,7 @@ function Productos() {
                                                 onClick={() =>
                                                     activarProducto(producto)
                                                 }
-                                                className="rounded-lg px-2.5 py-2 text-xs font-medium text-emerald-600 transition-colors hover:bg-emerald-50 sm:px-3 sm:py-1.5"
+                                                className="rounded-lg px-2.5 py-2 text-xs font-medium text-emerald-600 transition-colors hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-500/10 sm:px-3 sm:py-1.5"
                                             >
                                                 Activar
                                             </button>

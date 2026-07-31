@@ -12,7 +12,7 @@ import { useCodigoDisponible } from "../../hooks/useCodigoDisponible";
 function Field({ label, required, children, className = "" }) {
     return (
         <div className={className}>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-200">
                 {label} {required && <span className="text-rose-500">*</span>}
             </label>
             {children}
@@ -21,7 +21,7 @@ function Field({ label, required, children, className = "" }) {
 }
 
 const inputClass =
-    "w-full rounded-[10px] border border-slate-200/60 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 sm:text-base";
+    "w-full rounded-[10px] border border-slate-200/60 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500 sm:text-base";
 
 function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
     const { showToast } = useToast();
@@ -236,13 +236,13 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
     if (productoEditar) {
         return (
             <Card className="overflow-hidden" padding="p-0">
-                <div className="border-b border-slate-200/60 bg-amber-50/60 px-4 py-3 sm:px-5 sm:py-4">
+                <div className="border-b border-slate-200/60 bg-amber-50/60 px-4 py-3 dark:border-white/10 dark:bg-amber-500/10 sm:px-5 sm:py-4">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                         <div className="min-w-0">
-                            <h2 className="text-base font-semibold text-slate-800">
+                            <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
                                 Editar producto
                             </h2>
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs text-slate-500 dark:text-neutral-400">
                                 Modifica los datos base. El stock se ajusta desde
                                 movimientos.
                             </p>
@@ -250,7 +250,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                         <button
                             type="button"
                             onClick={onCancelarEdicion}
-                            className="self-start whitespace-nowrap rounded-[10px] border border-slate-200/60 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 sm:self-auto"
+                            className="self-start whitespace-nowrap rounded-[10px] border border-slate-200/60 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-carbon-800 dark:text-neutral-400 dark:hover:bg-white/5 sm:self-auto"
                         >
                             Cancelar
                         </button>
@@ -314,7 +314,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                                 )}
                             </div>
                             {codigoLibre === false && (
-                                <p className="mt-1 text-xs text-rose-600">
+                                <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">
                                     Este código ya está en uso por otro producto.
                                 </p>
                             )}
@@ -392,40 +392,40 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
     return (
         <Card padding="p-0" className="overflow-hidden">
             {/* Header con stepper */}
-            <div className="border-b border-slate-200/60 bg-gradient-to-br from-blue-50/40 to-slate-50 px-4 py-3 sm:px-5 sm:py-4">
+            <div className="border-b border-slate-200/60 bg-gradient-to-br from-blue-50/40 to-slate-50 px-4 py-3 dark:border-white/10 dark:from-blue-500/10 dark:to-white/5 sm:px-5 sm:py-4">
                 <div className="flex flex-wrap items-center gap-3">
                     <div className="flex items-center gap-2">
                         <div
                             className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold transition-all duration-300 ${
                                 paso === 1
                                     ? "scale-110 bg-blue-600 text-white shadow-sm"
-                                    : "bg-blue-100 text-blue-700"
+                                    : "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300"
                             }`}
                         >
                             1
                         </div>
                         <div
                             className={`h-0.5 w-8 transition-colors duration-300 ${
-                                paso === 2 ? "bg-blue-400" : "bg-slate-200"
+                                paso === 2 ? "bg-blue-400" : "bg-slate-200 dark:bg-white/15"
                             }`}
                         />
                         <div
                             className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold transition-all duration-300 ${
                                 paso === 2
                                     ? "scale-110 bg-blue-600 text-white shadow-sm"
-                                    : "bg-slate-200 text-slate-500"
+                                    : "bg-slate-200 text-slate-500 dark:bg-white/10 dark:text-neutral-400"
                             }`}
                         >
                             2
                         </div>
                     </div>
                     <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-slate-800">
+                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                             {paso === 1
                                 ? "Datos del producto"
                                 : "Stock inicial"}
                         </p>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-slate-500 dark:text-neutral-400">
                             Paso {paso} de 2
                         </p>
                     </div>
@@ -435,7 +435,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
             {/* PASO 1 */}
             {paso === 1 && (
                 <form onSubmit={handleSiguiente} className="p-4 sm:p-5">
-                    <p className="mb-5 text-sm text-slate-500">
+                    <p className="mb-5 text-sm text-slate-500 dark:text-neutral-400">
                         Define la ficha base del producto. El stock lo cargas en
                         el siguiente paso.
                     </p>
@@ -488,7 +488,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                                     }}
                                     title="Regenerar código sugerido"
                                     aria-label="Regenerar código sugerido"
-                                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-slate-200/60 bg-white text-slate-500 transition-colors hover:bg-slate-50 disabled:opacity-40"
+                                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-slate-200/60 bg-white text-slate-500 transition-colors hover:bg-slate-50 disabled:opacity-40 dark:border-white/10 dark:bg-carbon-800 dark:text-neutral-400 dark:hover:bg-white/5"
                                 >
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
@@ -508,13 +508,13 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                                 </button>
                             </div>
                             {codigoLibre === false && (
-                                <p className="mt-1 text-xs text-rose-600">
+                                <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">
                                     Este código ya está en uso. Elegí otro o
                                     regenerá la sugerencia.
                                 </p>
                             )}
                             {prefijo && !codigoEsManual && (
-                                <p className="mt-1 text-xs text-slate-500">
+                                <p className="mt-1 text-xs text-slate-500 dark:text-neutral-400">
                                     Sugerido automáticamente · prefijo{" "}
                                     <span className="font-mono font-semibold">
                                         {prefijo}
@@ -549,7 +549,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                                 {productoData.categoria && !categoriaEsManual && (
                                     <span
                                         aria-hidden="true"
-                                        className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700"
+                                        className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-500/20 dark:text-blue-300"
                                     >
                                         auto
                                     </span>
@@ -618,7 +618,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
             {/* PASO 2 */}
             {paso === 2 && (
                 <form onSubmit={handleSubmit} className="p-4 sm:p-5">
-                    <p className="mb-5 text-sm text-slate-500">
+                    <p className="mb-5 text-sm text-slate-500 dark:text-neutral-400">
                         ¿Este producto ya existe físicamente en la bodega? Si
                         quieres, puedes dejar registrado el stock inicial ahora.
                     </p>
@@ -628,15 +628,15 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                             <button
                                 type="button"
                                 onClick={() => handleElegirStock(true)}
-                                className="group rounded-[14px] border-2 border-slate-200/60 bg-white p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-400 hover:shadow-md"
+                                className="group rounded-[14px] border-2 border-slate-200/60 bg-white p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-400 hover:shadow-md dark:border-white/10 dark:bg-carbon-800"
                             >
-                                <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-[10px] bg-blue-50 text-xl transition-colors group-hover:bg-blue-100">
+                                <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-[10px] bg-blue-50 text-xl transition-colors group-hover:bg-blue-100 dark:bg-blue-500/10 dark:group-hover:bg-blue-500/20">
                                     📦
                                 </div>
-                                <div className="text-sm font-semibold text-slate-800">
+                                <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                                     Sí, cargar stock inicial
                                 </div>
-                                <div className="mt-1 text-xs text-slate-500">
+                                <div className="mt-1 text-xs text-slate-500 dark:text-neutral-400">
                                     El producto ya existe y quiero contar cuánto
                                     hay
                                 </div>
@@ -644,15 +644,15 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                             <button
                                 type="button"
                                 onClick={() => handleElegirStock(false)}
-                                className="group rounded-[14px] border-2 border-slate-200/60 bg-white p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-md"
+                                className="group rounded-[14px] border-2 border-slate-200/60 bg-white p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-md dark:border-white/10 dark:bg-carbon-800 dark:hover:border-white/25"
                             >
-                                <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-[10px] bg-slate-100 text-xl transition-colors group-hover:bg-slate-200">
+                                <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-[10px] bg-slate-100 text-xl transition-colors group-hover:bg-slate-200 dark:bg-white/10 dark:group-hover:bg-white/15">
                                     ➕
                                 </div>
-                                <div className="text-sm font-semibold text-slate-800">
+                                <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                                     No, lo creo sin stock
                                 </div>
-                                <div className="mt-1 text-xs text-slate-500">
+                                <div className="mt-1 text-xs text-slate-500 dark:text-neutral-400">
                                     Lo doy de alta ahora, el stock se cargará
                                     después con ingresos
                                 </div>
@@ -661,7 +661,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                     )}
 
                     {quiereStockInicial === true && (
-                        <div className="space-y-4 rounded-[14px] border border-blue-200/60 bg-blue-50/40 p-4">
+                        <div className="space-y-4 rounded-[14px] border border-blue-200/60 bg-blue-50/40 p-4 dark:border-blue-500/20 dark:bg-blue-500/5">
                             <div className="grid gap-4 md:grid-cols-2">
                                 <Field label="Cantidad inicial" required>
                                     <input
@@ -704,7 +704,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                     )}
 
                     {quiereStockInicial === false && (
-                        <div className="rounded-[14px] border border-slate-200/60 bg-slate-50 p-4 text-sm text-slate-600">
+                        <div className="rounded-[14px] border border-slate-200/60 bg-slate-50 p-4 text-sm text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-neutral-400">
                             El producto se creará con stock 0. Podés registrar
                             ingresos después desde el menú{" "}
                             <strong>Entradas</strong>.
@@ -715,7 +715,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                         <button
                             type="button"
                             onClick={handleAtras}
-                            className="inline-flex items-center justify-center gap-2 rounded-[10px] border border-slate-200/60 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                            className="inline-flex items-center justify-center gap-2 rounded-[10px] border border-slate-200/60 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-carbon-800 dark:text-slate-200 dark:hover:bg-white/5"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"

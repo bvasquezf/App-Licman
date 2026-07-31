@@ -27,11 +27,11 @@ export default function TecnicosView() {
     const totalOTs = rows.reduce((acc, r) => acc + r.total, 0);
 
     const columns = [
-        { key: "nombre", header: "Técnico", render: (r) => <span className="font-medium text-slate-900">{r.nombre}</span> },
+        { key: "nombre", header: "Técnico", render: (r) => <span className="font-medium text-slate-900 dark:text-slate-100">{r.nombre}</span> },
         { key: "esp", header: "Especialidad", render: (r) => r.esp || "—" },
         { key: "total", header: "Total", align: "right", render: (r) => <span className="font-mono">{r.total}</span> },
-        { key: "prev", header: "Prev.", align: "right", render: (r) => <span className="font-mono text-emerald-600">{r.prev}</span> },
-        { key: "corr", header: "Corr.", align: "right", render: (r) => <span className="font-mono text-amber-600">{r.corr}</span> },
+        { key: "prev", header: "Prev.", align: "right", render: (r) => <span className="font-mono text-emerald-600 dark:text-emerald-400">{r.prev}</span> },
+        { key: "corr", header: "Corr.", align: "right", render: (r) => <span className="font-mono text-amber-600 dark:text-amber-400">{r.corr}</span> },
         { key: "diag", header: "Diag.", align: "right", render: (r) => <span className="font-mono">{r.diag}</span> },
         {
             key: "pctOp",
@@ -41,10 +41,10 @@ export default function TecnicosView() {
                 const v = parseInt(r.pctOpLabel);
                 const cls =
                     v >= 40
-                        ? "bg-emerald-100 text-emerald-700"
+                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
                         : v >= 25
-                          ? "bg-amber-100 text-amber-700"
-                          : "bg-rose-100 text-rose-700";
+                          ? "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
+                          : "bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400";
                 return (
                     <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-bold ${cls}`}>
                         {r.pctOpLabel}
@@ -67,8 +67,8 @@ export default function TecnicosView() {
             </div>
 
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-                <article className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:p-6">
-                    <h2 className="text-[1.05rem] font-bold text-slate-900">
+                <article className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:p-6 dark:border-white/10 dark:bg-carbon-900">
+                    <h2 className="text-[1.05rem] font-bold text-slate-900 dark:text-slate-100">
                         Mix de trabajo (Top 5)
                     </h2>
                     <div className="mt-3">
@@ -80,8 +80,8 @@ export default function TecnicosView() {
                         />
                     </div>
                 </article>
-                <article className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:p-6">
-                    <h2 className="text-[1.05rem] font-bold text-slate-900">
+                <article className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:p-6 dark:border-white/10 dark:bg-carbon-900">
+                    <h2 className="text-[1.05rem] font-bold text-slate-900 dark:text-slate-100">
                         Estado final (Top 5)
                     </h2>
                     <div className="mt-3">
@@ -95,8 +95,8 @@ export default function TecnicosView() {
                 </article>
             </div>
 
-            <article className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:p-6">
-                <h2 className="text-[1.05rem] font-bold text-slate-900">
+            <article className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:p-6 dark:border-white/10 dark:bg-carbon-900">
+                <h2 className="text-[1.05rem] font-bold text-slate-900 dark:text-slate-100">
                     Detalle por técnico
                 </h2>
                 <div className="mt-3">

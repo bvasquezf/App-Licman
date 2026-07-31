@@ -120,14 +120,14 @@ export default function ClientesView() {
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                         <div
-                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] text-sm font-extrabold text-white shadow-sm"
-                            style={{
-                                background:
-                                    "linear-gradient(135deg, #2563eb 0%, #06b6d4 100%)",
-                            }}
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-white shadow-sm"
                             aria-hidden="true"
                         >
-                            IL
+                            <img
+                                src="/favicon.png"
+                                alt="Licman"
+                                className="h-7 w-7 object-contain"
+                            />
                         </div>
                         <div className="min-w-0">
                             <h1 className="text-base font-extrabold tracking-tight text-white sm:text-lg">
@@ -150,13 +150,13 @@ export default function ClientesView() {
             </header>
 
             {/* Card principal */}
-            <div className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:p-6">
+            <div className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:p-6 dark:border-white/10 dark:bg-carbon-900">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <h2 className="text-[1.2rem] font-bold text-slate-900">
+                        <h2 className="text-[1.2rem] font-bold text-slate-900 dark:text-slate-100">
                             👥 Clientes registrados
                         </h2>
-                        <p className="text-sm text-slate-500">
+                        <p className="text-sm text-slate-500 dark:text-neutral-400">
                             {clientes.length === 0 && !cargando
                                 ? "Aún no hay clientes en el catálogo."
                                 : `${clientes.length} cliente${clientes.length === 1 ? "" : "s"} en el catálogo.`}
@@ -167,16 +167,16 @@ export default function ClientesView() {
                         value={busqueda}
                         onChange={(e) => setBusqueda(e.target.value)}
                         placeholder="🔍 Buscar por razón social, RUT, contacto, comuna..."
-                        className="min-w-0 flex-1 rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2 text-[0.92rem] font-medium text-slate-900 outline-none focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15 sm:w-72"
+                        className="min-w-0 flex-1 rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2 text-[0.92rem] font-medium text-slate-900 outline-none focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15 sm:w-72 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500"
                     />
                 </div>
 
                 {cargando ? (
-                    <div className="mt-4 rounded-[10px] border-2 border-dashed border-slate-300 px-5 py-7 text-center text-sm text-slate-500">
+                    <div className="mt-4 rounded-[10px] border-2 border-dashed border-slate-300 px-5 py-7 text-center text-sm text-slate-500 dark:border-white/15 dark:text-neutral-400">
                         Cargando clientes…
                     </div>
                 ) : filtrados.length === 0 ? (
-                    <div className="mt-4 rounded-[10px] border-2 border-dashed border-slate-300 px-5 py-7 text-center text-sm text-slate-500">
+                    <div className="mt-4 rounded-[10px] border-2 border-dashed border-slate-300 px-5 py-7 text-center text-sm text-slate-500 dark:border-white/15 dark:text-neutral-400">
                         {clientes.length === 0
                             ? "Aún no hay clientes. Usa «Agregar nuevo» para crear el primero."
                             : "No se encontraron clientes con esos términos."}
@@ -186,29 +186,29 @@ export default function ClientesView() {
                         {filtrados.map((c) => (
                             <li
                                 key={c.id}
-                                className="grid grid-cols-[1fr_auto] items-start gap-3 rounded-[10px] border border-slate-200 bg-white p-3.5 transition hover:border-blue-300 hover:bg-blue-50/40 sm:p-4"
+                                className="grid grid-cols-[1fr_auto] items-start gap-3 rounded-[10px] border border-slate-200 bg-white p-3.5 transition hover:border-blue-300 hover:bg-blue-50/40 sm:p-4 dark:border-white/10 dark:bg-carbon-800 dark:hover:border-blue-500/40 dark:hover:bg-blue-500/10"
                             >
                                 <div className="min-w-0">
                                     <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                                        <span className="text-base font-bold text-slate-900">
+                                        <span className="text-base font-bold text-slate-900 dark:text-slate-100">
                                             {c.razon_social}
                                         </span>
                                         {c.rut && (
-                                            <span className="rounded-full bg-slate-100 px-2 py-0.5 font-mono text-[0.7rem] font-bold text-slate-700">
+                                            <span className="rounded-full bg-slate-100 px-2 py-0.5 font-mono text-[0.7rem] font-bold text-slate-700 dark:bg-white/10 dark:text-slate-200">
                                                 {c.rut}
                                             </span>
                                         )}
                                         {!c.activo && (
-                                            <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[0.7rem] font-bold text-rose-700">
+                                            <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[0.7rem] font-bold text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">
                                                 Inactivo
                                             </span>
                                         )}
                                     </div>
 
-                                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[0.82rem] text-slate-600">
+                                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[0.82rem] text-slate-600 dark:text-neutral-400">
                                         {c.contacto && (
                                             <span>
-                                                <b className="font-semibold text-slate-900">
+                                                <b className="font-semibold text-slate-900 dark:text-slate-100">
                                                     Contacto:
                                                 </b>{" "}
                                                 {c.contacto}
@@ -216,7 +216,7 @@ export default function ClientesView() {
                                         )}
                                         {c.mail && (
                                             <span className="truncate">
-                                                <b className="font-semibold text-slate-900">
+                                                <b className="font-semibold text-slate-900 dark:text-slate-100">
                                                     Mail:
                                                 </b>{" "}
                                                 <span className="break-all">
@@ -226,7 +226,7 @@ export default function ClientesView() {
                                         )}
                                         {c.celular && (
                                             <span>
-                                                <b className="font-semibold text-slate-900">
+                                                <b className="font-semibold text-slate-900 dark:text-slate-100">
                                                     Cel:
                                                 </b>{" "}
                                                 {c.celular}
@@ -235,13 +235,13 @@ export default function ClientesView() {
                                     </div>
 
                                     {(c.direccion || c.comuna) && (
-                                        <div className="mt-0.5 text-[0.78rem] text-slate-500">
+                                        <div className="mt-0.5 text-[0.78rem] text-slate-500 dark:text-neutral-400">
                                             {c.direccion && <span>{c.direccion}</span>}
                                             {c.direccion && c.comuna && (
                                                 <span> · </span>
                                             )}
                                             {c.comuna && (
-                                                <span className="font-semibold text-slate-600">
+                                                <span className="font-semibold text-slate-600 dark:text-neutral-400">
                                                     {c.comuna}
                                                 </span>
                                             )}
@@ -252,7 +252,7 @@ export default function ClientesView() {
                                 <button
                                     type="button"
                                     onClick={() => abrirEditar(c)}
-                                    className="shrink-0 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-[0.78rem] font-bold text-blue-700 transition hover:-translate-y-px hover:border-blue-300 hover:bg-blue-100"
+                                    className="shrink-0 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-[0.78rem] font-bold text-blue-700 transition hover:-translate-y-px hover:border-blue-300 hover:bg-blue-100 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:border-blue-500/50 dark:hover:bg-blue-500/20"
                                     aria-label={`Editar ${c.razon_social}`}
                                 >
                                     ✏️ Editar

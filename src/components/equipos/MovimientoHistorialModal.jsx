@@ -74,16 +74,16 @@ export default function MovimientoHistorialModal({ open, equipo, onClose }) {
                 if (e.target === e.currentTarget) onClose();
             }}
         >
-            <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl sm:rounded-2xl sm:p-6">
+            <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl sm:rounded-2xl sm:p-6 dark:bg-carbon-900">
                 <header className="mb-4 flex items-start justify-between gap-3">
                     <div className="min-w-0">
                         <h2
                             id="historial-mov-titulo"
-                            className="text-[1.15rem] font-bold text-slate-900"
+                            className="text-[1.15rem] font-bold text-slate-900 dark:text-slate-100"
                         >
                             📜 Historial de movimientos
                         </h2>
-                        <p className="mt-1 text-sm text-slate-600">
+                        <p className="mt-1 text-sm text-slate-600 dark:text-neutral-400">
                             {equipo.marca} {equipo.modelo} ·{" "}
                             <span className="font-mono font-semibold">
                                 {equipo.numero_interno}
@@ -94,7 +94,7 @@ export default function MovimientoHistorialModal({ open, equipo, onClose }) {
                         type="button"
                         onClick={onClose}
                         aria-label="Cerrar"
-                        className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                        className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-slate-200"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -108,19 +108,19 @@ export default function MovimientoHistorialModal({ open, equipo, onClose }) {
                 </header>
 
                 {cargando && (
-                    <div className="rounded-[10px] border-2 border-dashed border-slate-300 px-5 py-7 text-center text-sm text-slate-500">
+                    <div className="rounded-[10px] border-2 border-dashed border-slate-300 px-5 py-7 text-center text-sm text-slate-500 dark:border-white/15 dark:text-neutral-400">
                         Cargando movimientos…
                     </div>
                 )}
 
                 {error && (
-                    <div className="rounded-[10px] border-l-4 border-rose-600 bg-rose-50 px-3 py-2.5 text-sm text-rose-900">
+                    <div className="rounded-[10px] border-l-4 border-rose-600 bg-rose-50 px-3 py-2.5 text-sm text-rose-900 dark:bg-rose-500/10 dark:text-rose-300">
                         Error al cargar: {error}
                     </div>
                 )}
 
                 {!cargando && !error && movimientos.length === 0 && (
-                    <div className="rounded-[10px] border-2 border-dashed border-slate-300 px-5 py-7 text-center text-sm text-slate-500">
+                    <div className="rounded-[10px] border-2 border-dashed border-slate-300 px-5 py-7 text-center text-sm text-slate-500 dark:border-white/15 dark:text-neutral-400">
                         Este equipo aún no tiene movimientos registrados.{" "}
                         <strong>
                             Solo se registran traslados posteriores al alta.
@@ -135,27 +135,27 @@ export default function MovimientoHistorialModal({ open, equipo, onClose }) {
                                 key={m.id}
                                 className={`rounded-[10px] border p-3 ${
                                     idx === 0
-                                        ? "border-blue-300 bg-blue-50/40"
-                                        : "border-slate-200 bg-white"
+                                        ? "border-blue-300 bg-blue-50/40 dark:border-blue-500/30 dark:bg-blue-500/10"
+                                        : "border-slate-200 bg-white dark:border-white/10 dark:bg-carbon-800"
                                 }`}
                             >
                                 <div className="flex flex-wrap items-center gap-2 text-sm">
                                     <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[0.7rem] font-bold uppercase tracking-wide text-white">
                                         {formatearFecha(m.fecha)}
                                     </span>
-                                    <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[0.7rem] font-bold text-violet-800">
+                                    <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[0.7rem] font-bold text-violet-800 dark:bg-violet-500/10 dark:text-violet-400">
                                         {m.motivo}
                                     </span>
                                     {m.movimiento_padre_id && (
                                         <span
-                                            className="rounded-full bg-amber-100 px-2 py-0.5 text-[0.7rem] font-bold text-amber-800"
+                                            className="rounded-full bg-amber-100 px-2 py-0.5 text-[0.7rem] font-bold text-amber-800 dark:bg-amber-500/10 dark:text-amber-400"
                                             title="Esta fila es parte de un cambio de equipo (swap) bidireccional"
                                         >
                                             🔁 Pierna de swap
                                         </span>
                                     )}
                                     {m.categoria && (
-                                        <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[0.7rem] font-bold text-sky-800">
+                                        <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[0.7rem] font-bold text-sky-800 dark:bg-sky-500/10 dark:text-sky-400">
                                             {CATEGORIA_LABEL[m.categoria] ??
                                                 m.categoria}
                                         </span>
@@ -166,30 +166,30 @@ export default function MovimientoHistorialModal({ open, equipo, onClose }) {
                                         </span>
                                     )}
                                 </div>
-                                <p className="mt-2 text-[0.92rem] font-semibold text-slate-900">
+                                <p className="mt-2 text-[0.92rem] font-semibold text-slate-900 dark:text-slate-100">
                                     {renderOrigen(m)}
-                                    <span className="mx-2 text-slate-400">
+                                    <span className="mx-2 text-slate-400 dark:text-neutral-500">
                                         →
                                     </span>
-                                    <span className="text-blue-700">
+                                    <span className="text-blue-700 dark:text-blue-400">
                                         {renderDestino(m)}
                                     </span>
                                 </p>
                                 {(m.ubicacion_origen ||
                                     m.ubicacion_destino) && (
-                                    <p className="mt-0.5 text-xs text-slate-500">
+                                    <p className="mt-0.5 text-xs text-slate-500 dark:text-neutral-400">
                                         {m.ubicacion_origen ?? "—"}
-                                        <span className="mx-1.5 text-slate-400">
+                                        <span className="mx-1.5 text-slate-400 dark:text-neutral-500">
                                             →
                                         </span>
-                                        <span className="font-medium text-slate-700">
+                                        <span className="font-medium text-slate-700 dark:text-slate-200">
                                             {m.ubicacion_destino ?? "—"}
                                         </span>
                                     </p>
                                 )}
                                 {m.equipo_relacionado && (
-                                    <p className="mt-1 text-xs text-slate-600">
-                                        <span className="font-semibold text-slate-700">
+                                    <p className="mt-1 text-xs text-slate-600 dark:text-neutral-400">
+                                        <span className="font-semibold text-slate-700 dark:text-slate-200">
                                             Equipo relacionado:{" "}
                                         </span>
                                         #
@@ -211,14 +211,14 @@ export default function MovimientoHistorialModal({ open, equipo, onClose }) {
                                         )}
                                     </p>
                                 )}
-                                <p className="mt-1.5 text-xs text-slate-500">
+                                <p className="mt-1.5 text-xs text-slate-500 dark:text-neutral-400">
                                     👤{" "}
-                                    <span className="font-semibold text-slate-700">
+                                    <span className="font-semibold text-slate-700 dark:text-slate-200">
                                         {m.responsable}
                                     </span>
                                 </p>
                                 {m.notas && (
-                                    <p className="mt-1.5 rounded border-l-[3px] border-slate-300 bg-slate-50 px-2 py-1 text-xs text-slate-700">
+                                    <p className="mt-1.5 rounded border-l-[3px] border-slate-300 bg-slate-50 px-2 py-1 text-xs text-slate-700 dark:border-white/15 dark:bg-white/5 dark:text-slate-200">
                                         {m.notas}
                                     </p>
                                 )}

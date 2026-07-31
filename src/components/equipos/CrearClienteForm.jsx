@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 const clasesInput =
-    "mt-1 block w-full rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2.5 text-base font-medium text-slate-900 outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15";
+    "mt-1 block w-full rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2.5 text-base font-medium text-slate-900 outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500";
 
 const estadoInicial = {
     razon_social: "",
@@ -128,15 +128,15 @@ export default function CrearClienteForm({
                 if (e.target === e.currentTarget && !guardando) onCancel();
             }}
         >
-            <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl sm:rounded-2xl sm:p-6">
+            <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl sm:rounded-2xl sm:p-6 dark:bg-carbon-900">
                 <header className="mb-4">
                     <h2
                         id="cliente-titulo"
-                        className="text-[1.15rem] font-bold text-slate-900"
+                        className="text-[1.15rem] font-bold text-slate-900 dark:text-slate-100"
                     >
                         {modoEdicion ? "✏️ Editar cliente" : "👥 Nuevo cliente"}
                     </h2>
-                    <p className="mt-1 text-sm text-slate-600">
+                    <p className="mt-1 text-sm text-slate-600 dark:text-neutral-400">
                         {modoEdicion
                             ? "Modifica los datos del cliente en el catálogo."
                             : "Agrega un cliente al catálogo. Luego podrás asignarlo a equipos en arriendo, venta o garantía."}
@@ -144,7 +144,7 @@ export default function CrearClienteForm({
                 </header>
 
                 <form onSubmit={handleSubmit} className="space-y-3" noValidate>
-                    <label className="block text-[0.85rem] font-semibold text-slate-900">
+                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Razón social{" "}
                         <span className="font-normal text-rose-600">*</span>
                         <input
@@ -165,7 +165,7 @@ export default function CrearClienteForm({
                     </label>
 
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <label className="block text-[0.85rem] font-semibold text-slate-900">
+                        <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                             RUT
                             <input
                                 type="text"
@@ -180,7 +180,7 @@ export default function CrearClienteForm({
                             />
                         </label>
 
-                        <label className="block text-[0.85rem] font-semibold text-slate-900">
+                        <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                             Contacto
                             <input
                                 type="text"
@@ -196,7 +196,7 @@ export default function CrearClienteForm({
                     </div>
 
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <label className="block text-[0.85rem] font-semibold text-slate-900">
+                        <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                             Mail
                             <input
                                 type="email"
@@ -211,7 +211,7 @@ export default function CrearClienteForm({
                             />
                         </label>
 
-                        <label className="block text-[0.85rem] font-semibold text-slate-900">
+                        <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                             Celular
                             <input
                                 type="tel"
@@ -227,7 +227,7 @@ export default function CrearClienteForm({
                         </label>
                     </div>
 
-                    <label className="block text-[0.85rem] font-semibold text-slate-900">
+                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Dirección
                         <input
                             type="text"
@@ -241,7 +241,7 @@ export default function CrearClienteForm({
                         />
                     </label>
 
-                    <label className="block text-[0.85rem] font-semibold text-slate-900">
+                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Comuna
                         <input
                             type="text"
@@ -271,7 +271,7 @@ export default function CrearClienteForm({
                             type="button"
                             onClick={onCancel}
                             disabled={guardando}
-                            className="flex-1 rounded-[10px] bg-slate-100 px-4 py-3 text-base font-bold text-slate-900 transition hover:bg-slate-200 disabled:opacity-50"
+                            className="flex-1 rounded-[10px] bg-slate-100 px-4 py-3 text-base font-bold text-slate-900 transition hover:bg-slate-200 disabled:opacity-50 dark:bg-carbon-800 dark:text-slate-200 dark:hover:bg-white/10"
                         >
                             Cancelar
                         </button>

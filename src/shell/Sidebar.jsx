@@ -4,6 +4,7 @@ import {
     SECCIONES_PRINCIPALES,
     getSeccionActiva,
 } from "./subNavConfig";
+import ThemeToggle from "../components/ui/ThemeToggle";
 
 /**
  * Sidebar
@@ -199,6 +200,16 @@ function SidebarContenido({ expandido, onCerrarMobile }) {
                     expandido ? "" : "mx-1"
                 }`}
             >
+                <div
+                    className={`mb-2 flex items-center ${
+                        expandido ? "" : "justify-center"
+                    }`}
+                >
+                    <ThemeToggle
+                        variante="sidebar"
+                        mostrarLabel={expandido}
+                    />
+                </div>
                 <div
                     className={`flex items-center gap-2 text-[11px] font-medium text-neutral-500 ${
                         expandido ? "" : "justify-center"

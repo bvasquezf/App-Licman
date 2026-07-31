@@ -137,14 +137,14 @@ export default function EquiposHeader({
                     {/* Branding */}
                     <div className="flex items-center gap-3">
                         <div
-                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] text-sm font-extrabold text-white shadow-sm"
-                            style={{
-                                background:
-                                    "linear-gradient(135deg, #2563eb 0%, #06b6d4 100%)",
-                            }}
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-white shadow-sm"
                             aria-hidden="true"
                         >
-                            IL
+                            <img
+                                src="/favicon.png"
+                                alt="Licman"
+                                className="h-7 w-7 object-contain"
+                            />
                         </div>
                         <div className="min-w-0">
                             <h1 className="text-base font-extrabold tracking-tight text-white sm:text-lg">
@@ -296,12 +296,12 @@ export default function EquiposHeader({
             {/* Card del correlativo asignado — solo si showCorrelativo */}
             {showCorrelativo && (
                 <div
-                    className="flex flex-col gap-3 rounded-[14px] border border-blue-200/70 bg-blue-50/40 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.08)] sm:flex-row sm:items-center sm:justify-between sm:p-5"
+                    className="flex flex-col gap-3 rounded-[14px] border border-blue-200/70 bg-blue-50/40 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.08)] sm:flex-row sm:items-center sm:justify-between sm:p-5 dark:border-blue-500/20 dark:bg-blue-500/10"
                     role="region"
                     aria-label="Próximo correlativo a asignar"
                 >
                 <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="20"
@@ -320,10 +320,10 @@ export default function EquiposHeader({
                         </svg>
                     </div>
                     <div className="min-w-0">
-                        <p className="text-[0.7rem] font-bold uppercase tracking-wider text-blue-700">
+                        <p className="text-[0.7rem] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">
                             Correlativo asignado
                         </p>
-                        <p className="mt-0.5 text-xs text-slate-600">
+                        <p className="mt-0.5 text-xs text-slate-600 dark:text-neutral-400">
                             Vista previa. El número real se asigna al guardar.
                         </p>
                     </div>
@@ -337,14 +337,14 @@ export default function EquiposHeader({
                             </span>
                         </div>
                     ) : estadoCorrelativo === "cargando" ? (
-                        <div className="flex h-14 min-w-[100px] items-center justify-center rounded-[12px] bg-slate-200 px-4">
-                            <span className="text-sm font-medium text-slate-500">
+                        <div className="flex h-14 min-w-[100px] items-center justify-center rounded-[12px] bg-slate-200 px-4 dark:bg-white/10">
+                            <span className="text-sm font-medium text-slate-500 dark:text-neutral-400">
                                 Consultando…
                             </span>
                         </div>
                     ) : (
-                        <div className="flex h-14 min-w-[100px] items-center justify-center rounded-[12px] bg-amber-100 px-4">
-                            <span className="text-xs font-medium text-amber-800">
+                        <div className="flex h-14 min-w-[100px] items-center justify-center rounded-[12px] bg-amber-100 px-4 dark:bg-amber-500/10">
+                            <span className="text-xs font-medium text-amber-800 dark:text-amber-400">
                                 No disponible
                             </span>
                         </div>
@@ -354,7 +354,7 @@ export default function EquiposHeader({
                         onClick={refrescarTodo}
                         disabled={recargando}
                         aria-label="Refrescar conteo y correlativo"
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 hover:text-blue-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 hover:text-blue-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-carbon-800 dark:text-neutral-400 dark:hover:bg-white/5 dark:hover:text-blue-400"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"

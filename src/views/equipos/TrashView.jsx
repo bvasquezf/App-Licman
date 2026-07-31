@@ -118,13 +118,13 @@ export default function TrashView() {
         <section className="space-y-4">
             <EquiposHeader showCorrelativo={false} />
 
-            <div className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:p-6">
+            <div className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:p-6 dark:border-white/10 dark:bg-carbon-900">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <h2 className="text-[1.2rem] font-bold text-slate-900">
+                        <h2 className="text-[1.2rem] font-bold text-slate-900 dark:text-slate-100">
                             🗑️ Papelera
                         </h2>
-                        <p className="text-sm text-slate-500">
+                        <p className="text-sm text-slate-500 dark:text-neutral-400">
                             Equipos eliminados. Podés restaurarlos o borrarlos
                             definitivamente.
                         </p>
@@ -134,16 +134,16 @@ export default function TrashView() {
                         value={busqueda}
                         onChange={(e) => setBusqueda(e.target.value)}
                         placeholder="🔍 Buscar en papelera..."
-                        className="min-w-0 flex-1 rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2 text-[0.92rem] font-medium text-slate-900 outline-none focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15 sm:w-72"
+                        className="min-w-0 flex-1 rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2 text-[0.92rem] font-medium text-slate-900 outline-none focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15 sm:w-72 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500"
                     />
                 </div>
 
                 {cargando ? (
-                    <div className="mt-4 rounded-[10px] border-2 border-dashed border-slate-300 px-5 py-7 text-center text-sm text-slate-500">
+                    <div className="mt-4 rounded-[10px] border-2 border-dashed border-slate-300 px-5 py-7 text-center text-sm text-slate-500 dark:border-white/15 dark:text-neutral-400">
                         Cargando papelera…
                     </div>
                 ) : papelera.length === 0 ? (
-                    <div className="mt-4 rounded-[10px] border-2 border-dashed border-slate-300 px-5 py-7 text-center text-sm text-slate-500">
+                    <div className="mt-4 rounded-[10px] border-2 border-dashed border-slate-300 px-5 py-7 text-center text-sm text-slate-500 dark:border-white/15 dark:text-neutral-400">
                         {equipos.length === 0
                             ? "La papelera está vacía. Los equipos eliminados aparecerán acá."
                             : "No se encontraron equipos con esos términos."}
@@ -153,7 +153,7 @@ export default function TrashView() {
                         {papelera.map((e) => (
                             <article
                                 key={e.id}
-                                className="grid grid-cols-[60px_1fr] items-start gap-3 rounded-[10px] border border-rose-200 bg-rose-50/30 p-3.5 sm:p-4"
+                                className="grid grid-cols-[60px_1fr] items-start gap-3 rounded-[10px] border border-rose-200 bg-rose-50/30 p-3.5 sm:p-4 dark:border-rose-500/20 dark:bg-rose-500/5"
                             >
                                 <div className="rounded-[10px] bg-rose-700 px-1 py-2 text-center font-extrabold text-white">
                                     <span className="block text-[1.2rem] leading-none tabular-nums">
@@ -166,23 +166,23 @@ export default function TrashView() {
                                     </span>
                                 </div>
                                 <div className="min-w-0">
-                                    <div className="flex flex-wrap items-center gap-2 text-base font-bold text-slate-900">
+                                    <div className="flex flex-wrap items-center gap-2 text-base font-bold text-slate-900 dark:text-slate-100">
                                         <span>
                                             {e.marca} {e.modelo}
                                         </span>
                                         <EstadoBadge estado={e.estado_operacional} />
-                                        <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[0.7rem] font-bold text-sky-800">
+                                        <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[0.7rem] font-bold text-sky-800 dark:bg-sky-500/10 dark:text-sky-400">
                                             {e.bodega}
                                         </span>
                                         {e.tipo_equipo && (
-                                            <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[0.7rem] font-bold text-violet-800">
+                                            <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[0.7rem] font-bold text-violet-800 dark:bg-violet-500/10 dark:text-violet-400">
                                                 {e.tipo_equipo}
                                             </span>
                                         )}
                                     </div>
-                                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[0.82rem] text-slate-600">
+                                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[0.82rem] text-slate-600 dark:text-neutral-400">
                                         <span>
-                                            <b className="font-semibold text-slate-900">
+                                            <b className="font-semibold text-slate-900 dark:text-slate-100">
                                                 N° int:
                                             </b>{" "}
                                             <span className="font-mono">
@@ -190,27 +190,27 @@ export default function TrashView() {
                                             </span>
                                         </span>
                                         <span>
-                                            <b className="font-semibold text-slate-900">
+                                            <b className="font-semibold text-slate-900 dark:text-slate-100">
                                                 Serie:
                                             </b>{" "}
                                             {e.numero_serie || "—"}
                                         </span>
                                         {e.ubicacion_actual && (
                                             <span>
-                                                <b className="font-semibold text-slate-900">
+                                                <b className="font-semibold text-slate-900 dark:text-slate-100">
                                                     Ubicación:
                                                 </b>{" "}
                                                 {e.ubicacion_actual}
                                             </span>
                                         )}
                                     </div>
-                                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.75rem] text-slate-500">
-                                        <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[0.68rem] font-bold text-rose-700">
+                                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.75rem] text-slate-500 dark:text-neutral-400">
+                                        <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[0.68rem] font-bold text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">
                                             🗑️ Eliminado {formatearFecha(e.deleted_at)}
                                         </span>
                                         <span>
                                             👤{" "}
-                                            <b className="font-semibold text-slate-700">
+                                            <b className="font-semibold text-slate-700 dark:text-slate-200">
                                                 {e.responsable}
                                             </b>
                                         </span>
@@ -219,7 +219,7 @@ export default function TrashView() {
                                                 type="button"
                                                 onClick={() => setRestaurarId(e.id)}
                                                 disabled={procesando}
-                                                className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[0.78rem] font-bold text-blue-700 transition hover:-translate-y-px hover:border-blue-300 hover:bg-blue-100 disabled:opacity-50"
+                                                className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[0.78rem] font-bold text-blue-700 transition hover:-translate-y-px hover:border-blue-300 hover:bg-blue-100 disabled:opacity-50 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:border-blue-500/50 dark:hover:bg-blue-500/20"
                                             >
                                                 ↩️ Restaurar
                                             </button>
@@ -227,7 +227,7 @@ export default function TrashView() {
                                                 type="button"
                                                 onClick={() => setHardDeleteId(e.id)}
                                                 disabled={procesando}
-                                                className="rounded-full border border-rose-300 bg-rose-50 px-3 py-1 text-[0.78rem] font-bold text-rose-700 transition hover:-translate-y-px hover:bg-rose-100 disabled:opacity-50"
+                                                className="rounded-full border border-rose-300 bg-rose-50 px-3 py-1 text-[0.78rem] font-bold text-rose-700 transition hover:-translate-y-px hover:bg-rose-100 disabled:opacity-50 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/20"
                                             >
                                                 Borrar definitivo
                                             </button>

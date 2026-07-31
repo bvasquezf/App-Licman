@@ -171,7 +171,8 @@ export function getAvgIntervaloForEquipo(rows) {
 export function getIntervaloBadge(intervalo) {
     if (intervalo == null) {
         return {
-            className: "bg-slate-200 text-slate-600",
+            className:
+                "bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-neutral-300",
             text: "—",
             title: "Menos de 2 visitas con fecha — no se puede calcular",
         };
@@ -179,20 +180,23 @@ export function getIntervaloBadge(intervalo) {
     const dias = Math.round(intervalo);
     if (dias < 7) {
         return {
-            className: "bg-rose-100 text-rose-700",
+            className:
+                "bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400",
             text: `${dias} día${dias === 1 ? "" : "s"}`,
             title: "Promedio entre visitas consecutivas",
         };
     }
     if (dias < 30) {
         return {
-            className: "bg-amber-100 text-amber-700",
+            className:
+                "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
             text: `${dias} días`,
             title: "Promedio entre visitas consecutivas",
         };
     }
     return {
-        className: "bg-emerald-100 text-emerald-700",
+        className:
+            "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
         text: `${dias} días`,
         title: "Promedio entre visitas consecutivas",
     };

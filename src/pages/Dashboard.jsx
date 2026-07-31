@@ -253,7 +253,7 @@ function Dashboard() {
                     style={{ animationDelay: "240ms" }}
                 >
                     <div className="mb-4 flex items-center justify-between">
-                        <h2 className="text-base font-semibold text-slate-800">
+                        <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
                             Stock bajo mínimo
                         </h2>
                         <span className="rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-medium text-rose-700">
@@ -274,7 +274,7 @@ function Dashboard() {
                             description="Ningún producto está bajo su stock mínimo"
                         />
                     ) : (
-                        <ul className="divide-y divide-slate-100">
+                        <ul className="divide-y divide-slate-100 dark:divide-white/10">
                             {stockBajo.slice(0, 6).map((item) => {
                                 const producto = productos.find(
                                     (p) => p.id === item.id
@@ -285,10 +285,10 @@ function Dashboard() {
                                         className="flex items-center justify-between py-2.5 sm:py-3"
                                     >
                                         <div className="min-w-0 flex-1">
-                                            <p className="truncate text-sm font-medium text-slate-800">
+                                            <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
                                                 {producto?.nombre}
                                             </p>
-                                            <p className="text-xs text-slate-500">
+                                            <p className="text-xs text-slate-500 dark:text-neutral-400">
                                                 Stock: {item.stock}
                                             </p>
                                         </div>
@@ -308,7 +308,7 @@ function Dashboard() {
                     style={{ animationDelay: "320ms" }}
                 >
                     <div className="mb-4 flex items-center justify-between">
-                        <h2 className="text-base font-semibold text-slate-800">
+                        <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
                             Últimos movimientos
                         </h2>
                     </div>
@@ -326,7 +326,7 @@ function Dashboard() {
                             description="Aún no se han registrado movimientos"
                         />
                     ) : (
-                        <ul className="divide-y divide-slate-100">
+                        <ul className="divide-y divide-slate-100 dark:divide-white/10">
                             {movimientos.slice(0, 5).map((mov) => (
                                 <li
                                     key={mov.id}
@@ -340,10 +340,10 @@ function Dashboard() {
                                         {mov.tipo_movimiento}
                                     </span>
                                     <div className="min-w-0 flex-1">
-                                        <p className="truncate text-sm font-medium text-slate-800">
+                                        <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
                                             {mov.productos?.nombre}
                                         </p>
-                                        <p className="text-xs text-slate-500">
+                                        <p className="text-xs text-slate-500 dark:text-neutral-400">
                                             {mov.fecha}
                                         </p>
                                     </div>
