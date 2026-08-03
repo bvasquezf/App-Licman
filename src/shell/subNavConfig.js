@@ -75,14 +75,14 @@ export const SUB_NAV_POR_SECCION = {
     equipos: [
         {
             to: "/equipos",
-            label: "Registrar",
-            icon: "📝",
+            label: "Inventario",
+            icon: "📋",
             end: true,
         },
         {
-            to: "/equipos/inventario",
-            label: "Inventario",
-            icon: "📋",
+            to: "/equipos/registrar",
+            label: "Registrar",
+            icon: "📝",
         },
         {
             to: "/equipos/papelera",

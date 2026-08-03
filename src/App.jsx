@@ -49,9 +49,13 @@ function App() {
                 <Route path="/bodega/stock" element={<StockActual />} />
                 <Route path="/bodega/historial" element={<Historial />} />
 
-                {/* Equipos */}
-                <Route path="/equipos" element={<FormViewEquipos />} />
-                <Route path="/equipos/inventario" element={<ListViewEquipos />} />
+                {/* Equipos — Inventario es la pestaña principal */}
+                <Route path="/equipos" element={<ListViewEquipos />} />
+                <Route path="/equipos/registrar" element={<FormViewEquipos />} />
+                <Route
+                    path="/equipos/inventario"
+                    element={<Navigate to="/equipos" replace />}
+                />
                 <Route path="/equipos/clientes" element={<ClientesViewEquipos />} />
                 <Route path="/equipos/papelera" element={<TrashViewEquipos />} />
                 <Route path="/equipos/exportar" element={<ExportViewEquipos />} />
