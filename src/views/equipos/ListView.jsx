@@ -127,6 +127,176 @@ function parseFaltantes(valor) {
 }
 
 /**
+ * TablaEquipos
+ * ------------
+ * Vista tabular del inventario (alternativa a las cards). Recibe la
+ * página actual ya filtrada/ordenada y los mismos handlers de acciones
+ * que usan las cards (mover, historial, eliminar, ver foto), así no se
+ * duplica lógica. En móvil hace scroll horizontal.
+ */
+function TablaEquipos({
+    equipos,
+    duplicados,
+    clientesById,
+    onMover,
+    onHistorial,
+    onEliminar,
+    onVerFoto,
+}) {
+    const thClass =
+        "px-3 py-2.5 text-[0.72rem] font-bold uppercase tracking-wide whitespace-nowrap";
+    return (
+        <div className="mt-4 overflow-x-auto rounded-[10px] border border-slate-200 dark:border-white/10">
+            <table className="w-full min-w-[760px] border-collapse text-left text-[0.85rem]">
+                <thead>
+                    <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-carbon-800 dark:text-neutral-400">
+                        <th className={thClass}>N°</th>
+                        <th className={thClass}>Marca / Modelo</th>
+                        <th className={thClass}>N° interno</th>
+                        <th className={thClass}>Bodega / Ubicación</th>
+                        <th className={thClass}>Estado</th>
+                        <th className={thClass}>Faltantes</th>
+                        <th className={thClass}>Foto</th>
+                        <th className={`${thClass} text-right`}>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {equipos.map((e) => {
+                        const faltantes = parseFaltantes(
+                            e.elementos_faltantes,
+                        );
+                        const correlativo = e.correlativo ?? "—";
+                        const dupKey = `${e.bodega}|${e.numero_interno}`;
+                        const esDuplicado = duplicados.has(dupKey);
+                        return (
+                            <tr
+                                key={e.id}
+                                className={`border-b border-slate-100 transition last:border-b-0 dark:border-white/5 ${
+                                    esDuplicado
+                                        ? "bg-red-50/40 hover:bg-red-50 dark:bg-red-500/10 dark:hover:bg-red-500/15"
+                                        : "hover:bg-slate-50 dark:hover:bg-white/5"
+                                }`}
+                            >
+                                <td className="px-3 py-2.5">
+                                    <span className="inline-block rounded-[8px] bg-slate-900 px-2 py-1 text-[0.85rem] font-extrabold text-white tabular-nums">
+                                        {String(correlativo).padStart(4, "0")}
+                                    </span>
+                                </td>
+                                <td className="px-3 py-2.5">
+                                    <span className="font-bold text-slate-900 dark:text-slate-100">
+                                        {e.marca} {e.modelo}
+                                    </span>
+                                    {e.numero_serie && (
+                                        <span className="block text-[0.78rem] text-slate-500 dark:text-neutral-400">
+                                            Serie: {e.numero_serie}
+                                        </span>
+                                    )}
+                                </td>
+                                <td className="px-3 py-2.5 font-mono tabular-nums">
+                                    {esDuplicado ? (
+                                        <span
+                                            className="font-bold text-red-700 dark:text-red-400"
+                                            title={`El N° interno "${e.numero_interno}" está repetido en ${e.bodega}`}
+                                        >
+                                            ⚠ {e.numero_interno || "—"}
+                                        </span>
+                                    ) : (
+                                        <span className="text-slate-700 dark:text-slate-200">
+                                            {e.numero_interno || "—"}
+                                        </span>
+                                    )}
+                                </td>
+                                <td className="px-3 py-2.5">
+                                    {e.cliente_id ? (
+                                        <span
+                                            className="inline-block rounded-full bg-sky-100 px-2 py-0.5 text-[0.75rem] font-bold text-sky-800 dark:bg-sky-500/10 dark:text-sky-400"
+                                            title="En cliente"
+                                        >
+                                            🏢{" "}
+                                            {clientesById.get(e.cliente_id)
+                                                ?.razon_social ??
+                                                `Cliente #${e.cliente_id}`}
+                                        </span>
+                                    ) : (
+                                        <span className="font-medium text-slate-700 dark:text-slate-200">
+                                            {e.bodega}
+                                        </span>
+                                    )}
+                                    {e.ubicacion_actual && (
+                                        <span className="block text-[0.78rem] text-slate-500 dark:text-neutral-400">
+                                            📍 {e.ubicacion_actual}
+                                        </span>
+                                    )}
+                                </td>
+                                <td className="px-3 py-2.5">
+                                    <EstadoBadge
+                                        estado={e.estado_operacional}
+                                    />
+                                </td>
+                                <td className="px-3 py-2.5">
+                                    {faltantes.length > 0 ? (
+                                        <span
+                                            className="font-medium text-red-700 dark:text-red-400"
+                                            title={faltantes.join(", ")}
+                                        >
+                                            ⚠ {faltantes.length}
+                                        </span>
+                                    ) : (
+                                        <span className="text-slate-400 dark:text-neutral-500">
+                                            —
+                                        </span>
+                                    )}
+                                </td>
+                                <td className="px-3 py-2.5">
+                                    <EquipoFoto
+                                        path={e.foto_url || null}
+                                        size="sm"
+                                        onClick={() =>
+                                            onVerFoto(e.foto_url || null)
+                                        }
+                                    />
+                                </td>
+                                <td className="px-3 py-2.5">
+                                    <div className="flex justify-end gap-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => onMover(e)}
+                                            className="flex h-11 w-11 items-center justify-center rounded-full border border-blue-200 bg-blue-50 text-blue-700 transition hover:border-blue-300 hover:bg-blue-100 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:border-blue-500/50 dark:hover:bg-blue-500/20"
+                                            title="Registrar un traslado o cambio de ubicación"
+                                            aria-label={`Mover ${e.marca} ${e.modelo}`}
+                                        >
+                                            🔄
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => onHistorial(e)}
+                                            className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-200 dark:hover:bg-white/10"
+                                            title="Ver historial completo de movimientos"
+                                            aria-label={`Ver historial de ${e.marca} ${e.modelo}`}
+                                        >
+                                            📜
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => onEliminar(e.id)}
+                                            className="flex h-11 w-11 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-700 transition hover:bg-red-100 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"
+                                            title={`Eliminar ${e.marca} ${e.modelo}`}
+                                            aria-label={`Eliminar ${e.marca} ${e.modelo}`}
+                                        >
+                                            🗑
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+        </div>
+    );
+}
+
+/**
  * Vista principal de inventario de equipos.
  * Self-contained: carga desde cache + Supabase, expone handlers
  * de movimiento y eliminación (con soporte offline).
@@ -148,12 +318,33 @@ export default function ListView() {
     // Orden del inventario: "recientes" | "antiguos" | "marca" |
     // "numero_interno" | "bodega".
     const [orden, setOrden] = useState("recientes");
+    // Vista del inventario: "cards" (original) | "tabla". Persistida en
+    // localStorage; si la lectura falla (ej. modo privado) queda "cards".
+    const [vista, setVista] = useState(() => {
+        try {
+            return localStorage.getItem("equipos:vista") === "tabla"
+                ? "tabla"
+                : "cards";
+        } catch {
+            return "cards";
+        }
+    });
     const [movimientoEquipo, setMovimientoEquipo] = useState(null);
     const [historialEquipo, setHistorialEquipo] = useState(null);
     const [pagina, setPagina] = useState(1);
     const [fotoModalPath, setFotoModalPath] = useState(null);
     // Modal hermano para crear cliente desde el dialog de movimiento.
     const [crearClienteAbierto, setCrearClienteAbierto] = useState(false);
+
+    // Cambia la vista y la persiste; si localStorage falla, queda en memoria.
+    const handleCambiarVista = (nueva) => {
+        setVista(nueva);
+        try {
+            localStorage.setItem("equipos:vista", nueva);
+        } catch {
+            // Sin persistencia: la elección dura solo esta sesión.
+        }
+    };
 
     const cargar = async () => {
         setCargando(true);
@@ -645,6 +836,30 @@ export default function ListView() {
                             <option value="numero_interno">N° interno</option>
                             <option value="bodega">Bodega (A-Z)</option>
                         </select>
+                        <div
+                            className="flex self-start rounded-[10px] border-[1.5px] border-slate-300 bg-white p-0.5 sm:self-auto dark:border-white/15 dark:bg-carbon-800"
+                            role="group"
+                            aria-label="Cambiar vista del inventario"
+                        >
+                            {[
+                                { id: "cards", label: "⠿ Cards" },
+                                { id: "tabla", label: "☰ Tabla" },
+                            ].map((op) => (
+                                <button
+                                    key={op.id}
+                                    type="button"
+                                    onClick={() => handleCambiarVista(op.id)}
+                                    aria-pressed={vista === op.id}
+                                    className={`rounded-[8px] px-3 py-1.5 text-[0.85rem] font-bold transition ${
+                                        vista === op.id
+                                            ? "bg-slate-900 text-white dark:bg-white/15 dark:text-slate-100"
+                                            : "text-slate-600 hover:bg-slate-100 dark:text-neutral-400 dark:hover:bg-white/10"
+                                    }`}
+                                >
+                                    {op.label}
+                                </button>
+                            ))}
+                        </div>
                         <input
                             type="search"
                             value={busqueda}
@@ -782,6 +997,16 @@ export default function ListView() {
                             ? 'Aún no hay registros. Ve a "Registrar" para empezar.'
                             : "No se encontraron equipos con los filtros actuales."}
                     </div>
+                ) : vista === "tabla" ? (
+                    <TablaEquipos
+                        equipos={equiposPaginados}
+                        duplicados={duplicados}
+                        clientesById={clientesById}
+                        onMover={setMovimientoEquipo}
+                        onHistorial={setHistorialEquipo}
+                        onEliminar={setConfirmId}
+                        onVerFoto={setFotoModalPath}
+                    />
                 ) : (
                     <div className="mt-4 space-y-2">
                         {equiposPaginados.map((e) => {
