@@ -1,8 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-    BODEGAS,
-    BODEGA_EN_CLIENTE,
-} from "../../lib/equiposConstants";
+import { BODEGA_EN_CLIENTE } from "../../lib/equiposConstants";
 import EstadoBadge from "../../components/equipos/EstadoBadge";
 import ConfirmDialog from "../../components/equipos/ConfirmDialog";
 import MovimientoDialog from "../../components/equipos/MovimientoDialog";
@@ -26,6 +23,11 @@ import {
 // Cantidad de cards por página en el inventario. Mobile-first: 20
 // mantiene un scroll razonable sin saturar la pantalla.
 const ITEMS_POR_PAGINA = 20;
+
+// Orden fijo del inventario: correlativo descendente (más recientes
+// primero). El selector de orden se eliminó de la UI; el historial
+// cronológico completo vive en la pestaña Movimientos.
+const ORDEN_INVENTARIO = "recientes";
 
 const CAMPOS_BUSQUEDA = [
     "numero_interno",
@@ -311,13 +313,9 @@ export default function ListView() {
     const [busqueda, setBusqueda] = useState("");
     const [filtroBodega, setFiltroBodega] = useState("todas");
     const [confirmId, setConfirmId] = useState(null);
-    const [soloDuplicados, setSoloDuplicados] = useState(false);
     // Filtros rápidos combinables: array de ids activos.
     // Array vacío = sin filtro rápido (equivale a "Todos").
     const [filtroRapido, setFiltroRapido] = useState([]);
-    // Orden del inventario: "recientes" | "antiguos" | "marca" |
-    // "numero_interno" | "bodega".
-    const [orden, setOrden] = useState("recientes");
     // Vista del inventario: "cards" (original) | "tabla". Persistida en
     // localStorage; si la lectura falla (ej. modo privado) queda "cards".
     const [vista, setVista] = useState(() => {
@@ -442,10 +440,6 @@ export default function ListView() {
             ) {
                 return false;
             }
-            if (soloDuplicados) {
-                const key = `${e.bodega}|${e.numero_interno}`;
-                if (!duplicados.has(key)) return false;
-            }
             // Filtros rápidos combinables: se aplican TODOS los activos (AND).
             if (
                 filtroRapido.includes("operativos") &&
@@ -470,7 +464,7 @@ export default function ListView() {
                     .includes(texto),
             );
         });
-    }, [equiposActivos, busqueda, filtroBodega, soloDuplicados, duplicados, filtroRapido]);
+    }, [equiposActivos, busqueda, filtroBodega, filtroRapido]);
 
     // Orden aplicado DESPUÉS de filtrar y ANTES de paginar.
     const equiposOrdenados = useMemo(() => {
@@ -481,7 +475,7 @@ export default function ListView() {
             });
         const correlativoAsc = (a, b) =>
             (a.correlativo ?? 0) - (b.correlativo ?? 0);
-        switch (orden) {
+        switch (ORDEN_INVENTARIO) {
             case "antiguos":
                 lista.sort(correlativoAsc);
                 break;
@@ -514,11 +508,11 @@ export default function ListView() {
                 lista.sort((a, b) => -correlativoAsc(a, b));
         }
         return lista;
-    }, [equiposFiltrados, orden]);
+    }, [equiposFiltrados]);
 
     useEffect(() => {
         setPagina(1);
-    }, [busqueda, filtroBodega, soloDuplicados, filtroRapido, orden]);
+    }, [busqueda, filtroBodega, filtroRapido]);
 
     const totalPaginas = Math.max(
         1,
@@ -801,73 +795,41 @@ export default function ListView() {
             />
 
             <div className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:p-6 dark:border-white/10 dark:bg-carbon-900">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h2 className="w-full text-[1.2rem] font-bold text-slate-900 sm:w-auto dark:text-slate-100">
+                <div className="flex flex-col gap-3 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-4">
+                    <h2 className="text-[1.2rem] font-bold text-slate-900 sm:justify-self-start dark:text-slate-100">
                         Inventario registrado
                     </h2>
-                    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-                        <select
-                            value={filtroBodega}
-                            onChange={(e) => setFiltroBodega(e.target.value)}
-                            className="rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2 text-[0.92rem] font-medium text-slate-900 outline-none focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100"
-                            aria-label="Filtrar por bodega"
-                        >
-                            <option value="todas">Todas las ubicaciones</option>
-                            <option value={BODEGA_EN_CLIENTE}>
-                                🏢 En cliente
-                            </option>
-                            <optgroup label="Bodegas">
-                                {BODEGAS.map((b) => (
-                                    <option key={b} value={b}>
-                                        {b}
-                                    </option>
-                                ))}
-                            </optgroup>
-                        </select>
-                        <select
-                            value={orden}
-                            onChange={(e) => setOrden(e.target.value)}
-                            className="rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2 text-[0.92rem] font-medium text-slate-900 outline-none focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100"
-                            aria-label="Ordenar por"
-                        >
-                            <option value="recientes">Más recientes</option>
-                            <option value="antiguos">Más antiguos</option>
-                            <option value="marca">Marca (A-Z)</option>
-                            <option value="numero_interno">N° interno</option>
-                            <option value="bodega">Bodega (A-Z)</option>
-                        </select>
-                        <div
-                            className="flex self-start rounded-[10px] border-[1.5px] border-slate-300 bg-white p-0.5 sm:self-auto dark:border-white/15 dark:bg-carbon-800"
-                            role="group"
-                            aria-label="Cambiar vista del inventario"
-                        >
-                            {[
-                                { id: "cards", label: "⠿ Cards" },
-                                { id: "tabla", label: "☰ Tabla" },
-                            ].map((op) => (
-                                <button
-                                    key={op.id}
-                                    type="button"
-                                    onClick={() => handleCambiarVista(op.id)}
-                                    aria-pressed={vista === op.id}
-                                    className={`rounded-[8px] px-3 py-1.5 text-[0.85rem] font-bold transition ${
-                                        vista === op.id
-                                            ? "bg-slate-900 text-white dark:bg-white/15 dark:text-slate-100"
-                                            : "text-slate-600 hover:bg-slate-100 dark:text-neutral-400 dark:hover:bg-white/10"
-                                    }`}
-                                >
-                                    {op.label}
-                                </button>
-                            ))}
-                        </div>
-                        <input
-                            type="search"
-                            value={busqueda}
-                            onChange={(e) => setBusqueda(e.target.value)}
-                            placeholder="🔍 Buscar (N° interno, serie, marca...)"
-                            className="min-w-0 flex-1 rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2 text-[0.92rem] font-medium text-slate-900 outline-none focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15 sm:w-72 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500"
-                        />
+                    <div
+                        className="flex self-center rounded-[10px] border-[1.5px] border-slate-300 bg-white p-0.5 sm:justify-self-center dark:border-white/15 dark:bg-carbon-800"
+                        role="group"
+                        aria-label="Cambiar vista del inventario"
+                    >
+                        {[
+                            { id: "cards", label: "⠿ Cards" },
+                            { id: "tabla", label: "☰ Tabla" },
+                        ].map((op) => (
+                            <button
+                                key={op.id}
+                                type="button"
+                                onClick={() => handleCambiarVista(op.id)}
+                                aria-pressed={vista === op.id}
+                                className={`rounded-[8px] px-3 py-1.5 text-[0.85rem] font-bold transition ${
+                                    vista === op.id
+                                        ? "bg-slate-900 text-white dark:bg-white/15 dark:text-slate-100"
+                                        : "text-slate-600 hover:bg-slate-100 dark:text-neutral-400 dark:hover:bg-white/10"
+                                }`}
+                            >
+                                {op.label}
+                            </button>
+                        ))}
                     </div>
+                    <input
+                        type="search"
+                        value={busqueda}
+                        onChange={(e) => setBusqueda(e.target.value)}
+                        placeholder="🔍 Buscar (N° interno, serie, marca...)"
+                        className="w-full rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2 text-[0.92rem] font-medium text-slate-900 outline-none focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15 sm:w-72 sm:justify-self-end dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500"
+                    />
                 </div>
 
                 {duplicados.size > 0 && (
@@ -890,25 +852,6 @@ export default function ListView() {
                 )}
 
                 <AlertasInventario equipos={equiposActivos} />
-
-                <div className="mt-3 flex flex-wrap items-center gap-3">
-                    <label className="flex cursor-pointer items-center gap-2 text-[0.85rem] font-medium text-slate-700 dark:text-slate-200">
-                        <input
-                            type="checkbox"
-                            checked={soloDuplicados}
-                            onChange={(e) =>
-                                setSoloDuplicados(e.target.checked)
-                            }
-                            className="h-4 w-4 accent-red-600"
-                        />
-                        Solo mostrar con N° interno repetido
-                        {duplicados.size > 0 && (
-                            <span className="rounded-full bg-red-100 px-2 py-0.5 text-[0.68rem] font-bold text-red-700 dark:bg-red-500/10 dark:text-red-400">
-                                {duplicados.size}
-                            </span>
-                        )}
-                    </label>
-                </div>
 
                 <div
                     className="mt-3 flex flex-wrap gap-2"
@@ -973,18 +916,6 @@ export default function ListView() {
                             </button>
                         );
                     })}
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                    <span className="rounded-full bg-green-100 px-2.5 py-1 text-[0.7rem] font-bold uppercase tracking-wide text-green-700 dark:bg-green-500/10 dark:text-green-400">
-                        Operativo
-                    </span>
-                    <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[0.7rem] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
-                        Op. c/ obs.
-                    </span>
-                    <span className="rounded-full bg-red-100 px-2.5 py-1 text-[0.7rem] font-bold uppercase tracking-wide text-red-700 dark:bg-red-500/10 dark:text-red-400">
-                        Inoperativo
-                    </span>
                 </div>
 
                 {cargando && equipos.length === 0 ? (

@@ -20,18 +20,21 @@ function parseFaltantes(valor) {
         .filter(Boolean);
 }
 
-// Estilo base calcado del banner de N° internos duplicados de ListView,
-// variando el color según severidad.
+// Chips compactos con el color según severidad (misma paleta que los
+// filtros rápidos de ListView).
 const ESTILOS_SEVERIDAD = {
-    red: "border-red-600 bg-red-50 text-red-900 dark:bg-red-500/10 dark:text-red-300",
-    amber: "border-amber-500 bg-amber-50 text-amber-900 dark:bg-amber-500/10 dark:text-amber-300",
-    blue: "border-blue-600 bg-blue-50 text-blue-900 dark:bg-blue-500/10 dark:text-blue-300",
+    red: "border-red-300 bg-red-50 text-red-800 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400",
+    amber: "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400",
+    blue: "border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400",
 };
 
 /**
- * Banners informativos con alertas accionables del inventario.
+ * Chips compactos con las alertas accionables del inventario.
  * Deriva todo de los equipos activos (sin tocar la base ni cargar
  * movimientos). Si no hay alertas, no renderiza nada.
+ *
+ * Cada chip muestra icono + conteo corto; la explicación larga va en
+ * el tooltip nativo (title) para no ocupar espacio vertical.
  *
  * Props:
  *   equipos: array de equipos activos (sin papelera).
@@ -48,11 +51,11 @@ export default function AlertasInventario({ equipos }) {
                 id: "inoperativos",
                 severidad: "red",
                 icono: "⚠️",
-                titulo:
+                texto:
                     inoperativos.length === 1
-                        ? "Hay 1 equipo inoperativo"
-                        : `Hay ${inoperativos.length} equipos inoperativos`,
-                detalle:
+                        ? "1 inoperativo"
+                        : `${inoperativos.length} inoperativos`,
+                tooltip:
                     "Revisá el chip “Inoperativos” para ver el detalle y gestionar su reparación o baja.",
             });
         }
@@ -65,11 +68,11 @@ export default function AlertasInventario({ equipos }) {
                 id: "con_faltantes",
                 severidad: "amber",
                 icono: "🧩",
-                titulo:
+                texto:
                     conFaltantes.length === 1
-                        ? "1 equipo tiene elementos faltantes"
-                        : `${conFaltantes.length} equipos tienen elementos faltantes`,
-                detalle:
+                        ? "1 con faltantes"
+                        : `${conFaltantes.length} con faltantes`,
+                tooltip:
                     "Falta documentar o reponer elementos (cabina, batería, extintor, etc.). Filtrá con el chip “Con faltantes”.",
             });
         }
@@ -80,11 +83,11 @@ export default function AlertasInventario({ equipos }) {
                 id: "sin_foto",
                 severidad: "blue",
                 icono: "📷",
-                titulo:
+                texto:
                     sinFoto.length === 1
-                        ? "1 equipo no tiene foto registrada"
-                        : `${sinFoto.length} equipos no tienen foto registrada`,
-                detalle:
+                        ? "1 sin foto"
+                        : `${sinFoto.length} sin foto`,
+                tooltip:
                     "La foto ayuda a identificar el equipo en terreno. Podés subirla desde la ficha de cada equipo.",
             });
         }
@@ -105,12 +108,11 @@ export default function AlertasInventario({ equipos }) {
                 id: "inoperativos_antiguos",
                 severidad: "red",
                 icono: "⏳",
-                titulo:
+                texto:
                     inoperativosAntiguos.length === 1
-                        ? `1 equipo lleva más de ${DIAS_INOPERATIVO} días inoperativo`
-                        : `${inoperativosAntiguos.length} equipos llevan más de ${DIAS_INOPERATIVO} días inoperativos`,
-                detalle:
-                    "Se registraron hace más de 30 días y siguen inoperativos. Considerá gestionar su reparación o darlos de baja.",
+                        ? `1 inoperativo +${DIAS_INOPERATIVO} días`
+                        : `${inoperativosAntiguos.length} inoperativos +${DIAS_INOPERATIVO} días`,
+                tooltip: `Se registraron hace más de ${DIAS_INOPERATIVO} días y siguen inoperativos. Considerá gestionar su reparación o darlos de baja.`,
             });
         }
 
@@ -120,20 +122,19 @@ export default function AlertasInventario({ equipos }) {
     if (alertas.length === 0) return null;
 
     return (
-        <div className="mt-3 space-y-2" aria-label="Alertas del inventario">
+        <div
+            className="mt-3 flex flex-wrap gap-2"
+            aria-label="Alertas del inventario"
+        >
             {alertas.map((a) => (
-                <div
+                <span
                     key={a.id}
-                    className={`flex items-start gap-2.5 rounded-[10px] border-l-4 px-3 py-2.5 text-[0.85rem] ${ESTILOS_SEVERIDAD[a.severidad]}`}
+                    title={a.tooltip}
+                    className={`inline-flex items-center gap-1.5 rounded-full border-[1.5px] px-3 py-1 text-[0.75rem] font-bold ${ESTILOS_SEVERIDAD[a.severidad]}`}
                 >
-                    <span className="text-base">{a.icono}</span>
-                    <div className="min-w-0 flex-1">
-                        <p className="font-bold">{a.titulo}</p>
-                        <p className="mt-0.5 text-[0.8rem] opacity-90">
-                            {a.detalle}
-                        </p>
-                    </div>
-                </div>
+                    <span aria-hidden="true">{a.icono}</span>
+                    {a.texto}
+                </span>
             ))}
         </div>
     );
