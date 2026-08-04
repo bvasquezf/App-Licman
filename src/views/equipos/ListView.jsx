@@ -140,7 +140,12 @@ export default function ListView() {
     const [filtroBodega, setFiltroBodega] = useState("todas");
     const [confirmId, setConfirmId] = useState(null);
     const [soloDuplicados, setSoloDuplicados] = useState(false);
-    const [filtroRapido, setFiltroRapido] = useState("todos");
+    // Filtros rápidos combinables: array de ids activos.
+    // Array vacío = sin filtro rápido (equivale a "Todos").
+    const [filtroRapido, setFiltroRapido] = useState([]);
+    // Orden del inventario: "recientes" | "antiguos" | "marca" |
+    // "numero_interno" | "bodega".
+    const [orden, setOrden] = useState("recientes");
     const [movimientoEquipo, setMovimientoEquipo] = useState(null);
     const [historialEquipo, setHistorialEquipo] = useState(null);
     const [pagina, setPagina] = useState(1);
@@ -248,21 +253,23 @@ export default function ListView() {
                 const key = `${e.bodega}|${e.numero_interno}`;
                 if (!duplicados.has(key)) return false;
             }
+            // Filtros rápidos combinables: se aplican TODOS los activos (AND).
             if (
-                filtroRapido === "operativos" &&
+                filtroRapido.includes("operativos") &&
                 e.estado_operacional !== "Operativo"
             )
                 return false;
             if (
-                filtroRapido === "inoperativos" &&
+                filtroRapido.includes("inoperativos") &&
                 e.estado_operacional !== "Inoperativo"
             )
                 return false;
-            if (filtroRapido === "con_faltantes") {
+            if (filtroRapido.includes("con_faltantes")) {
                 const f = parseFaltantes(e.elementos_faltantes);
                 if (f.length === 0) return false;
             }
-            if (filtroRapido === "sin_foto" && e.foto_enviada) return false;
+            if (filtroRapido.includes("sin_foto") && e.foto_enviada)
+                return false;
             if (!texto) return true;
             return CAMPOS_BUSQUEDA.some((c) =>
                 String(e[c] ?? "")
@@ -272,13 +279,57 @@ export default function ListView() {
         });
     }, [equiposActivos, busqueda, filtroBodega, soloDuplicados, duplicados, filtroRapido]);
 
+    // Orden aplicado DESPUÉS de filtrar y ANTES de paginar.
+    const equiposOrdenados = useMemo(() => {
+        const lista = [...equiposFiltrados];
+        const cmpTexto = (a, b) =>
+            String(a ?? "").localeCompare(String(b ?? ""), "es", {
+                sensitivity: "base",
+            });
+        const correlativoAsc = (a, b) =>
+            (a.correlativo ?? 0) - (b.correlativo ?? 0);
+        switch (orden) {
+            case "antiguos":
+                lista.sort(correlativoAsc);
+                break;
+            case "marca":
+                lista.sort(
+                    (a, b) =>
+                        cmpTexto(a.marca, b.marca) ||
+                        cmpTexto(a.modelo, b.modelo) ||
+                        correlativoAsc(a, b),
+                );
+                break;
+            case "numero_interno":
+                lista.sort((a, b) =>
+                    String(a.numero_interno ?? "").localeCompare(
+                        String(b.numero_interno ?? ""),
+                        "es",
+                        { numeric: true, sensitivity: "base" },
+                    ),
+                );
+                break;
+            case "bodega":
+                lista.sort(
+                    (a, b) =>
+                        cmpTexto(a.bodega, b.bodega) ||
+                        -correlativoAsc(a, b),
+                );
+                break;
+            case "recientes":
+            default:
+                lista.sort((a, b) => -correlativoAsc(a, b));
+        }
+        return lista;
+    }, [equiposFiltrados, orden]);
+
     useEffect(() => {
         setPagina(1);
-    }, [busqueda, filtroBodega, soloDuplicados, filtroRapido]);
+    }, [busqueda, filtroBodega, soloDuplicados, filtroRapido, orden]);
 
     const totalPaginas = Math.max(
         1,
-        Math.ceil(equiposFiltrados.length / ITEMS_POR_PAGINA),
+        Math.ceil(equiposOrdenados.length / ITEMS_POR_PAGINA),
     );
 
     useEffect(() => {
@@ -287,18 +338,18 @@ export default function ListView() {
 
     const equiposPaginados = useMemo(() => {
         const inicio = (pagina - 1) * ITEMS_POR_PAGINA;
-        return equiposFiltrados.slice(inicio, inicio + ITEMS_POR_PAGINA);
-    }, [equiposFiltrados, pagina]);
+        return equiposOrdenados.slice(inicio, inicio + ITEMS_POR_PAGINA);
+    }, [equiposOrdenados, pagina]);
 
     const rangoActual = useMemo(() => {
-        if (equiposFiltrados.length === 0) return { desde: 0, hasta: 0 };
+        if (equiposOrdenados.length === 0) return { desde: 0, hasta: 0 };
         const desde = (pagina - 1) * ITEMS_POR_PAGINA + 1;
         const hasta = Math.min(
             pagina * ITEMS_POR_PAGINA,
-            equiposFiltrados.length,
+            equiposOrdenados.length,
         );
         return { desde, hasta };
-    }, [equiposFiltrados.length, pagina]);
+    }, [equiposOrdenados.length, pagina]);
 
     const equipoAEliminar = equipos.find((e) => e.id === confirmId);
 
@@ -574,6 +625,18 @@ export default function ListView() {
                                 ))}
                             </optgroup>
                         </select>
+                        <select
+                            value={orden}
+                            onChange={(e) => setOrden(e.target.value)}
+                            className="rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2 text-[0.92rem] font-medium text-slate-900 outline-none focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100"
+                            aria-label="Ordenar por"
+                        >
+                            <option value="recientes">Más recientes</option>
+                            <option value="antiguos">Más antiguos</option>
+                            <option value="marca">Marca (A-Z)</option>
+                            <option value="numero_interno">N° interno</option>
+                            <option value="bodega">Bodega (A-Z)</option>
+                        </select>
                         <input
                             type="search"
                             value={busqueda}
@@ -634,7 +697,10 @@ export default function ListView() {
                         { id: "con_faltantes", label: "Con faltantes", color: "amber" },
                         { id: "sin_foto", label: "Sin foto", color: "blue" },
                     ].map((chip) => {
-                        const activo = filtroRapido === chip.id;
+                        const activo =
+                            chip.id === "todos"
+                                ? filtroRapido.length === 0
+                                : filtroRapido.includes(chip.id);
                         const count = conteosFiltros[chip.id] ?? 0;
                         const colorClasses = {
                             slate: activo
@@ -657,7 +723,17 @@ export default function ListView() {
                             <button
                                 key={chip.id}
                                 type="button"
-                                onClick={() => setFiltroRapido(chip.id)}
+                                onClick={() => {
+                                    if (chip.id === "todos") {
+                                        setFiltroRapido([]);
+                                        return;
+                                    }
+                                    setFiltroRapido((prev) =>
+                                        prev.includes(chip.id)
+                                            ? prev.filter((f) => f !== chip.id)
+                                            : [...prev, chip.id],
+                                    );
+                                }}
                                 aria-pressed={activo}
                                 className={`flex items-center gap-1.5 rounded-full border-[1.5px] px-3 py-1.5 text-[0.78rem] font-bold transition ${colorClasses}`}
                             >
