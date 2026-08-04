@@ -8,6 +8,7 @@ import ConfirmDialog from "../../components/equipos/ConfirmDialog";
 import MovimientoDialog from "../../components/equipos/MovimientoDialog";
 import MovimientoHistorialModal from "../../components/equipos/MovimientoHistorialModal";
 import EquiposHeader from "../../components/equipos/EquiposHeader";
+import ResumenBodegas from "../../components/equipos/ResumenBodegas";
 import EquipoFoto from "../../components/equipos/EquipoFoto";
 import CrearClienteForm from "../../components/equipos/CrearClienteForm";
 import { useToast } from "../../context/ToastContext";
@@ -548,6 +549,12 @@ export default function ListView() {
                 activeFilter={filtroBodega}
                 onFilterBodega={setFiltroBodega}
                 showCorrelativo={false}
+            />
+
+            <ResumenBodegas
+                equipos={equiposActivos}
+                activa={filtroBodega}
+                onSelect={(b) => setFiltroBodega(b)}
             />
 
             <div className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:p-6 dark:border-white/10 dark:bg-carbon-900">
