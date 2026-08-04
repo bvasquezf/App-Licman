@@ -140,7 +140,9 @@ export default function ListView() {
     const [filtroBodega, setFiltroBodega] = useState("todas");
     const [confirmId, setConfirmId] = useState(null);
     const [soloDuplicados, setSoloDuplicados] = useState(false);
-    const [filtroRapido, setFiltroRapido] = useState("todos");
+    // Filtros rápidos combinables: array de ids activos.
+    // Array vacío = sin filtro rápido (equivale a "Todos").
+    const [filtroRapido, setFiltroRapido] = useState([]);
     const [movimientoEquipo, setMovimientoEquipo] = useState(null);
     const [historialEquipo, setHistorialEquipo] = useState(null);
     const [pagina, setPagina] = useState(1);
@@ -248,21 +250,23 @@ export default function ListView() {
                 const key = `${e.bodega}|${e.numero_interno}`;
                 if (!duplicados.has(key)) return false;
             }
+            // Filtros rápidos combinables: se aplican TODOS los activos (AND).
             if (
-                filtroRapido === "operativos" &&
+                filtroRapido.includes("operativos") &&
                 e.estado_operacional !== "Operativo"
             )
                 return false;
             if (
-                filtroRapido === "inoperativos" &&
+                filtroRapido.includes("inoperativos") &&
                 e.estado_operacional !== "Inoperativo"
             )
                 return false;
-            if (filtroRapido === "con_faltantes") {
+            if (filtroRapido.includes("con_faltantes")) {
                 const f = parseFaltantes(e.elementos_faltantes);
                 if (f.length === 0) return false;
             }
-            if (filtroRapido === "sin_foto" && e.foto_enviada) return false;
+            if (filtroRapido.includes("sin_foto") && e.foto_enviada)
+                return false;
             if (!texto) return true;
             return CAMPOS_BUSQUEDA.some((c) =>
                 String(e[c] ?? "")
@@ -634,7 +638,10 @@ export default function ListView() {
                         { id: "con_faltantes", label: "Con faltantes", color: "amber" },
                         { id: "sin_foto", label: "Sin foto", color: "blue" },
                     ].map((chip) => {
-                        const activo = filtroRapido === chip.id;
+                        const activo =
+                            chip.id === "todos"
+                                ? filtroRapido.length === 0
+                                : filtroRapido.includes(chip.id);
                         const count = conteosFiltros[chip.id] ?? 0;
                         const colorClasses = {
                             slate: activo
@@ -657,7 +664,17 @@ export default function ListView() {
                             <button
                                 key={chip.id}
                                 type="button"
-                                onClick={() => setFiltroRapido(chip.id)}
+                                onClick={() => {
+                                    if (chip.id === "todos") {
+                                        setFiltroRapido([]);
+                                        return;
+                                    }
+                                    setFiltroRapido((prev) =>
+                                        prev.includes(chip.id)
+                                            ? prev.filter((f) => f !== chip.id)
+                                            : [...prev, chip.id],
+                                    );
+                                }}
                                 aria-pressed={activo}
                                 className={`flex items-center gap-1.5 rounded-full border-[1.5px] px-3 py-1.5 text-[0.78rem] font-bold transition ${colorClasses}`}
                             >
