@@ -162,10 +162,16 @@ select {
     }
 }
 
-/* `both`: respeta el estado inicial durante animation-delay,
-   clave para las entradas en cascada (stagger). */
+/* `backwards`: aplica el estado inicial durante animation-delay (clave
+   para las entradas en cascada / stagger) pero NO retiene el estado final.
+   Con `both` el `transform: translateY(0)` del keyframe `to` quedaba
+   aplicado para siempre, y un ancestro con transform (aunque sea identidad)
+   se convierte en containing block de los `position: fixed` descendientes:
+   los modales quedaban posicionados respecto de <main> en vez del viewport
+   y podían abrir fuera de pantalla en páginas altas (bug real: el modal
+   de "Nuevo cliente" no aparecía). */
 .animate-fade-in {
-    animation: fade-in 0.25s ease-out both;
+    animation: fade-in 0.25s ease-out backwards;
 }
 
 /* Pop para el logo del sidebar: fade + leve escala */
