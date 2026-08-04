@@ -85,6 +85,11 @@ export const SUB_NAV_POR_SECCION = {
             icon: "📝",
         },
         {
+            to: "/equipos/movimientos",
+            label: "Movimientos",
+            icon: "🕓",
+        },
+        {
             to: "/equipos/papelera",
             label: "Papelera",
             icon: "🗑️",

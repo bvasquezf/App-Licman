@@ -17,6 +17,7 @@ import ListViewEquipos from "./views/equipos/ListView";
 import TrashViewEquipos from "./views/equipos/TrashView";
 import ExportViewEquipos from "./views/equipos/ExportView";
 import ClientesViewEquipos from "./views/equipos/ClientesView";
+import MovimientosViewEquipos from "./views/equipos/MovimientosView";
 
 // Sección Mantenimiento (port del dashboard)
 import ResumenViewMant from "./views/mantenimiento/ResumenView";
@@ -57,6 +58,10 @@ function App() {
                     element={<Navigate to="/equipos" replace />}
                 />
                 <Route path="/equipos/clientes" element={<ClientesViewEquipos />} />
+                <Route
+                    path="/equipos/movimientos"
+                    element={<MovimientosViewEquipos />}
+                />
                 <Route path="/equipos/papelera" element={<TrashViewEquipos />} />
                 <Route path="/equipos/exportar" element={<ExportViewEquipos />} />
 

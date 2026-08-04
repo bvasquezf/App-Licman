@@ -130,6 +130,24 @@ export const ELEMENTOS_FALTANTES = [
 // Email al que se envían las fotos (referencia visual en el formulario).
 export const PHOTO_EMAIL = "salinascompliance@gmail.com";
 
+// Icono por motivo de movimiento, para el timeline del historial
+// por equipo y la vista global de movimientos.
+export const ICONO_POR_MOTIVO = {
+    "Cambio de bodega": "🚚",
+    "En arriendo a cliente": "🏢",
+    "Venta a cliente": "💰",
+    "Devuelto de arriendo": "📥",
+    "Cambio de equipo (renovación)": "🔁",
+    "Cambio de equipo (garantía)": "🔁",
+    "Cambio de equipo (fallo)": "🔁",
+    "Mantención externa": "🔧",
+    Otro: "📝",
+};
+
+export function iconoPorMotivo(motivo) {
+    return ICONO_POR_MOTIVO[motivo] ?? "📌";
+}
+
 // Mapeo de campos de la base de datos a headers en español para Excel.
 export const EXCEL_HEADERS = {
     correlativo: "Correlativo",

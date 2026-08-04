@@ -1,7 +1,9 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAsync } from "../../hooks/useAsync";
 import { supabase } from "../../services/supabase";
 import { formatearFecha } from "../../utils/format";
+import { iconoPorMotivo } from "../../lib/equiposConstants";
+import { getFotoUrlCached } from "../../lib/equiposStorage";
 
 const CATEGORIA_LABEL = {
     renovacion: "Renovación",
@@ -129,101 +131,150 @@ export default function MovimientoHistorialModal({ open, equipo, onClose }) {
                 )}
 
                 {!cargando && !error && movimientos.length > 0 && (
-                    <ol className="space-y-2">
-                        {movimientos.map((m, idx) => (
-                            <li
-                                key={m.id}
-                                className={`rounded-[10px] border p-3 ${
-                                    idx === 0
-                                        ? "border-blue-300 bg-blue-50/40 dark:border-blue-500/30 dark:bg-blue-500/10"
-                                        : "border-slate-200 bg-white dark:border-white/10 dark:bg-carbon-800"
-                                }`}
-                            >
-                                <div className="flex flex-wrap items-center gap-2 text-sm">
-                                    <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[0.7rem] font-bold uppercase tracking-wide text-white">
-                                        {formatearFecha(m.fecha)}
-                                    </span>
-                                    <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[0.7rem] font-bold text-violet-800 dark:bg-violet-500/10 dark:text-violet-400">
-                                        {m.motivo}
-                                    </span>
-                                    {m.movimiento_padre_id && (
+                    <ol className="relative">
+                        {movimientos.map((m, idx) => {
+                            const esUltimo = idx === 0;
+                            const siguienteMasNuevo = movimientos[idx - 1];
+                            const desde = new Date(m.fecha);
+                            const hasta = esUltimo
+                                ? new Date()
+                                : new Date(siguienteMasNuevo.fecha);
+                            const duracion = duracionLegible(hasta - desde);
+
+                            return (
+                                <li
+                                    key={m.id}
+                                    className="relative pb-4 pl-12 last:pb-0"
+                                >
+                                    {/* Línea conectora del timeline */}
+                                    {idx < movimientos.length - 1 && (
                                         <span
-                                            className="rounded-full bg-amber-100 px-2 py-0.5 text-[0.7rem] font-bold text-amber-800 dark:bg-amber-500/10 dark:text-amber-400"
-                                            title="Esta fila es parte de un cambio de equipo (swap) bidireccional"
-                                        >
-                                            🔁 Pierna de swap
-                                        </span>
+                                            className="absolute left-[19px] top-10 bottom-0 w-px bg-slate-200 dark:bg-white/10"
+                                            aria-hidden="true"
+                                        />
                                     )}
-                                    {m.categoria && (
-                                        <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[0.7rem] font-bold text-sky-800 dark:bg-sky-500/10 dark:text-sky-400">
-                                            {CATEGORIA_LABEL[m.categoria] ??
-                                                m.categoria}
-                                        </span>
-                                    )}
-                                    {idx === 0 && (
-                                        <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[0.7rem] font-bold uppercase tracking-wide text-white">
-                                            Último
-                                        </span>
-                                    )}
-                                </div>
-                                <p className="mt-2 text-[0.92rem] font-semibold text-slate-900 dark:text-slate-100">
-                                    {renderOrigen(m)}
-                                    <span className="mx-2 text-slate-400 dark:text-neutral-500">
-                                        →
+                                    {/* Nodo con icono del tipo de movimiento */}
+                                    <span
+                                        className={`absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-full text-base ${
+                                            esUltimo
+                                                ? "bg-brand-600 text-white shadow-[0_2px_8px_rgba(232,18,26,0.35)]"
+                                                : "bg-slate-900 text-white dark:bg-white/10"
+                                        }`}
+                                        aria-hidden="true"
+                                    >
+                                        {iconoPorMotivo(m.motivo)}
                                     </span>
-                                    <span className="text-blue-700 dark:text-blue-400">
-                                        {renderDestino(m)}
-                                    </span>
-                                </p>
-                                {(m.ubicacion_origen ||
-                                    m.ubicacion_destino) && (
-                                    <p className="mt-0.5 text-xs text-slate-500 dark:text-neutral-400">
-                                        {m.ubicacion_origen ?? "—"}
-                                        <span className="mx-1.5 text-slate-400 dark:text-neutral-500">
-                                            →
-                                        </span>
-                                        <span className="font-medium text-slate-700 dark:text-slate-200">
-                                            {m.ubicacion_destino ?? "—"}
-                                        </span>
-                                    </p>
-                                )}
-                                {m.equipo_relacionado && (
-                                    <p className="mt-1 text-xs text-slate-600 dark:text-neutral-400">
-                                        <span className="font-semibold text-slate-700 dark:text-slate-200">
-                                            Equipo relacionado:{" "}
-                                        </span>
-                                        #
-                                        {String(
-                                            m.equipo_relacionado.correlativo,
-                                        ).padStart(4, "0")}{" "}
-                                        · {m.equipo_relacionado.marca}{" "}
-                                        {m.equipo_relacionado.modelo}
-                                        {m.equipo_relacionado.numero_interno && (
-                                            <>
-                                                {" "}
-                                                ·{" "}
-                                                <span className="font-mono">
-                                                    {
-                                                        m.equipo_relacionado.numero_interno
-                                                    }
+
+                                    <div
+                                        className={`rounded-[10px] border p-3 ${
+                                            esUltimo
+                                                ? "border-brand-300 bg-brand-50/50 dark:border-brand-500/30 dark:bg-brand-500/10"
+                                                : "border-slate-200 bg-white dark:border-white/10 dark:bg-carbon-800"
+                                        }`}
+                                    >
+                                        <div className="flex flex-wrap items-center gap-2 text-sm">
+                                            <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[0.7rem] font-bold uppercase tracking-wide text-white dark:bg-white/10">
+                                                {formatearFecha(m.fecha)}
+                                            </span>
+                                            <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[0.7rem] font-bold text-violet-800 dark:bg-violet-500/10 dark:text-violet-400">
+                                                {m.motivo}
+                                            </span>
+                                            {m.movimiento_padre_id && (
+                                                <span
+                                                    className="rounded-full bg-amber-100 px-2 py-0.5 text-[0.7rem] font-bold text-amber-800 dark:bg-amber-500/10 dark:text-amber-400"
+                                                    title="Esta fila es parte de un cambio de equipo (swap) bidireccional"
+                                                >
+                                                    🔁 Pierna de swap
                                                 </span>
-                                            </>
+                                            )}
+                                            {m.categoria && (
+                                                <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[0.7rem] font-bold text-sky-800 dark:bg-sky-500/10 dark:text-sky-400">
+                                                    {CATEGORIA_LABEL[
+                                                        m.categoria
+                                                    ] ?? m.categoria}
+                                                </span>
+                                            )}
+                                            {esUltimo && (
+                                                <span className="rounded-full bg-brand-600 px-2 py-0.5 text-[0.7rem] font-bold uppercase tracking-wide text-white">
+                                                    Actual
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="mt-2 text-[0.92rem] font-semibold text-slate-900 dark:text-slate-100">
+                                            {renderOrigen(m)}
+                                            <span className="mx-2 text-slate-400 dark:text-neutral-500">
+                                                →
+                                            </span>
+                                            <span className="text-brand-700 dark:text-brand-400">
+                                                {renderDestino(m)}
+                                            </span>
+                                        </p>
+                                        <p className="mt-0.5 text-xs text-slate-500 dark:text-neutral-400">
+                                            ⏱️{" "}
+                                            {esUltimo
+                                                ? `Lleva ${duracion} aquí`
+                                                : `Estuvo ${duracion} en este destino`}
+                                        </p>
+                                        {(m.ubicacion_origen ||
+                                            m.ubicacion_destino) && (
+                                            <p className="mt-0.5 text-xs text-slate-500 dark:text-neutral-400">
+                                                {m.ubicacion_origen ?? "—"}
+                                                <span className="mx-1.5 text-slate-400 dark:text-neutral-500">
+                                                    →
+                                                </span>
+                                                <span className="font-medium text-slate-700 dark:text-slate-200">
+                                                    {m.ubicacion_destino ?? "—"}
+                                                </span>
+                                            </p>
                                         )}
-                                    </p>
-                                )}
-                                <p className="mt-1.5 text-xs text-slate-500 dark:text-neutral-400">
-                                    👤{" "}
-                                    <span className="font-semibold text-slate-700 dark:text-slate-200">
-                                        {m.responsable}
-                                    </span>
-                                </p>
-                                {m.notas && (
-                                    <p className="mt-1.5 rounded border-l-[3px] border-slate-300 bg-slate-50 px-2 py-1 text-xs text-slate-700 dark:border-white/15 dark:bg-white/5 dark:text-slate-200">
-                                        {m.notas}
-                                    </p>
-                                )}
-                            </li>
-                        ))}
+                                        {m.equipo_relacionado && (
+                                            <p className="mt-1 text-xs text-slate-600 dark:text-neutral-400">
+                                                <span className="font-semibold text-slate-700 dark:text-slate-200">
+                                                    Equipo relacionado:{" "}
+                                                </span>
+                                                #
+                                                {String(
+                                                    m.equipo_relacionado
+                                                        .correlativo,
+                                                ).padStart(4, "0")}{" "}
+                                                · {m.equipo_relacionado.marca}{" "}
+                                                {m.equipo_relacionado.modelo}
+                                                {m.equipo_relacionado
+                                                    .numero_interno && (
+                                                    <>
+                                                        {" "}
+                                                        ·{" "}
+                                                        <span className="font-mono">
+                                                            {
+                                                                m
+                                                                    .equipo_relacionado
+                                                                    .numero_interno
+                                                            }
+                                                        </span>
+                                                    </>
+                                                )}
+                                            </p>
+                                        )}
+                                        <p className="mt-1.5 text-xs text-slate-500 dark:text-neutral-400">
+                                            👤{" "}
+                                            <span className="font-semibold text-slate-700 dark:text-slate-200">
+                                                {m.responsable}
+                                            </span>
+                                        </p>
+                                        {m.notas && (
+                                            <p className="mt-1.5 rounded border-l-[3px] border-slate-300 bg-slate-50 px-2 py-1 text-xs text-slate-700 dark:border-white/15 dark:bg-white/5 dark:text-slate-200">
+                                                {m.notas}
+                                            </p>
+                                        )}
+                                        {m.foto_url && (
+                                            <MovimientoFoto
+                                                path={m.foto_url}
+                                            />
+                                        )}
+                                    </div>
+                                </li>
+                            );
+                        })}
                     </ol>
                 )}
             </div>
@@ -244,6 +295,57 @@ function renderDestino(m) {
     }
     if (m.destino_externo) return `🔧 ${m.destino_externo}`;
     return m.bodega_destino ?? "—";
+}
+
+/**
+ * Convierte un intervalo en ms a texto legible:
+ * "menos de 1 día", "1 día", "45 días", "~3 meses".
+ */
+function duracionLegible(ms) {
+    const dias = Math.floor(ms / 86400000);
+    if (dias < 1) return "menos de 1 día";
+    if (dias === 1) return "1 día";
+    if (dias < 60) return `${dias} días`;
+    const meses = Math.round(dias / 30);
+    return `~${meses} ${meses === 1 ? "mes" : "meses"}`;
+}
+
+/**
+ * Thumbnail de la foto adjunta a un movimiento. El path vive en un
+ * bucket privado: resuelve la signed URL on-demand (con cache) y al
+ * hacer click abre la imagen completa en pestaña nueva.
+ */
+function MovimientoFoto({ path }) {
+    const [url, setUrl] = useState(null);
+
+    useEffect(() => {
+        let vivo = true;
+        getFotoUrlCached(path).then((u) => {
+            if (vivo) setUrl(u);
+        });
+        return () => {
+            vivo = false;
+        };
+    }, [path]);
+
+    if (!url) return null;
+
+    return (
+        <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-block"
+            title="Ver foto completa"
+        >
+            <img
+                src={url}
+                alt="Foto del movimiento"
+                className="h-16 w-16 rounded-[8px] border border-slate-200 object-cover transition hover:opacity-80 dark:border-white/15"
+                loading="lazy"
+            />
+        </a>
+    );
 }
 
 /**
