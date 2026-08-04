@@ -9,6 +9,7 @@ import MovimientoDialog from "../../components/equipos/MovimientoDialog";
 import MovimientoHistorialModal from "../../components/equipos/MovimientoHistorialModal";
 import EquiposHeader from "../../components/equipos/EquiposHeader";
 import ResumenBodegas from "../../components/equipos/ResumenBodegas";
+import AlertasInventario from "../../components/equipos/AlertasInventario";
 import EquipoFoto from "../../components/equipos/EquipoFoto";
 import CrearClienteForm from "../../components/equipos/CrearClienteForm";
 import { useToast } from "../../context/ToastContext";
@@ -609,6 +610,8 @@ export default function ListView() {
                         </div>
                     </div>
                 )}
+
+                <AlertasInventario equipos={equiposActivos} />
 
                 <div className="mt-3 flex flex-wrap items-center gap-3">
                     <label className="flex cursor-pointer items-center gap-2 text-[0.85rem] font-medium text-slate-700 dark:text-slate-200">
