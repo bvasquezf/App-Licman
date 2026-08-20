@@ -1,8 +1,9 @@
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { supabase } from "../services/supabase";
 import { exportToExcel } from "../utils/exportToExcel";
 import { useToast } from "../context/ToastContext";
 import { useAsync } from "../hooks/useAsync";
+import { useUrlFilters } from "../hooks/useUrlFilters";
 import { withRetry } from "../utils/withRetry";
 import PageHeader from "../components/ui/PageHeader";
 import EmptyState from "../components/ui/EmptyState";
@@ -11,8 +12,12 @@ import Skeleton from "../components/ui/Skeleton";
 import { formatCLP } from "../utils/format";
 
 function StockActual() {
-    const [busqueda, setBusqueda] = useState("");
-    const [filtroEstado, setFiltroEstado] = useState("todos"); // todos | bajo | sin_stock
+    const [filtrosUrl, setFiltroUrl] = useUrlFilters({
+        q: "",
+        estado: "todos",
+    });
+    const busqueda = filtrosUrl.q;
+    const filtroEstado = filtrosUrl.estado;
     const { showToast } = useToast();
 
     const cargarStock = useCallback(async () => {
@@ -169,8 +174,8 @@ function StockActual() {
                         type="text"
                         placeholder="Buscar por nombre o código..."
                         value={busqueda}
-                        onChange={(e) => setBusqueda(e.target.value)}
-                        className="w-full rounded-[14px] border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 shadow-[0_10px_30px_rgba(15,23,42,0.10)] transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/10 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500 sm:text-base"
+                        onChange={(e) => setFiltroUrl("q", e.target.value)}
+                        className="min-h-[44px] w-full rounded-[14px] border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 shadow-[0_10px_30px_rgba(15,23,42,0.10)] transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/10 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500 sm:text-base"
                     />
                 </div>
             </div>
@@ -197,8 +202,8 @@ function StockActual() {
                     return (
                         <button
                             key={chip.key}
-                            onClick={() => setFiltroEstado(chip.key)}
-                            className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-200 active:scale-95 ${tones[chip.tone]}`}
+                            onClick={() => setFiltroUrl("estado", chip.key)}
+                            className={`inline-flex min-h-[44px] items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-200 active:scale-95 ${tones[chip.tone]}`}
                         >
                             {chip.label}
                             <span

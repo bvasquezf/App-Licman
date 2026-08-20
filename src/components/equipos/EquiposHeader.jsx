@@ -150,7 +150,7 @@ export default function EquiposHeader({
                             <h1 className="text-base font-extrabold tracking-tight text-white sm:text-lg">
                                 Inventario Licman
                             </h1>
-                            <p className="text-[0.72rem] font-medium text-slate-300 sm:text-xs">
+                            <p className="text-xs font-medium text-slate-300">
                                 Levantamiento en terreno · 3 bodegas
                             </p>
                         </div>
@@ -159,7 +159,7 @@ export default function EquiposHeader({
                     {/* Indicador online + chips contadores */}
                     <div className="flex flex-wrap items-center gap-2">
                         <span
-                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.7rem] font-bold uppercase tracking-wider ${
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wider ${
                                 online
                                     ? "bg-emerald-500/15 text-emerald-300"
                                     : "bg-rose-500/20 text-rose-300"
@@ -231,7 +231,7 @@ export default function EquiposHeader({
                                       : "border-white/15"
                             }`}
                         >
-                            <span className="text-[0.6rem] font-bold uppercase tracking-wider text-slate-300">
+                            <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
                                 Total
                             </span>
                             <span className="text-base font-extrabold leading-tight text-white tabular-nums">
@@ -253,7 +253,7 @@ export default function EquiposHeader({
                                       : "border-sky-300/30"
                             }`}
                         >
-                            <span className="text-[0.6rem] font-bold uppercase tracking-wider text-sky-200">
+                            <span className="text-xs font-bold uppercase tracking-wider text-sky-200">
                                 En cliente
                             </span>
                             <span className="text-base font-extrabold leading-tight text-white tabular-nums">
@@ -280,7 +280,7 @@ export default function EquiposHeader({
                                               : "border-white/15"
                                     }`}
                                 >
-                                    <span className="text-[0.6rem] font-bold uppercase tracking-wider text-slate-300">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
                                         {b}
                                     </span>
                                     <span className="text-base font-extrabold leading-tight text-white tabular-nums">
@@ -320,7 +320,7 @@ export default function EquiposHeader({
                         </svg>
                     </div>
                     <div className="min-w-0">
-                        <p className="text-[0.7rem] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">
+                        <p className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">
                             Correlativo asignado
                         </p>
                         <p className="mt-0.5 text-xs text-slate-600 dark:text-neutral-400">

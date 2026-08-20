@@ -25,11 +25,14 @@ import {
     getPendingCount,
 } from "../lib/offlineDb";
 import { flushQueue } from "../lib/offlineQueue";
+import { useAuth } from "./AuthContext";
+import { PERMISOS } from "../lib/authPermissions";
 
 const NetworkContext = createContext(null);
 
 export function NetworkProvider({ children }) {
     const toast = useToast();
+    const { user, loading: authLoading, puede } = useAuth();
     const [online, setOnline] = useState(
         typeof navigator !== "undefined" ? navigator.onLine : true,
     );
@@ -52,10 +55,13 @@ export function NetworkProvider({ children }) {
         if (!navigator.onLine) {
             return { flushed: 0, failed: 0, skipped: 0 };
         }
+        if (authLoading || !user || !puede(PERMISOS.EQUIPOS)) {
+            return { flushed: 0, failed: 0, skipped: 0 };
+        }
         flushingRef.current = true;
         setSincronizando(true);
         try {
-            const result = await flushQueue();
+            const result = await flushQueue({ userId: user.id });
             await refrescarPending();
             if (result.flushed > 0) {
                 toast.success(
@@ -79,7 +85,7 @@ export function NetworkProvider({ children }) {
             flushingRef.current = false;
             setSincronizando(false);
         }
-    }, [refrescarPending, toast]);
+    }, [authLoading, puede, refrescarPending, toast, user]);
 
     // Listeners online/offline
     useEffect(() => {
@@ -103,7 +109,13 @@ export function NetworkProvider({ children }) {
         // se flusheaba en el evento "online": si cerrabas la pestaña
         // con pendientes y volvías CON conexión, quedaban pegados.
         refrescarPending().then((n) => {
-            if (n > 0 && navigator.onLine) {
+            if (
+                n > 0 &&
+                navigator.onLine &&
+                !authLoading &&
+                user &&
+                puede(PERMISOS.EQUIPOS)
+            ) {
                 toast.info("Hay cambios pendientes — sincronizando…");
                 flush();
             }
@@ -113,7 +125,7 @@ export function NetworkProvider({ children }) {
             window.removeEventListener("online", handleOnline);
             window.removeEventListener("offline", handleOffline);
         };
-    }, [flush, refrescarPending, toast]);
+    }, [authLoading, flush, puede, refrescarPending, toast, user]);
 
     const value = {
         online,

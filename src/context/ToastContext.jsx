@@ -121,7 +121,7 @@ function ToastStack({ toasts, onCerrar }) {
                 />
             ))}
             {restantes > 0 && (
-                <div className="pointer-events-auto rounded-full bg-slate-800/90 px-3 py-1 text-center text-[0.72rem] font-bold text-white shadow-md">
+                <div className="pointer-events-auto rounded-full bg-slate-800/90 px-3 py-1 text-center text-xs font-bold text-white shadow-md">
                     +{restantes} más
                 </div>
             )}

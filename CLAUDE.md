@@ -1,6 +1,6 @@
 # Control de Bodega — Guía para Claude
 
-App web unificada de Licman: **3 secciones en una sola SPA** (rama `unificacion-licman`).
+App web unificada de Licman: **4 secciones en una sola SPA** (rama `unificacion-licman`).
 En español chileno, usable desde iPhone y MacBook.
 
 1. **Bodega** (`/bodega/*`) — inventario de repuestos/ferretería
@@ -24,13 +24,13 @@ src/
 ├── pages/              # Sección BODEGA: Dashboard, Productos, StockActual,
 │                       #   NuevaEntrada, NuevaSalida, Historial
 ├── views/
-│   ├── equipos/        # FormView (alta), ListView (inventario), ClientesView,
-│   │                   #   TrashView (papelera), ExportView
+│   ├── equipos/        # RegistrarEquipoView (alta), InventarioView,
+│   │                   #   ClientesView, PapeleraView, ExportarView
 │   └── mantenimiento/  # ResumenView, TecnicosView, ReincidenciaView, TiemposView
 ├── components/
 │   ├── forms/          # ProductoForm (wizard 2 pasos), EntradaForm, SalidaForm
 │   ├── equipos/        # EquiposHeader, MovimientoDialog, MovimientoHistorialModal,
-│   │                   #   CrearClienteForm, PhotoUpload, EquipoFoto, ConfirmDialog…
+│   │                   #   InventarioTabla, CrearClienteForm, PhotoUpload, EquipoFoto…
 │   ├── mantenimiento/  # DashboardShell, ChartCanvas, KpiCard, DataTable,
 │   │                   #   FilterBar, SourceConfigPanel
 │   └── ui/             # PageHeader, StatCard, Card, EmptyState, Skeleton, PillToast
@@ -38,9 +38,11 @@ src/
 │                       #   (online/offline + flush de cola), DashboardContext
 │                       #   (solo /mantenimiento: data + filtros + auto-refresh 2 min)
 ├── hooks/              # useAsync, useCodigoDisponible, useSiguienteCorrelativo,
-│                       #   useUnsavedChanges
+│                       #   useUnsavedChanges, useModalTransition
 ├── lib/                # offlineDb (IDB: cache + pendingWrites), offlineQueue (flush),
-│                       #   equiposStorage (fotos), equiposValidacion, equiposExport,
+│                       #   equiposStorage (fotos), compressImage (resize+JPEG en el
+│                       #   navegador ANTES de subir: toda foto pasa por ahí, ~300 KB),
+│                       #   equiposValidacion, equiposPresentacion, equiposExport,
 │                       #   equiposConstants, dashboardData (loadData + circuit breaker),
 │                       #   dashboardAnalytics, dashboardPresentation
 ├── services/           # supabase.js (cliente único compartido)
@@ -49,8 +51,8 @@ src/
 ├── utils/              # handleSupabaseError, withRetry, productCodeUtils,
 │                       #   exportToExcel, exportWorkbook, format (formatCLP,
 │                       #   formatearFecha, formatearFechaCorta)
-├── App.jsx             # Router. SIN authGuard (ver "Auth" abajo)
-└── main.jsx            # ToastProvider > NetworkProvider > App
+├── App.jsx             # Router protegido por sesión y permisos por módulo
+└── main.jsx            # ToastProvider > AuthProvider > NetworkProvider > App
 ```
 
 ## Base de datos (Supabase, proyecto único)
@@ -63,16 +65,24 @@ Tablas por sección:
 
 RPCs (siempre vía `supabase.rpc`, nunca escritura directa a equipos):
 `insert_equipo`, `soft_delete_equipo`, `restore_equipo`, `hard_delete_equipo`,
-`registrar_movimiento` (soporta cliente y swap), `preview_next_correlativo`.
+`registrar_movimiento` (soporta cliente y swap), `preview_next_correlativo`,
+`actualizar_estado_equipo`, `actualizar_foto_equipo`, `actualizar_equipo`, `import_equipo` (solo para la carga inicial desde
+`scripts/importar-inventario.mjs`; la app no la usa).
 
-Migraciones en `supabase/migrations/` (000–006), idempotentes.
+Migraciones en `supabase/migrations/` (000–033), idempotentes.
+Desde 010 `equipos` tiene además `capacidad_kg`, `mastil`, `anio`, `altura`,
+`bateria`, `bateria_serie` (vienen de la planilla de inventario; el formulario
+de alta no los edita, pero sí se pueden corregir desde la ficha del inventario).
 
-## Auth: NO HAY (decisión consciente)
+## Auth y permisos
 
-- Se eliminó el login en la unificación: la app es accesible para cualquiera con el link.
-- **Riesgo aceptado**: RLS abierto a `anon` (`USING (true)`, migración 003) + `GRANT EXECUTE`
-  en todas las funciones. Uso interno solamente. Si se reactiva auth, hay que rehacer
-  AuthContext/Login (borrados en jul 2026, están en el historial de git) y cerrar las policies.
+- Supabase Auth por correo/contraseña, perfiles y roles en migración 028.
+- `AuthProvider`, `RequireAuth` y `RequirePermission` protegen la SPA.
+- RLS y Storage cerrados para `anon`; triggers de autorización cubren también RPC
+  `SECURITY DEFINER`.
+- `responsable` es el dato operativo y `creado_por = auth.uid()` identifica al usuario.
+- Invitaciones y eliminación de cuentas desde `/usuarios` mediante las Edge Functions
+  `invitar-usuario` y `eliminar-usuario`.
 
 ## Offline (sección Equipos)
 
@@ -92,11 +102,11 @@ const { data, loading, error, refetch } = useAsync(cargarData, {
 });
 ```
 - **NO** usar `useState` + `useEffect` para fetches. Usar `useAsync`.
-  (Deuda conocida: ListView/FormView de equipos aún usan fetch crudo.)
+  (Deuda conocida: InventarioView/RegistrarEquipoView aún usan fetch crudo.)
 - Queries a Supabase siempre envueltas en `withRetry(() => ...)`.
 - Errores normalizados con `handleSupabaseError(error, contexto).message`.
 - `useAsync` retorna solo `{ data, loading, error, refetch }` — NO existe `setData`
-  (hubo un ReferenceError por esto en TrashView).
+  (hubo un ReferenceError por esto en PapeleraView).
 
 ### Toasts
 ```jsx
@@ -137,7 +147,6 @@ useUnsavedChanges(formData, {
   ```
 - Touch targets **mínimo 44×44px** (`h-11 w-11` o `min-h-[44px]`).
 - **NUNCA** usar `text-[10px]` ni `text-[11px]` — mínimo `text-xs` (12px).
-  (Deuda conocida: chips de equipos usan `text-[0.55rem]`–`text-[0.68rem]`.)
 - Inputs y textareas: `font-size: 16px` en mobile (ya en `index.css`, evita auto-zoom iOS).
 
 ### Breakpoints de Tailwind
@@ -157,21 +166,21 @@ useUnsavedChanges(formData, {
 5. **Toda la UI y mensajes en español chileno** ("ingreso", "egreso", "bodega", "pesos CLP").
 6. **Estilo directo** — sin rodeos, responder en español coloquial.
 
-## Trabajo pendiente / deuda conocida (julio 2026)
+## Trabajo pendiente / deuda conocida (agosto 2026)
 
 - **Idempotencia de la cola offline**: si un request llega al server pero la respuesta
   se pierde, el reintento duplica (falta token único por operación).
-- **ListView/FormView** (equipos): fetch crudo sin `useAsync`/`withRetry`; FormView sin
+- **InventarioView/RegistrarEquipoView**: fetch crudo sin `useAsync`/`withRetry`; el formulario sin
   `useUnsavedChanges`. Bloque "cache → fetch" duplicado entre ambos (candidato a hook).
 - **Duplicación restante**: mapeo de params del RPC `registrar_movimiento` ×3
   (candidato a `buildMovimientoParams`).
-- **`key={location.pathname}` en AppShell** remonta el DashboardProvider al cambiar de tab.
 - **Dashboard/Historial de bodega** traen TODOS los movimientos sin `.limit()`.
-- **Tipografía**: chips de equipos bajo el mínimo de 12px; `validarEquipo` exige bodega
+- **Validación**: `validarEquipo` exige bodega
   aunque el modelo Fase 2 permite NULL con cliente.
 - **Tests**: sin tests unitarios ni E2E.
 - **PWA**: no hay service worker ni instalabilidad.
-- **Auditoría**: no se trackea quién modificó qué.
+- **Auditoría pendiente**: existe autoría para movimientos, tareas y altas; falta una
+  bitácora detallada por campo modificado.
 
 ## Lint / ESLint
 

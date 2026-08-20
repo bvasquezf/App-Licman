@@ -1,4 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import {
+    useModalTransition,
+    useRetainedValue,
+} from "../../hooks/useModalTransition";
+import { useDialogA11y } from "../../hooks/useDialogA11y";
+import { useUnsavedChanges } from "../../hooks/useUnsavedChanges";
 
 const clasesInput =
     "mt-1 block w-full rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2.5 text-base font-medium text-slate-900 outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500";
@@ -39,33 +45,40 @@ function formatearRut(value) {
  */
 export default function CrearClienteForm({
     open,
-    clienteInicial = null,
+    clienteInicial: clienteInicialProp = null,
     onSubmit,
     onCancel,
 }) {
     const refs = useRef({});
+    const dialogRef = useRef(null);
+    const transicion = useModalTransition(open);
+    const clienteInicial = useRetainedValue(clienteInicialProp, open);
     const [form, setForm] = useState(estadoInicial);
     const [errores, setErrores] = useState({});
     const [guardando, setGuardando] = useState(false);
+    const [versionFormulario, setVersionFormulario] = useState(0);
+
+    useUnsavedChanges(form, {
+        habilitado: open && !guardando,
+        resetKey: versionFormulario,
+    });
 
     useEffect(() => {
         if (open) {
             setForm(clienteInicial ? { ...estadoInicial, ...clienteInicial } : estadoInicial);
             setErrores({});
             setGuardando(false);
+            setVersionFormulario((version) => version + 1);
         }
     }, [open, clienteInicial]);
 
-    useEffect(() => {
-        if (!open) return undefined;
-        const handler = (e) => {
-            if (e.key === "Escape" && !guardando) onCancel();
-        };
-        window.addEventListener("keydown", handler);
-        return () => window.removeEventListener("keydown", handler);
-    }, [open, guardando, onCancel]);
+    useDialogA11y(open, {
+        dialogRef,
+        onClose: onCancel,
+        bloquearCierre: guardando,
+    });
 
-    if (!open) return null;
+    if (!transicion.renderizar) return null;
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -88,6 +101,12 @@ export default function CrearClienteForm({
         const errs = {};
         if (!form.razon_social.trim())
             errs.razon_social = "La razón social es obligatoria";
+        if (
+            form.mail.trim() &&
+            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.mail.trim())
+        ) {
+            errs.mail = "Ingresa un correo válido";
+        }
         return errs;
     };
 
@@ -120,27 +139,44 @@ export default function CrearClienteForm({
 
     return (
         <div
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="cliente-titulo"
-            className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+            aria-busy={guardando}
+            tabIndex={-1}
+            className={`fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 p-0 sm:items-center sm:p-4 ${transicion.claseFondo}`}
             onClick={(e) => {
                 if (e.target === e.currentTarget && !guardando) onCancel();
             }}
         >
-            <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl sm:rounded-2xl sm:p-6 dark:bg-carbon-900">
-                <header className="mb-4">
-                    <h2
-                        id="cliente-titulo"
-                        className="text-[1.15rem] font-bold text-slate-900 dark:text-slate-100"
+            <div
+                className={`max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl sm:rounded-2xl sm:p-6 dark:bg-carbon-900 ${transicion.clasePanel}`}
+            >
+                <header className="sticky top-0 z-10 -mx-5 -mt-5 mb-4 flex items-start justify-between gap-3 border-b border-slate-200 bg-white/95 px-5 py-4 backdrop-blur sm:-mx-6 sm:-mt-6 sm:px-6 dark:border-white/10 dark:bg-carbon-900/95">
+                    <div>
+                        <h2
+                            id="cliente-titulo"
+                            className="text-[1.15rem] font-bold text-slate-900 dark:text-slate-100"
+                        >
+                            {modoEdicion ? "✏️ Editar cliente" : "👥 Nuevo cliente"}
+                        </h2>
+                        <p className="mt-1 text-sm text-slate-600 dark:text-neutral-400">
+                            {modoEdicion
+                                ? "Modifica los datos del cliente en el catálogo."
+                                : "Agrega un cliente al catálogo. Luego podrás asignarlo a equipos en arriendo, venta o garantía."}
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onCancel}
+                        disabled={guardando}
+                        data-dialog-autofocus
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-xl text-slate-600 transition hover:bg-slate-200 disabled:opacity-50 dark:bg-white/5 dark:text-neutral-300 dark:hover:bg-white/10"
+                        aria-label="Cerrar formulario de cliente"
                     >
-                        {modoEdicion ? "✏️ Editar cliente" : "👥 Nuevo cliente"}
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-600 dark:text-neutral-400">
-                        {modoEdicion
-                            ? "Modifica los datos del cliente en el catálogo."
-                            : "Agrega un cliente al catálogo. Luego podrás asignarlo a equipos en arriendo, venta o garantía."}
-                    </p>
+                        ×
+                    </button>
                 </header>
 
                 <form onSubmit={handleSubmit} className="space-y-3" noValidate>
@@ -152,7 +188,9 @@ export default function CrearClienteForm({
                             name="razon_social"
                             value={form.razon_social}
                             onChange={handleChange}
-                            ref={(el) => (refs.current.razon_social = el)}
+                            ref={(el) => {
+                                refs.current.razon_social = el;
+                            }}
                             placeholder="Ej. TRANSPORTES LOGISTICOS SPA"
                             autoComplete="off"
                             className={clasesInput}
@@ -172,7 +210,9 @@ export default function CrearClienteForm({
                                 name="rut"
                                 value={form.rut}
                                 onChange={handleChange}
-                                ref={(el) => (refs.current.rut = el)}
+                                ref={(el) => {
+                                    refs.current.rut = el;
+                                }}
                                 placeholder="76.302.113-0"
                                 autoComplete="off"
                                 inputMode="text"
@@ -187,7 +227,9 @@ export default function CrearClienteForm({
                                 name="contacto"
                                 value={form.contacto}
                                 onChange={handleChange}
-                                ref={(el) => (refs.current.contacto = el)}
+                                ref={(el) => {
+                                    refs.current.contacto = el;
+                                }}
                                 placeholder="Nombre de la persona"
                                 autoComplete="off"
                                 className={clasesInput}
@@ -203,12 +245,20 @@ export default function CrearClienteForm({
                                 name="mail"
                                 value={form.mail}
                                 onChange={handleChange}
-                                ref={(el) => (refs.current.mail = el)}
+                                ref={(el) => {
+                                    refs.current.mail = el;
+                                }}
                                 placeholder="contacto@empresa.cl"
                                 autoComplete="off"
                                 inputMode="email"
-                                className={clasesInput}
+                                aria-invalid={Boolean(errores.mail)}
+                                className={`${clasesInput} ${errores.mail ? "border-rose-500" : ""}`}
                             />
+                            {errores.mail && (
+                                <p className="mt-1 text-xs font-medium text-rose-600">
+                                    {errores.mail}
+                                </p>
+                            )}
                         </label>
 
                         <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
@@ -218,7 +268,9 @@ export default function CrearClienteForm({
                                 name="celular"
                                 value={form.celular}
                                 onChange={handleChange}
-                                ref={(el) => (refs.current.celular = el)}
+                                ref={(el) => {
+                                    refs.current.celular = el;
+                                }}
                                 placeholder="+56 9 ..."
                                 autoComplete="off"
                                 inputMode="tel"
@@ -234,7 +286,9 @@ export default function CrearClienteForm({
                             name="direccion"
                             value={form.direccion}
                             onChange={handleChange}
-                            ref={(el) => (refs.current.direccion = el)}
+                            ref={(el) => {
+                                refs.current.direccion = el;
+                            }}
                             placeholder="Calle, número, oficina"
                             autoComplete="off"
                             className={clasesInput}
@@ -248,14 +302,19 @@ export default function CrearClienteForm({
                             name="comuna"
                             value={form.comuna}
                             onChange={handleChange}
-                            ref={(el) => (refs.current.comuna = el)}
+                            ref={(el) => {
+                                refs.current.comuna = el;
+                            }}
                             placeholder="Comuna"
                             autoComplete="off"
                             className={clasesInput}
                         />
                     </label>
 
-                    <div className="flex flex-col gap-2 pt-2 sm:flex-row-reverse">
+                    <div
+                        className="sticky bottom-0 z-10 -mx-5 -mb-5 flex flex-col gap-2 border-t border-slate-200 bg-white/95 px-5 pt-4 backdrop-blur sm:-mx-6 sm:-mb-6 sm:flex-row-reverse sm:px-6 dark:border-white/10 dark:bg-carbon-900/95"
+                        style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+                    >
                         <button
                             type="submit"
                             disabled={guardando}

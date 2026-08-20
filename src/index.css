@@ -223,6 +223,173 @@ select {
     animation: toast-in 0.25s ease-out both;
 }
 
+/* Ficha lateral de equipos: el fondo aparece suavemente y el panel
+   entra desde la derecha. Las clases de salida permiten esperar la
+   animación antes de desmontar el modal. */
+@keyframes equipo-detalle-fondo-in {
+    from {
+        opacity: 0;
+        backdrop-filter: blur(0);
+    }
+    to {
+        opacity: 1;
+        backdrop-filter: blur(2px);
+    }
+}
+
+@keyframes equipo-detalle-fondo-out {
+    from {
+        opacity: 1;
+        backdrop-filter: blur(2px);
+    }
+    to {
+        opacity: 0;
+        backdrop-filter: blur(0);
+    }
+}
+
+@keyframes equipo-detalle-panel-in {
+    from {
+        opacity: 0.75;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes equipo-detalle-panel-out {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0.75;
+        transform: translateX(100%);
+    }
+}
+
+.animate-equipo-detalle-fondo-in {
+    animation: equipo-detalle-fondo-in 0.24s ease-out both;
+}
+
+.animate-equipo-detalle-fondo-out {
+    animation: equipo-detalle-fondo-out 0.2s ease-in both;
+}
+
+.animate-equipo-detalle-panel-in {
+    animation: equipo-detalle-panel-in 0.32s
+        cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-equipo-detalle-panel-out {
+    animation: equipo-detalle-panel-out 0.22s ease-in both;
+}
+
+/* Diálogos centrados y bottom sheets de Equipos. En móvil el recorrido
+   vertical recuerda a una hoja nativa; en escritorio se percibe como
+   una elevación breve y no como un salto brusco. */
+@keyframes modal-panel-in {
+    from {
+        opacity: 0;
+        transform: translateY(24px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes modal-panel-out {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(18px) scale(0.98);
+    }
+}
+
+@keyframes modal-imagen-in {
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes modal-imagen-out {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+}
+
+@keyframes modal-contenido-in {
+    from {
+        opacity: 0;
+        transform: translateX(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.animate-modal-fondo-in {
+    animation: equipo-detalle-fondo-in 0.2s ease-out both;
+}
+
+.animate-modal-fondo-out {
+    animation: equipo-detalle-fondo-out 0.2s ease-in both;
+}
+
+.animate-modal-panel-in {
+    animation: modal-panel-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+    will-change: transform, opacity;
+}
+
+.animate-modal-panel-out {
+    animation: modal-panel-out 0.2s ease-in both;
+    will-change: transform, opacity;
+}
+
+.animate-modal-imagen-in {
+    animation: modal-imagen-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-modal-imagen-out {
+    animation: modal-imagen-out 0.2s ease-in both;
+}
+
+.animate-modal-contenido-in {
+    animation: modal-contenido-in 0.22s ease-out backwards;
+}
+
+@keyframes filter-results-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-filter-results {
+    animation: filter-results-in 0.2s ease-out both;
+}
+
 /* Shimmer para skeletons: brillo que barre de izquierda a derecha */
 @keyframes shimmer {
     from {

@@ -16,7 +16,7 @@
 // Fase 2 (movimientos con clientes): el handler `movimiento` se
 // extendió con params opcionales de cliente y swap. Los SWAPS no
 // son offline-capable (la pierna 2 depende del `padre.id` de la
-// pierna 1) — el padre (ListView) los bloquea antes de encolar.
+// pierna 1) — el padre (InventarioView) los bloquea antes de encolar.
 
 import { supabase } from "../services/supabase";
 import {
@@ -67,13 +67,15 @@ const HANDLERS = {
      *   ubicacion_destino, motivo, responsable, notas, p_foto_url?,
      *   cliente_origen_id?, cliente_destino_id?,
      *   categoria?, destino_externo?,
+     *   horometro?,
+     *   numero_acta?, numero_guia_despacho?,
      *   movimiento_padre_id?, equipo_relacionado_id?
      * }
      *
      * El RPC en la BD tiene DEFAULT NULL para los params opcionales,
      * así que se envían todos (con null los que no apliquen).
      *
-     * Si el payload original tenía `fotoFile` (binario), ListView lo
+     * Si el payload original tenía `fotoFile` (binario), InventarioView lo
      * descarta ANTES de encolar (no guardamos binarios en IDB) y bloquea
      * el submit offline. Por eso `p_foto_url` aquí siempre será null
      * en operaciones encoladas: si el usuario quería actualizar la
@@ -94,6 +96,9 @@ const HANDLERS = {
             p_ubicacion_origen: payload.ubicacion_origen ?? null,
             p_ubicacion_destino: payload.ubicacion_destino ?? null,
             p_notas: payload.notas ?? null,
+            p_horometro: payload.horometro ?? null,
+            p_numero_acta: payload.numero_acta ?? null,
+            p_numero_guia_despacho: payload.numero_guia_despacho ?? null,
             p_foto_url: payload.p_foto_url ?? null,
             p_cliente_origen_id: payload.cliente_origen_id ?? null,
             p_cliente_destino_id: payload.cliente_destino_id ?? null,
@@ -162,6 +167,15 @@ export async function flushQueue(opts = {}) {
     let skipped = 0;
 
     for (const item of pending) {
+        // Una operación offline pertenece al usuario que la creó. Nunca debe
+        // quedar registrada a nombre de otra persona que use el mismo equipo.
+        if (item.userId && item.userId !== opts.userId) {
+            skipped++;
+            if (opts.onProgress) {
+                opts.onProgress({ flushed, failed, skipped, total });
+            }
+            continue;
+        }
         const handler = HANDLERS[item.type];
         if (!handler) {
             // Tipo desconocido: descartar sin reintentar

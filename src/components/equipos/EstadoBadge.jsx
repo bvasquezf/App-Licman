@@ -16,7 +16,7 @@ export default function EstadoBadge({ estado }) {
     const texto = ESTADO_CHIP[estado] ?? estado ?? "—";
     return (
         <span
-            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.7rem] font-bold uppercase tracking-wide ${clases}`}
+            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide ${clases}`}
         >
             {texto}
         </span>

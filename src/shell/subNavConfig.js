@@ -12,6 +12,8 @@
  * sidebar y la sub-nav.
  */
 
+import { PERMISOS } from "../lib/authPermissions";
+
 // Orden de las secciones principales (izquierda → derecha en el sidebar).
 export const SECCIONES_PRINCIPALES = [
     {
@@ -20,6 +22,7 @@ export const SECCIONES_PRINCIPALES = [
         short: "Bodega",
         icon: "📦",
         to: "/bodega",
+        permiso: PERMISOS.BODEGA,
     },
     {
         id: "equipos",
@@ -27,6 +30,7 @@ export const SECCIONES_PRINCIPALES = [
         short: "Equipos",
         icon: "🏗️",
         to: "/equipos",
+        permiso: PERMISOS.EQUIPOS,
     },
     {
         id: "mantenimiento",
@@ -34,6 +38,15 @@ export const SECCIONES_PRINCIPALES = [
         short: "Mantto.",
         icon: "📈",
         to: "/mantenimiento",
+        permiso: PERMISOS.MANTENIMIENTO,
+    },
+    {
+        id: "tareas",
+        title: "Tareas",
+        short: "Tareas",
+        icon: "📋",
+        to: "/tareas",
+        permiso: PERMISOS.TAREAS,
     },
 ];
 
@@ -90,6 +103,11 @@ export const SUB_NAV_POR_SECCION = {
             icon: "🕓",
         },
         {
+            to: "/equipos/baterias",
+            label: "Baterías",
+            icon: "🔋",
+        },
+        {
             to: "/equipos/papelera",
             label: "Papelera",
             icon: "🗑️",
@@ -126,6 +144,29 @@ export const SUB_NAV_POR_SECCION = {
             to: "/mantenimiento/tiempos",
             label: "Tiempos",
             icon: "⏱️",
+        },
+    ],
+    tareas: [
+        {
+            to: "/tareas",
+            label: "Tablero",
+            icon: "📋",
+            end: true,
+        },
+        {
+            to: "/tareas/calendario",
+            label: "Calendario",
+            icon: "📅",
+        },
+        {
+            to: "/tareas/tecnicos",
+            label: "Por técnico",
+            icon: "👷",
+        },
+        {
+            to: "/tareas/finalizadas",
+            label: "Finalizadas",
+            icon: "✅",
         },
     ],
 };

@@ -1,10 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
     SECCIONES_PRINCIPALES,
     getSeccionActiva,
 } from "./subNavConfig";
 import ThemeToggle from "../components/ui/ThemeToggle";
+import { useNetwork } from "../context/NetworkContext";
+import { useAuth } from "../context/AuthContext";
+import { PERMISOS, inicialesNombre } from "../lib/authPermissions";
+import { useDialogA11y } from "../hooks/useDialogA11y";
 
 /**
  * Sidebar
@@ -16,12 +20,13 @@ import ThemeToggle from "../components/ui/ThemeToggle";
  *   - Mobile: drawer controlado por `abiertoMobile`. Siempre expandido
  *     (no hay hover en touch).
  *
- * Los 3 items son de primer nivel: Bodega, Equipos, Mantenimiento.
+ * Los ítems son de primer nivel: Bodega, Equipos, Mantenimiento y Tareas.
  * Click en uno navega a la ruta principal (`/bodega`, etc.) y la
  * sub-nav del header muestra el resto.
  */
 export function Sidebar({ abiertoMobile, onCerrarMobile }) {
     const [expandidoDesktop, setExpandidoDesktop] = useState(false);
+    const drawerRef = useRef(null);
     const location = useLocation();
 
     // Cierra el drawer mobile al cambiar de ruta
@@ -30,15 +35,10 @@ export function Sidebar({ abiertoMobile, onCerrarMobile }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location.pathname]);
 
-    // Cierra el drawer mobile con Escape
-    useEffect(() => {
-        if (!abiertoMobile) return;
-        const handler = (e) => {
-            if (e.key === "Escape") onCerrarMobile?.();
-        };
-        window.addEventListener("keydown", handler);
-        return () => window.removeEventListener("keydown", handler);
-    }, [abiertoMobile, onCerrarMobile]);
+    useDialogA11y(abiertoMobile, {
+        dialogRef: drawerRef,
+        onClose: onCerrarMobile,
+    });
 
     // Body scroll lock cuando el drawer mobile está abierto
     useEffect(() => {
@@ -63,6 +63,7 @@ export function Sidebar({ abiertoMobile, onCerrarMobile }) {
 
             {/* Sidebar mobile (drawer) */}
             <aside
+                ref={drawerRef}
                 className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] transform bg-gradient-to-b from-carbon-900 to-carbon-950 p-5 text-white shadow-2xl transition-transform duration-300 ease-in-out md:hidden ${
                     abiertoMobile ? "translate-x-0" : "-translate-x-full"
                 }`}
@@ -70,6 +71,9 @@ export function Sidebar({ abiertoMobile, onCerrarMobile }) {
                     paddingTop: "max(1rem, env(safe-area-inset-top))",
                 }}
                 aria-label="Navegación principal"
+                aria-modal={abiertoMobile ? "true" : undefined}
+                role={abiertoMobile ? "dialog" : undefined}
+                tabIndex={abiertoMobile ? -1 : undefined}
             >
                 <SidebarContenido
                     expandido
@@ -105,7 +109,16 @@ export function Sidebar({ abiertoMobile, onCerrarMobile }) {
  */
 function SidebarContenido({ expandido, onCerrarMobile }) {
     const location = useLocation();
+    const { online, pending, sincronizando } = useNetwork();
+    const { profile, puede, cerrarSesion } = useAuth();
     const seccionActivaId = getSeccionActiva(location.pathname);
+    const estadoConexion = sincronizando
+        ? "Sincronizando"
+        : online
+          ? pending > 0
+              ? `${pending} pendiente${pending === 1 ? "" : "s"}`
+              : "En línea"
+          : "Sin conexión";
 
     return (
         <div className="flex h-full flex-col px-3 py-5 md:py-6">
@@ -131,7 +144,7 @@ function SidebarContenido({ expandido, onCerrarMobile }) {
                         <p className="truncate text-base font-extrabold tracking-wide text-white">
                             LICMAN
                         </p>
-                        <p className="truncate text-[11px] text-neutral-400">
+                        <p className="truncate text-xs text-neutral-400">
                             Gestión integral
                         </p>
                     </div>
@@ -140,6 +153,7 @@ function SidebarContenido({ expandido, onCerrarMobile }) {
                     <button
                         type="button"
                         onClick={onCerrarMobile}
+                        data-dialog-autofocus
                         className="ml-auto flex h-11 w-11 items-center justify-center rounded-[10px] text-neutral-400 hover:bg-white/10 hover:text-white"
                         aria-label="Cerrar menú"
                     >
@@ -154,12 +168,12 @@ function SidebarContenido({ expandido, onCerrarMobile }) {
                 aria-hidden="true"
             />
 
-            {/* Sección principal: 3 items (Bodega / Equipos / Mantenimiento) */}
+            {/* Secciones principales */}
             <nav
                 className="flex-1 space-y-1.5 overflow-y-auto py-2"
                 aria-label="Secciones principales"
             >
-                {SECCIONES_PRINCIPALES.map((sec) => {
+                {SECCIONES_PRINCIPALES.filter((sec) => puede(sec.permiso)).map((sec) => {
                     const activa = sec.id === seccionActivaId;
                     return (
                         <NavLink
@@ -200,6 +214,45 @@ function SidebarContenido({ expandido, onCerrarMobile }) {
                     expandido ? "" : "mx-1"
                 }`}
             >
+                <NavLink
+                    to="/perfil"
+                    title={expandido ? undefined : "Mi perfil"}
+                    className={`mb-2 flex min-h-[44px] items-center gap-3 rounded-xl text-neutral-300 transition hover:bg-white/10 hover:text-white ${
+                        expandido ? "px-2" : "justify-center"
+                    }`}
+                >
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-500 text-xs font-black text-white">
+                        {inicialesNombre(profile?.nombre_completo)}
+                    </span>
+                    {expandido && (
+                        <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-bold text-white">
+                                {profile?.nombre_completo}
+                            </span>
+                            <span className="block truncate text-xs text-neutral-400">
+                                {profile?.rol_nombre}
+                            </span>
+                        </span>
+                    )}
+                </NavLink>
+
+                {puede(PERMISOS.USUARIOS) && (
+                    <NavLink
+                        to="/usuarios"
+                        title={expandido ? undefined : "Usuarios"}
+                        className={`mb-2 flex min-h-[44px] items-center gap-3 rounded-xl text-neutral-300 transition hover:bg-white/10 hover:text-white ${
+                            expandido ? "px-3" : "justify-center"
+                        }`}
+                    >
+                        <span className="text-xl" aria-hidden="true">
+                            👥
+                        </span>
+                        {expandido && (
+                            <span className="text-sm font-bold">Usuarios</span>
+                        )}
+                    </NavLink>
+                )}
+
                 <div
                     className={`mb-2 flex items-center ${
                         expandido ? "" : "justify-center"
@@ -211,16 +264,39 @@ function SidebarContenido({ expandido, onCerrarMobile }) {
                     />
                 </div>
                 <div
-                    className={`flex items-center gap-2 text-[11px] font-medium text-neutral-500 ${
+                    className={`flex items-center gap-2 text-xs font-medium text-neutral-400 ${
                         expandido ? "" : "justify-center"
                     }`}
+                    title={estadoConexion}
+                    aria-live="polite"
                 >
                     <span
-                        className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]"
+                        className={`inline-block h-2 w-2 rounded-full ${
+                            sincronizando
+                                ? "animate-pulse bg-amber-400"
+                                : online
+                                  ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]"
+                                  : "bg-rose-400 shadow-[0_0_6px_rgba(251,113,133,0.5)]"
+                        }`}
                         aria-hidden="true"
                     />
-                    {expandido ? <span>v1.0 · online</span> : <span>v1.0</span>}
+                    {expandido && <span>{estadoConexion}</span>}
                 </div>
+                <button
+                    type="button"
+                    onClick={() => cerrarSesion()}
+                    title={expandido ? undefined : "Cerrar sesión"}
+                    className={`mt-2 flex min-h-[44px] w-full items-center gap-3 rounded-xl text-neutral-400 transition hover:bg-white/10 hover:text-white ${
+                        expandido ? "px-3" : "justify-center"
+                    }`}
+                >
+                    <span className="text-lg" aria-hidden="true">
+                        ↪
+                    </span>
+                    {expandido && (
+                        <span className="text-sm font-bold">Cerrar sesión</span>
+                    )}
+                </button>
             </div>
         </div>
     );

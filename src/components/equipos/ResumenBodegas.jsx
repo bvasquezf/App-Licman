@@ -3,8 +3,7 @@ import { BODEGAS, BODEGA_EN_CLIENTE } from "../../lib/equiposConstants";
 
 /**
  * Resumen visual del inventario por ubicación (bodegas + "En cliente").
- * Cada mini-card actúa como filtro: un clic selecciona la ubicación y
- * otro clic sobre la card activa vuelve a mostrar todas.
+ * Puede usarse como resumen solamente o como filtro cuando recibe onSelect.
  *
  * Props:
  *   equipos: array de equipos activos (sin papelera).
@@ -31,7 +30,7 @@ export default function ResumenBodegas({ equipos, activa, onSelect }) {
             inoperativos: 0,
         });
         for (const e of equipos) {
-            // Misma lógica del filtro de ListView: si tiene cliente,
+            // Misma lógica del filtro de InventarioView: si tiene cliente,
             // cuenta como "En cliente" aunque conserve bodega.
             const clave = e.cliente_id ? BODEGA_EN_CLIENTE : e.bodega;
             const r = porUbicacion.get(clave);
@@ -50,19 +49,10 @@ export default function ResumenBodegas({ equipos, activa, onSelect }) {
             aria-label="Resumen por ubicación"
         >
             {resumen.map((r) => {
-                const esActiva = activa === r.valor;
-                return (
-                    <button
-                        key={r.valor}
-                        type="button"
-                        onClick={() => onSelect(esActiva ? "todas" : r.valor)}
-                        aria-pressed={esActiva}
-                        className={`min-h-[44px] rounded-[12px] border-[1.5px] p-3 text-left transition ${
-                            esActiva
-                                ? "border-brand-600 bg-brand-50 ring-2 ring-brand-600/20 dark:border-brand-500 dark:bg-brand-500/10 dark:ring-brand-500/25"
-                                : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-white/10 dark:bg-carbon-800 dark:hover:border-white/20 dark:hover:bg-white/5"
-                        }`}
-                    >
+                const esInteractiva = typeof onSelect === "function";
+                const esActiva = esInteractiva && activa === r.valor;
+                const contenido = (
+                    <>
                         <p className="truncate text-[0.8rem] font-bold text-slate-700 dark:text-slate-200">
                             {r.valor === BODEGA_EN_CLIENTE ? "🏢 " : ""}
                             {r.nombre}
@@ -82,6 +72,32 @@ export default function ResumenBodegas({ equipos, activa, onSelect }) {
                                     : `${r.inoperativos} inoperativos`}
                             </span>
                         </p>
+                    </>
+                );
+
+                const clases = `min-h-[44px] rounded-[12px] border-[1.5px] p-3 text-left ${
+                    esActiva
+                        ? "border-brand-600 bg-brand-50 ring-2 ring-brand-600/20 dark:border-brand-500 dark:bg-brand-500/10 dark:ring-brand-500/25"
+                        : "border-slate-200 bg-white dark:border-white/10 dark:bg-carbon-800"
+                }`;
+
+                if (!esInteractiva) {
+                    return (
+                        <article key={r.valor} className={clases}>
+                            {contenido}
+                        </article>
+                    );
+                }
+
+                return (
+                    <button
+                        key={r.valor}
+                        type="button"
+                        onClick={() => onSelect(esActiva ? "todas" : r.valor)}
+                        aria-pressed={esActiva}
+                        className={`${clases} transition hover:border-slate-300 hover:bg-slate-50 dark:hover:border-white/20 dark:hover:bg-white/5`}
+                    >
+                        {contenido}
                     </button>
                 );
             })}

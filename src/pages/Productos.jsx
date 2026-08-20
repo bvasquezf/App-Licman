@@ -4,6 +4,7 @@ import { supabase } from "../services/supabase";
 import { exportToExcel } from "../utils/exportToExcel";
 import { useToast } from "../context/ToastContext";
 import { useAsync } from "../hooks/useAsync";
+import { useUrlFilters } from "../hooks/useUrlFilters";
 import { withRetry } from "../utils/withRetry";
 import { handleSupabaseError } from "../utils/handleSupabaseError";
 import PageHeader from "../components/ui/PageHeader";
@@ -15,8 +16,12 @@ import { formatCLP } from "../utils/format";
 
 function Productos() {
     const [productoEditar, setProductoEditar] = useState(null);
-    const [mostrarInactivos, setMostrarInactivos] = useState(false);
-    const [busqueda, setBusqueda] = useState("");
+    const [filtrosUrl, setFiltroUrl] = useUrlFilters({
+        q: "",
+        inactivos: "0",
+    });
+    const busqueda = filtrosUrl.q;
+    const mostrarInactivos = filtrosUrl.inactivos === "1";
     const { showToast } = useToast();
 
     const cargarProductos = useCallback(async () => {
@@ -210,7 +215,10 @@ function Productos() {
                                 type="checkbox"
                                 checked={mostrarInactivos}
                                 onChange={(e) =>
-                                    setMostrarInactivos(e.target.checked)
+                                    setFiltroUrl(
+                                        "inactivos",
+                                        e.target.checked ? "1" : "0",
+                                    )
                                 }
                                 className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-white/15 dark:bg-carbon-800"
                             />
@@ -263,8 +271,8 @@ function Productos() {
                     type="text"
                     placeholder="Buscar por nombre, código o categoría..."
                     value={busqueda}
-                    onChange={(e) => setBusqueda(e.target.value)}
-                    className="w-full rounded-[14px] border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 shadow-[0_10px_30px_rgba(15,23,42,0.10)] transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/10 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500 sm:text-base"
+                    onChange={(e) => setFiltroUrl("q", e.target.value)}
+                    className="min-h-[44px] w-full rounded-[14px] border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 shadow-[0_10px_30px_rgba(15,23,42,0.10)] transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/10 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500 sm:text-base"
                 />
             </div>
 

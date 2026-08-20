@@ -12,14 +12,50 @@ export default function DataTable({ columns, rows, emptyLabel = "Sin datos" }) {
         );
     }
     return (
-        <div className="overflow-x-auto rounded-[10px] border border-slate-200 dark:border-white/10">
-            <table className="w-full text-sm">
+        <>
+            <div className="grid gap-3 lg:hidden">
+                {rows.map((row, idx) => (
+                    <article
+                        key={row.id ?? idx}
+                        className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm dark:border-white/10 dark:bg-carbon-800"
+                    >
+                        <dl className="divide-y divide-slate-100 dark:divide-white/5">
+                            {columns.map((col) => (
+                                <div
+                                    key={col.key}
+                                    className="grid grid-cols-[minmax(0,0.42fr)_minmax(0,1fr)] items-start gap-3 py-2 first:pt-0 last:pb-0"
+                                >
+                                    <dt className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-neutral-400">
+                                        {col.header}
+                                    </dt>
+                                    <dd
+                                        className={`min-w-0 text-sm text-slate-800 dark:text-slate-100 ${
+                                            col.align === "right"
+                                                ? "text-right"
+                                                : col.align === "center"
+                                                  ? "text-center"
+                                                  : ""
+                                        }`}
+                                    >
+                                        {col.render
+                                            ? col.render(row)
+                                            : row[col.key] ?? "—"}
+                                    </dd>
+                                </div>
+                            ))}
+                        </dl>
+                    </article>
+                ))}
+            </div>
+
+            <div className="hidden overflow-hidden rounded-[10px] border border-slate-200 dark:border-white/10 lg:block">
+            <table className="w-full table-fixed text-sm">
                 <thead>
                     <tr className="border-b border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-white/5">
                         {columns.map((col) => (
                             <th
                                 key={col.key}
-                                className={`px-3 py-2.5 text-left text-[0.72rem] font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400 ${
+                                className={`px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400 ${
                                     col.align === "right"
                                         ? "text-right"
                                         : col.align === "center"
@@ -50,6 +86,7 @@ export default function DataTable({ columns, rows, emptyLabel = "Sin datos" }) {
                     ))}
                 </tbody>
             </table>
-        </div>
+            </div>
+        </>
     );
 }

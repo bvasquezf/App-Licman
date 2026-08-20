@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { SubNavBar } from "./SubNavBar";
 import ThemeToggle from "../components/ui/ThemeToggle";
+import { useAuth } from "../context/AuthContext";
+import { inicialesNombre } from "../lib/authPermissions";
 
 /**
  * AppShell
@@ -21,9 +23,33 @@ import ThemeToggle from "../components/ui/ThemeToggle";
 export function AppShell() {
     const [menuAbierto, setMenuAbierto] = useState(false);
     const location = useLocation();
+    const { profile } = useAuth();
 
     return (
         <div className="min-h-screen">
+            {/* Filtro del wordmark para modo oscuro: vuelve blanco el gris
+                del texto y conserva el rojo de la marca. Se declara inline
+                para que funcione también en iOS Safari. */}
+            <svg
+                aria-hidden="true"
+                className="pointer-events-none absolute h-0 w-0 overflow-hidden"
+            >
+                <defs>
+                    <filter
+                        id="licman-dark-wordmark"
+                        colorInterpolationFilters="sRGB"
+                    >
+                        <feColorMatrix
+                            type="matrix"
+                            values="0 0 0 0 1
+                                -1.1086 0 0 0 1.2106
+                                -1.0704 0 0 0 1.2034
+                                0 0 0 1 0"
+                        />
+                    </filter>
+                </defs>
+            </svg>
+
             {/* Topbar mobile (solo <md) */}
             <header
                 className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200/60 bg-white/80 px-4 py-3 backdrop-blur dark:border-white/10 dark:bg-carbon-900/80 md:hidden"
@@ -42,15 +68,28 @@ export function AppShell() {
                         <img
                             src="/logo.png"
                             alt="Licman"
-                            className="h-6 w-auto animate-logo-reveal dark:rounded dark:bg-white dark:p-0.5"
+                            className="h-6 w-auto animate-logo-reveal dark:hidden"
+                        />
+                        <img
+                            src="/logo.png"
+                            alt="Licman"
+                            className="hidden h-6 w-auto animate-logo-reveal dark:block"
+                            style={{ filter: "url(#licman-dark-wordmark)" }}
                         />
                     </div>
                 </div>
                 <div className="flex items-center gap-1">
                     <p className="text-xs font-medium text-slate-500 dark:text-neutral-400">
-                        {TITULO_POR_RUTA(location.pathname)}
+                        {tituloPorRuta(location.pathname)}
                     </p>
                     <ThemeToggle />
+                    <Link
+                        to="/perfil"
+                        className="ml-1 flex h-11 w-11 items-center justify-center rounded-full bg-brand-500 text-xs font-black text-white shadow-sm"
+                        aria-label="Abrir mi perfil"
+                    >
+                        {inicialesNombre(profile?.nombre_completo)}
+                    </Link>
                 </div>
             </header>
 
@@ -81,8 +120,11 @@ export function AppShell() {
                 con los iconos; el padding-right balancea el layout
                 en pantallas anchas. */}
             <main
-                key={location.pathname}
                 className="mx-auto w-full max-w-screen-xl animate-fade-in px-4 py-6 sm:px-6 md:pl-16 md:pr-16 lg:pl-20 lg:pr-20"
+                style={{
+                    paddingBottom:
+                        "max(1.5rem, env(safe-area-inset-bottom))",
+                }}
             >
                 <Outlet />
             </main>
@@ -96,9 +138,12 @@ export function AppShell() {
  * Devuelve un título corto para el topbar mobile según la ruta actual.
  * Es solo orientativo — el header completo vive dentro de cada vista.
  */
-function TITULO_POR_RUTA(path) {
+function tituloPorRuta(path) {
     if (path.startsWith("/bodega")) return "Bodega";
     if (path.startsWith("/equipos")) return "Equipos";
     if (path.startsWith("/mantenimiento")) return "Mantenimiento";
+    if (path.startsWith("/tareas")) return "Tareas";
+    if (path.startsWith("/perfil")) return "Mi perfil";
+    if (path.startsWith("/usuarios")) return "Usuarios";
     return "LICMAN";
 }

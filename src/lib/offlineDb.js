@@ -9,6 +9,7 @@
 //   - pendingWrites: cola de mutaciones pendientes (auto-increment id)
 
 import { openDB } from "idb";
+import { supabase } from "../services/supabase";
 
 const DB_NAME = "bodega-licman-equipos";
 // v2: pendingWrites pasa a keyPath "id" (antes las keys eran out-of-line
@@ -105,10 +106,16 @@ export async function enqueuePendingWrite(item) {
     if (!item || !item.type) {
         throw new Error("enqueuePendingWrite: item.type es requerido");
     }
+    const { data: sessionData } = await supabase.auth.getSession();
+    const userId = sessionData?.session?.user?.id ?? null;
+    if (!userId) {
+        throw new Error("Debes iniciar sesión antes de guardar cambios offline");
+    }
     const db = await getDB();
     const entry = {
         type: item.type,
         payload: item.payload,
+        userId,
         createdAt: new Date().toISOString(),
         retries: 0,
     };

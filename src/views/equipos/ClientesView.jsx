@@ -1,9 +1,12 @@
 import { useCallback, useMemo, useState } from "react";
 import { useToast } from "../../context/ToastContext";
 import { useAsync } from "../../hooks/useAsync";
+import { useUrlFilters } from "../../hooks/useUrlFilters";
 import { withRetry } from "../../utils/withRetry";
 import { supabase } from "../../services/supabase";
 import CrearClienteForm from "../../components/equipos/CrearClienteForm";
+import ConfirmDialog from "../../components/equipos/ConfirmDialog";
+import Skeleton from "../../components/ui/Skeleton";
 
 /**
  * Vista de catálogo de clientes.
@@ -32,10 +35,18 @@ const CAMPOS_BUSQUEDA = [
 
 export default function ClientesView() {
     const toast = useToast();
-    const [busqueda, setBusqueda] = useState("");
+    const [filtrosUrl, setFiltroUrl] = useUrlFilters({
+        q: "",
+        inactivos: "0",
+    });
+    const busqueda = filtrosUrl.q;
+    const mostrarInactivos = filtrosUrl.inactivos === "1";
     const [modalAbierto, setModalAbierto] = useState(false);
     const [clienteEditar, setClienteEditar] = useState(null);
     const [guardando, setGuardando] = useState(false);
+    const [clienteEliminar, setClienteEliminar] = useState(null);
+    const [refsEliminar, setRefsEliminar] = useState(null);
+    const [eliminando, setEliminando] = useState(false);
 
     const cargarClientes = useCallback(async () => {
         if (!supabase) return [];
@@ -45,7 +56,6 @@ export default function ClientesView() {
                 .select(
                     "id, razon_social, rut, contacto, mail, celular, direccion, comuna, activo, created_at",
                 )
-                .eq("activo", true)
                 .order("razon_social", { ascending: true }),
         );
         if (error) throw error;
@@ -61,15 +71,21 @@ export default function ClientesView() {
         onError: (err) => toast.error(err.message),
     });
 
+    const visibles = useMemo(
+        () =>
+            mostrarInactivos ? clientes : clientes.filter((c) => c.activo),
+        [clientes, mostrarInactivos],
+    );
+
     const filtrados = useMemo(() => {
         const texto = busqueda.trim().toLowerCase();
-        if (!texto) return clientes;
-        return clientes.filter((c) =>
+        if (!texto) return visibles;
+        return visibles.filter((c) =>
             CAMPOS_BUSQUEDA.some((campo) =>
                 String(c[campo] ?? "").toLowerCase().includes(texto),
             ),
         );
-    }, [clientes, busqueda]);
+    }, [visibles, busqueda]);
 
     const abrirCrear = () => {
         setClienteEditar(null);
@@ -85,6 +101,86 @@ export default function ClientesView() {
         if (guardando) return;
         setModalAbierto(false);
         setClienteEditar(null);
+    };
+
+    // Cuenta referencias antes de decidir: con historial se desactiva
+    // (soft-delete), sin referencias se elimina definitivamente.
+    const abrirEliminar = async (cliente) => {
+        setClienteEliminar(cliente);
+        setRefsEliminar(null);
+        try {
+            const [eq, mov] = await Promise.all([
+                supabase
+                    .from("equipos")
+                    .select("*", { count: "exact", head: true })
+                    .eq("cliente_id", cliente.id)
+                    .is("deleted_at", null),
+                supabase
+                    .from("equipos_movimientos")
+                    .select("*", { count: "exact", head: true })
+                    .or(
+                        `cliente_origen_id.eq.${cliente.id},cliente_destino_id.eq.${cliente.id}`,
+                    ),
+            ]);
+            setRefsEliminar({
+                equipos: eq.count ?? 0,
+                movimientos: mov.count ?? 0,
+            });
+        } catch {
+            setRefsEliminar({ equipos: null, movimientos: null });
+        }
+    };
+
+    const cerrarEliminar = () => {
+        if (eliminando) return;
+        setClienteEliminar(null);
+        setRefsEliminar(null);
+    };
+
+    const confirmarEliminar = async () => {
+        if (!clienteEliminar) return;
+        setEliminando(true);
+        try {
+            const totalRefs =
+                (refsEliminar?.equipos ?? 0) + (refsEliminar?.movimientos ?? 0);
+            if (totalRefs > 0 || refsEliminar === null) {
+                const { error } = await supabase
+                    .from("clientes")
+                    .update({ activo: false })
+                    .eq("id", clienteEliminar.id);
+                if (error) throw error;
+                toast.success(
+                    "Cliente desactivado: desaparece de las listas pero su historial se mantiene",
+                );
+            } else {
+                const { error } = await supabase
+                    .from("clientes")
+                    .delete()
+                    .eq("id", clienteEliminar.id);
+                if (error) throw error;
+                toast.success("Cliente eliminado definitivamente");
+            }
+            cerrarEliminar();
+            await cargar();
+        } catch (err) {
+            toast.error(err?.message ?? "No se pudo eliminar el cliente");
+        } finally {
+            setEliminando(false);
+        }
+    };
+
+    const handleReactivar = async (cliente) => {
+        try {
+            const { error } = await supabase
+                .from("clientes")
+                .update({ activo: true })
+                .eq("id", cliente.id);
+            if (error) throw error;
+            toast.success("Cliente reactivado");
+            await cargar();
+        } catch (err) {
+            toast.error(err?.message ?? "No se pudo reactivar el cliente");
+        }
     };
 
     const handleSubmit = async (payload) => {
@@ -133,7 +229,7 @@ export default function ClientesView() {
                             <h1 className="text-base font-extrabold tracking-tight text-white sm:text-lg">
                                 Catálogo de clientes
                             </h1>
-                            <p className="text-[0.72rem] font-medium text-slate-300 sm:text-xs">
+                            <p className="text-xs font-medium text-slate-300">
                                 Empresas que reciben equipos en arriendo, venta o garantía
                             </p>
                         </div>
@@ -165,15 +261,37 @@ export default function ClientesView() {
                     <input
                         type="search"
                         value={busqueda}
-                        onChange={(e) => setBusqueda(e.target.value)}
+                        onChange={(e) => setFiltroUrl("q", e.target.value)}
                         placeholder="🔍 Buscar por razón social, RUT, contacto, comuna..."
-                        className="min-w-0 flex-1 rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2 text-[0.92rem] font-medium text-slate-900 outline-none focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15 sm:w-72 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500"
+                        className="min-h-[44px] min-w-0 flex-1 rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2 text-[0.92rem] font-medium text-slate-900 outline-none focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15 sm:w-72 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500"
                     />
+                    <label className="inline-flex min-h-[44px] cursor-pointer items-center gap-2 rounded-xl px-2 text-[0.8rem] font-semibold text-slate-600 select-none dark:text-neutral-400">
+                        <input
+                            type="checkbox"
+                            checked={mostrarInactivos}
+                            onChange={(e) =>
+                                setFiltroUrl("inactivos", e.target.checked ? "1" : "0")
+                            }
+                            className="h-5 w-5 accent-blue-600"
+                        />
+                        Ver inactivos
+                    </label>
                 </div>
 
                 {cargando ? (
-                    <div className="mt-4 rounded-[10px] border-2 border-dashed border-slate-300 px-5 py-7 text-center text-sm text-slate-500 dark:border-white/15 dark:text-neutral-400">
-                        Cargando clientes…
+                    <div className="mt-4 space-y-2" aria-busy="true" aria-label="Cargando clientes">
+                        {Array.from({ length: 5 }, (_, index) => (
+                            <div
+                                key={index}
+                                className="rounded-2xl border border-slate-200 p-4 dark:border-white/10"
+                            >
+                                <div className="flex justify-between gap-3">
+                                    <Skeleton className="h-5 w-48" />
+                                    <Skeleton className="h-7 w-20 rounded-full" />
+                                </div>
+                                <Skeleton className="mt-3 h-4 w-2/3" />
+                            </div>
+                        ))}
                     </div>
                 ) : filtrados.length === 0 ? (
                     <div className="mt-4 rounded-[10px] border-2 border-dashed border-slate-300 px-5 py-7 text-center text-sm text-slate-500 dark:border-white/15 dark:text-neutral-400">
@@ -182,7 +300,7 @@ export default function ClientesView() {
                             : "No se encontraron clientes con esos términos."}
                     </div>
                 ) : (
-                    <ul className="mt-4 space-y-2">
+                    <ul className="animate-filter-results mt-4 space-y-2">
                         {filtrados.map((c) => (
                             <li
                                 key={c.id}
@@ -194,12 +312,12 @@ export default function ClientesView() {
                                             {c.razon_social}
                                         </span>
                                         {c.rut && (
-                                            <span className="rounded-full bg-slate-100 px-2 py-0.5 font-mono text-[0.7rem] font-bold text-slate-700 dark:bg-white/10 dark:text-slate-200">
+                                            <span className="rounded-full bg-slate-100 px-2 py-0.5 font-mono text-xs font-bold text-slate-700 dark:bg-white/10 dark:text-slate-200">
                                                 {c.rut}
                                             </span>
                                         )}
                                         {!c.activo && (
-                                            <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[0.7rem] font-bold text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">
+                                            <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">
                                                 Inactivo
                                             </span>
                                         )}
@@ -249,14 +367,37 @@ export default function ClientesView() {
                                     )}
                                 </div>
 
-                                <button
-                                    type="button"
-                                    onClick={() => abrirEditar(c)}
-                                    className="shrink-0 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-[0.78rem] font-bold text-blue-700 transition hover:-translate-y-px hover:border-blue-300 hover:bg-blue-100 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:border-blue-500/50 dark:hover:bg-blue-500/20"
-                                    aria-label={`Editar ${c.razon_social}`}
-                                >
-                                    ✏️ Editar
-                                </button>
+                                <div className="flex shrink-0 flex-col items-stretch gap-1.5 sm:flex-row sm:items-center">
+                                    {c.activo ? (
+                                        <>
+                                            <button
+                                                type="button"
+                                                onClick={() => abrirEditar(c)}
+                                                className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-[0.78rem] font-bold text-blue-700 transition hover:-translate-y-px hover:border-blue-300 hover:bg-blue-100 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:border-blue-500/50 dark:hover:bg-blue-500/20"
+                                                aria-label={`Editar ${c.razon_social}`}
+                                            >
+                                                ✏️ Editar
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => abrirEliminar(c)}
+                                                className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-[0.78rem] font-bold text-rose-700 transition hover:-translate-y-px hover:border-rose-300 hover:bg-rose-100 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-400 dark:hover:border-rose-500/50 dark:hover:bg-rose-500/20"
+                                                aria-label={`Eliminar ${c.razon_social}`}
+                                            >
+                                                🗑 Eliminar
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => handleReactivar(c)}
+                                            className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[0.78rem] font-bold text-emerald-700 transition hover:-translate-y-px hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:border-emerald-500/50 dark:hover:bg-emerald-500/20"
+                                            aria-label={`Reactivar ${c.razon_social}`}
+                                        >
+                                            ♻️ Reactivar
+                                        </button>
+                                    )}
+                                </div>
                             </li>
                         ))}
                     </ul>
@@ -268,6 +409,33 @@ export default function ClientesView() {
                 clienteInicial={clienteEditar}
                 onSubmit={handleSubmit}
                 onCancel={cerrarModal}
+            />
+
+            <ConfirmDialog
+                open={Boolean(clienteEliminar)}
+                title={
+                    (refsEliminar?.equipos ?? 0) + (refsEliminar?.movimientos ?? 0) > 0 ||
+                    refsEliminar === null
+                        ? "Desactivar cliente"
+                        : "Eliminar cliente"
+                }
+                message={
+                    refsEliminar === null
+                        ? `Comprobando referencias de "${clienteEliminar?.razon_social}"…`
+                        : (refsEliminar.equipos ?? 0) + (refsEliminar.movimientos ?? 0) > 0
+                          ? `"${clienteEliminar?.razon_social}" tiene ${refsEliminar.equipos} equipo(s) y ${refsEliminar.movimientos} movimiento(s) asociados. Se DESACTIVARÁ: desaparece de las listas de selección pero el historial mantiene su nombre. Puedes reactivarlo después marcando «Ver inactivos».`
+                          : `"${clienteEliminar?.razon_social}" no tiene equipos ni movimientos asociados. Se eliminará DEFINITIVAMENTE del catálogo.`
+                }
+                confirmLabel={
+                    refsEliminar === null
+                        ? "Cargando…"
+                        : (refsEliminar.equipos ?? 0) + (refsEliminar.movimientos ?? 0) > 0
+                          ? "Desactivar"
+                          : "Eliminar definitivamente"
+                }
+                onConfirm={confirmarEliminar}
+                onCancel={cerrarEliminar}
+                peligro
             />
         </section>
     );

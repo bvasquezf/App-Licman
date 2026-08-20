@@ -39,14 +39,39 @@ export const MARCA_OTRA = "__otra__";
 export const MOTIVOS_MOVIMIENTO = [
     "Cambio de bodega",
     "En arriendo a cliente",
+    "En préstamo a cliente",
     "Venta a cliente",
     "Devuelto de arriendo",
+    "Mantención interna",
+    "Retorno a cliente",
+    "Cierre de mantención en bodega",
+    "Devolución definitiva",
+    "Asignación de batería",
+    "Cambio de batería",
     "Cambio de equipo (renovación)",
     "Cambio de equipo (garantía)",
     "Cambio de equipo (fallo)",
     "Mantención externa",
     "Otro",
 ];
+
+// Movimientos que deben quedar respaldados con documentación física/digital.
+// Se exige al menos uno de los dos documentos: acta o guía de despacho.
+export const MOTIVOS_CON_DOCUMENTOS = [
+    "Cambio de bodega",
+    "En arriendo a cliente",
+    "En préstamo a cliente",
+    "Devuelto de arriendo",
+    "Mantención interna",
+    "Retorno a cliente",
+    "Cierre de mantención en bodega",
+    "Devolución definitiva",
+    "Mantención externa",
+];
+
+export function requiereDocumentosMovimiento(motivo) {
+    return MOTIVOS_CON_DOCUMENTOS.includes(motivo) || esSwap(motivo);
+}
 
 // Categorías para "Cambio de equipo" (swap). El valor guardado en la BD
 // es el slug (minúscula, sin tilde); el label es lo que se muestra en UI.
@@ -56,7 +81,7 @@ export const CATEGORIAS_SWAP = [
     { value: "fallo", label: "Fallo postventa" },
 ];
 
-// Sentinel para el filtro "En cliente" en EquiposHeader/ListView.
+// Sentinel para el filtro "En cliente" en EquiposHeader/InventarioView.
 // NO se guarda en la BD — es solo un valor de UI para el filtro.
 // En la BD, un equipo "en cliente" tiene `bodega = NULL` + `cliente_id IS NOT NULL`.
 export const BODEGA_EN_CLIENTE = "__en_cliente__";
@@ -65,6 +90,92 @@ export const BODEGA_EN_CLIENTE = "__en_cliente__";
 export function esSwap(motivo) {
     return typeof motivo === "string" && motivo.startsWith("Cambio de equipo");
 }
+
+// Detecta si el motivo es una venta (el equipo queda marcado `vendido`).
+export function esVenta(motivo) {
+    return motivo === "Venta a cliente";
+}
+
+// Solo estas categorías usan las baterías eléctricas grandes y reparables
+// que se controlan en el inventario separado. Las baterías de equipos a gas
+// u otros equipos no eléctricos quedan fuera de este módulo.
+export function usaBateriaElectrica(equipo) {
+    const tipo = String(equipo?.tipo_equipo ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+
+    // Una asociación real siempre prevalece sobre el nombre descriptivo.
+    if (equipo?.bateria_asociada) return true;
+
+    // La planilla histórica tiene muchas variantes. Primero excluimos las
+    // grúas a gas, cuyos textos "SIN BATERÍA" se referían a la batería de
+    // arranque desechable y no al inventario eléctrico reparable.
+    if (/\bgas\b/.test(tipo)) return false;
+
+    return [
+        /retrac/,
+        /apilador/,
+        /grua.*elect/,
+        /transpaleta/,
+        /order\s*picker/,
+        /recoge\s*pedido/,
+        /multidireccional/,
+        /trilateral/,
+        /remolcador/,
+        /plataforma.*(aerea|tijera|unipersonal)/,
+        /alza\s*hombre/,
+        /brazo\s*articulado/,
+    ].some((patron) => patron.test(tipo));
+}
+
+// Mapa categoría swap → motivo final. La tile "Cambio de equipo" del
+// MovimientoDialog selecciona un motivo genérico y el select de categoría
+// sincroniza el motivo exacto que se guarda en la BD.
+export const MOTIVO_POR_CATEGORIA_SWAP = {
+    renovacion: "Cambio de equipo (renovación)",
+    garantia: "Cambio de equipo (garantía)",
+    fallo: "Cambio de equipo (fallo)",
+};
+
+// Tiles del picker de motivos en MovimientoDialog: botones grandes y
+// touch-friendly que reemplazan al <select> de 9 opciones. Los 3 motivos
+// swap se colapsan en una sola tile; la categoría se elige después.
+// `motivo` es el valor real que queda seleccionado al apretar la tile.
+export const MOTIVOS_TILES = [
+    { motivo: "Cambio de bodega", icono: "🚚", label: "Cambio de bodega" },
+    { motivo: "En arriendo a cliente", icono: "🏢", label: "Arriendo" },
+    { motivo: "En préstamo a cliente", icono: "🤝", label: "Préstamo" },
+    { motivo: "Devuelto de arriendo", icono: "📥", label: "Devolución" },
+    { motivo: "Mantención interna", icono: "🛠️", label: "Mantención interna" },
+    {
+        motivo: "Retorno a cliente",
+        icono: "↩️",
+        label: "Devolver al cliente",
+        esCierreMantencion: true,
+    },
+    {
+        motivo: "Cierre de mantención en bodega",
+        icono: "📦",
+        label: "Dejar en bodega",
+        esCierreMantencion: true,
+    },
+    {
+        motivo: "Devolución definitiva",
+        icono: "↩️",
+        label: "Devolución definitiva",
+    },
+    { motivo: "Venta a cliente", icono: "💰", label: "Venta" },
+    {
+        motivo: "Cambio de equipo (renovación)",
+        icono: "🔁",
+        label: "Cambio de equipo",
+        esSwapTile: true,
+    },
+    { motivo: "Mantención externa", icono: "🔧", label: "Mantención" },
+    { motivo: "Otro", icono: "📝", label: "Otro" },
+];
 
 /**
  * Devuelve la configuración de campos según el motivo seleccionado.
@@ -79,10 +190,22 @@ export function camposPorMotivo(motivo) {
     if (motivo === "Cambio de bodega") {
         return { tipo: "bodega", requiere: ["bodega_destino"] };
     }
-    if (motivo === "Devuelto de arriendo") {
+    if (
+        motivo === "Devuelto de arriendo" ||
+        motivo === "Mantención interna" ||
+        motivo === "Cierre de mantención en bodega" ||
+        motivo === "Devolución definitiva"
+    ) {
         return { tipo: "bodega", requiere: ["bodega_destino"] };
     }
-    if (motivo === "En arriendo a cliente" || motivo === "Venta a cliente") {
+    if (motivo === "Retorno a cliente") {
+        return { tipo: "cliente_retorno", requiere: [] };
+    }
+    if (
+        motivo === "En arriendo a cliente" ||
+        motivo === "En préstamo a cliente" ||
+        motivo === "Venta a cliente"
+    ) {
         return { tipo: "cliente", requiere: ["cliente_id"] };
     }
     if (esSwap(motivo)) {
@@ -135,8 +258,15 @@ export const PHOTO_EMAIL = "salinascompliance@gmail.com";
 export const ICONO_POR_MOTIVO = {
     "Cambio de bodega": "🚚",
     "En arriendo a cliente": "🏢",
+    "En préstamo a cliente": "🤝",
     "Venta a cliente": "💰",
     "Devuelto de arriendo": "📥",
+    "Mantención interna": "🛠️",
+    "Retorno a cliente": "↩️",
+    "Cierre de mantención en bodega": "📦",
+    "Devolución definitiva": "↩️",
+    "Asignación de batería": "🔋",
+    "Cambio de batería": "🔋",
     "Cambio de equipo (renovación)": "🔁",
     "Cambio de equipo (garantía)": "🔁",
     "Cambio de equipo (fallo)": "🔁",
@@ -164,6 +294,7 @@ export const EXCEL_HEADERS = {
     observaciones: "Observaciones",
     responsable: "Responsable",
     foto_enviada: "Foto Enviada",
+    vendido: "Vendido",
     created_at: "Fecha Registro",
 };
 
@@ -183,5 +314,6 @@ export const EXCEL_COLUMN_ORDER = [
     "observaciones",
     "responsable",
     "foto_enviada",
+    "vendido",
     "created_at",
 ];

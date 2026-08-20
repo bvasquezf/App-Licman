@@ -12,9 +12,10 @@ import { equipoVacio, validarEquipo } from "../../lib/equiposValidacion";
 import { useToast } from "../../context/ToastContext";
 import { useNetwork } from "../../context/NetworkContext";
 import { supabase } from "../../services/supabase";
-import { uploadFotoEquipo } from "../../lib/equiposStorage";
+import { deleteFotoEquipo, uploadFotoEquipo } from "../../lib/equiposStorage";
 import PhotoUpload from "../../components/equipos/PhotoUpload";
 import EquiposHeader from "../../components/equipos/EquiposHeader";
+import { useUnsavedChanges } from "../../hooks/useUnsavedChanges";
 import {
     cacheEquipos,
     enqueuePendingWrite,
@@ -31,13 +32,18 @@ const ESTADO_DESCRIPCIONES = {
 const clasesInput =
     "mt-1.5 block w-full rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2.5 text-base font-medium text-slate-900 outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500";
 
+function ErrorCampo({ mensaje }) {
+    if (!mensaje) return null;
+    return <p className="mt-1 text-xs font-medium text-rose-600">{mensaje}</p>;
+}
+
 /**
  * Formulario de registro de equipos.
  * - Al montar pide `preview_next_correlativo` (pista visual).
  * - Al enviar: si online → RPC `insert_equipo` (asigna correlativo real atómico).
  *   Si offline → encola en IDB y se sincroniza al reconectar.
  */
-export default function FormView() {
+export default function RegistrarEquipoView() {
     const toast = useToast();
     const { online, refrescarPending } = useNetwork();
     const refs = useRef({});
@@ -54,6 +60,8 @@ export default function FormView() {
 
     // Para detectar duplicados: cargamos todos los equipos al montar.
     const [equipos, setEquipos] = useState([]);
+
+    useUnsavedChanges([form, Boolean(fotoFile)], { habilitado: !guardando });
 
     useEffect(() => {
         let cancelado = false;
@@ -158,9 +166,28 @@ export default function FormView() {
             return;
         }
 
+        // Se valida el formulario antes de reemplazar el sentinel "Otra".
+        // Así el validador puede comprobar correctamente que marcaOtra tenga
+        // contenido, sin interpretar una marca libre (ej. Toyota) como una
+        // opción inválida del listado principal.
+        const {
+            ok,
+            errores: errsValidacion,
+            erroresPorCampo,
+        } = validarEquipo(form);
+        if (!ok) {
+            setErrores(erroresPorCampo);
+            const primerCampo = Object.keys(erroresPorCampo)[0];
+            refs.current[primerCampo]?.focus();
+            toast.error(errsValidacion[0] ?? "Revisa los campos");
+            return;
+        }
+
         const payload = {
             ...form,
-            marca: form.marca === MARCA_OTRA ? form.marcaOtra : form.marca,
+            marca: String(
+                form.marca === MARCA_OTRA ? form.marcaOtra : form.marca,
+            ).trim(),
             marcaOtra: undefined,
             elementos_faltantes: form.elementos_faltantes ?? [],
             horometro: form.horometro === "" ? null : Number(form.horometro),
@@ -168,15 +195,6 @@ export default function FormView() {
             // completa después de subir a Storage si estamos online.
             foto_enviada: Boolean(fotoFile),
         };
-
-        const { ok, errores: errsValidacion } = validarEquipo(payload);
-        if (!ok) {
-            const errsObj = {};
-            for (const msg of errsValidacion) errsObj._general = msg;
-            setErrores(errsObj);
-            toast.error(errsValidacion[0] ?? "Revisa los campos");
-            return;
-        }
 
         setErrores({});
         setGuardando(true);
@@ -194,49 +212,58 @@ export default function FormView() {
                 setFotoFile(null);
                 setFotoError(null);
             } else {
-                // 1. Subir foto a Storage si hay
-                let fotoUrl = null;
-                if (fotoFile) {
-                    setFotoError(null);
-                    try {
-                        // Pedimos el correlativo que se va a asignar
-                        // para incluirlo en el path del archivo
-                        // (convención: {correlativo:04d}_{timestamp}.ext).
-                        // Esto evita que todas las fotos queden en
-                        // `0001_*.ext` como pasaba antes.
-                        const { data: corrPreview, error: corrErr } =
-                            await supabase.rpc("preview_next_correlativo");
-                        if (corrErr) throw corrErr;
-                        const corrParaPath =
-                            typeof corrPreview === "number"
-                                ? corrPreview
-                                : Number(corrPreview) || 1;
-                        fotoUrl = await uploadFotoEquipo(
-                            fotoFile,
-                            corrParaPath,
-                        );
-                    } catch (uploadErr) {
-                        setFotoError(
-                            uploadErr?.message ?? "Error al subir foto",
-                        );
-                        toast.error(
-                            "No se pudo subir la foto: " +
-                                (uploadErr?.message ?? "error desconocido"),
-                        );
-                        setGuardando(false);
-                        return;
-                    }
-                }
-
-                const payloadFinal = { ...payload, foto_url: fotoUrl };
+                // 1. Crear primero el equipo sin foto para obtener su ID real.
+                // La foto se sube después a una ruta ligada a ese ID.
+                const payloadSinFoto = {
+                    ...payload,
+                    foto_enviada: false,
+                    foto_url: null,
+                };
                 const { data, error } = await supabase.rpc("insert_equipo", {
-                    p_equipo: payloadFinal,
+                    p_equipo: payloadSinFoto,
                 });
                 if (error) throw error;
                 const inserted = Array.isArray(data) ? data[0] : data;
+
+                // 2. Subir y vincular la foto después del INSERT.
+                let fotoUrl = null;
+                let fotoGuardada = false;
+                if (fotoFile) {
+                    setFotoError(null);
+                    try {
+                        fotoUrl = await uploadFotoEquipo(fotoFile, inserted.id);
+                        const { error: fotoDbError } = await supabase.rpc(
+                            "actualizar_foto_equipo",
+                            {
+                                p_id: inserted.id,
+                                p_foto_url: fotoUrl,
+                            },
+                        );
+                        if (fotoDbError) throw fotoDbError;
+                        fotoGuardada = true;
+                    } catch (uploadErr) {
+                        if (fotoUrl) {
+                            try {
+                                await deleteFotoEquipo(fotoUrl);
+                            } catch {
+                                console.warn(
+                                    `[RegistrarEquipoView] No se pudo limpiar foto ${fotoUrl}`,
+                                );
+                            }
+                        }
+                        setFotoError(
+                            uploadErr?.message ?? "Error al subir foto",
+                        );
+                        toast.warning(
+                            "Equipo registrado, pero la foto no pudo guardarse: " +
+                                (uploadErr?.message ?? "error desconocido"),
+                        );
+                    }
+                }
+
                 toast.success(
                     `Equipo registrado con N° ${inserted?.correlativo ?? "?"}${
-                        fotoUrl ? " · foto guardada" : ""
+                        fotoGuardada ? " · foto guardada" : ""
                     }`,
                 );
                 setForm(equipoVacio());
@@ -279,8 +306,11 @@ export default function FormView() {
                             onChange={(e) =>
                                 handleChange("bodega", e.target.value)
                             }
-                            ref={(el) => (refs.current.bodega = el)}
-                            className={clasesInput}
+                            ref={(el) => {
+                                refs.current.bodega = el;
+                            }}
+                            aria-invalid={Boolean(errores.bodega)}
+                            className={`${clasesInput} ${errores.bodega ? "border-rose-500" : ""}`}
                         >
                             <option value="">— Selecciona —</option>
                             {BODEGAS.map((b) => (
@@ -289,6 +319,7 @@ export default function FormView() {
                                 </option>
                             ))}
                         </select>
+                        <ErrorCampo mensaje={errores.bodega} />
                     </label>
 
                     <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
@@ -298,8 +329,11 @@ export default function FormView() {
                             onChange={(e) =>
                                 handleChange("tipo_equipo", e.target.value)
                             }
-                            ref={(el) => (refs.current.tipo_equipo = el)}
-                            className={clasesInput}
+                            ref={(el) => {
+                                refs.current.tipo_equipo = el;
+                            }}
+                            aria-invalid={Boolean(errores.tipo_equipo)}
+                            className={`${clasesInput} ${errores.tipo_equipo ? "border-rose-500" : ""}`}
                         >
                             <option value="">— Selecciona —</option>
                             {TIPOS_EQUIPO.map((t) => (
@@ -308,6 +342,7 @@ export default function FormView() {
                                 </option>
                             ))}
                         </select>
+                        <ErrorCampo mensaje={errores.tipo_equipo} />
                     </label>
 
                     <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
@@ -321,12 +356,13 @@ export default function FormView() {
                                     e.target.value,
                                 )
                             }
-                            ref={(el) =>
-                                (refs.current.numero_interno = el)
-                            }
+                            ref={(el) => {
+                                refs.current.numero_interno = el;
+                            }}
+                            aria-invalid={Boolean(errores.numero_interno || niDuplicado)}
                             placeholder="Ej. AP-042"
                             className={`${clasesInput} ${
-                                niDuplicado
+                                niDuplicado || errores.numero_interno
                                     ? "border-rose-400 focus:border-rose-600 focus:ring-rose-600/15"
                                     : ""
                             }`}
@@ -336,6 +372,9 @@ export default function FormView() {
                                 ⚠️ Ya existe un equipo con este N° interno en
                                 {form.bodega}. Verifica antes de guardar.
                             </p>
+                        )}
+                        {!niDuplicado && (
+                            <ErrorCampo mensaje={errores.numero_interno} />
                         )}
                     </label>
 
@@ -347,10 +386,14 @@ export default function FormView() {
                             onChange={(e) =>
                                 handleChange("numero_serie", e.target.value)
                             }
-                            ref={(el) => (refs.current.numero_serie = el)}
+                            ref={(el) => {
+                                refs.current.numero_serie = el;
+                            }}
+                            aria-invalid={Boolean(errores.numero_serie)}
                             placeholder="S/N del fabricante"
-                            className={clasesInput}
+                            className={`${clasesInput} ${errores.numero_serie ? "border-rose-500" : ""}`}
                         />
+                        <ErrorCampo mensaje={errores.numero_serie} />
                     </label>
 
                     <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
@@ -360,7 +403,11 @@ export default function FormView() {
                             onChange={(e) =>
                                 handleChange("marca", e.target.value)
                             }
-                            className={clasesInput}
+                            ref={(el) => {
+                                refs.current.marca = el;
+                            }}
+                            aria-invalid={Boolean(errores.marca)}
+                            className={`${clasesInput} ${errores.marca ? "border-rose-500" : ""}`}
                         >
                             <option value="">— Selecciona —</option>
                             {MARCAS.map((m) => (
@@ -370,6 +417,7 @@ export default function FormView() {
                             ))}
                             <option value={MARCA_OTRA}>Otra…</option>
                         </select>
+                        <ErrorCampo mensaje={errores.marca} />
                     </label>
 
                     {form.marca === MARCA_OTRA && (
@@ -381,9 +429,14 @@ export default function FormView() {
                                 onChange={(e) =>
                                     handleChange("marcaOtra", e.target.value)
                                 }
+                                ref={(el) => {
+                                    refs.current.marcaOtra = el;
+                                }}
+                                aria-invalid={Boolean(errores.marcaOtra)}
                                 placeholder="Nombre de la marca"
-                                className={clasesInput}
+                                className={`${clasesInput} ${errores.marcaOtra ? "border-rose-500" : ""}`}
                             />
+                            <ErrorCampo mensaje={errores.marcaOtra} />
                         </label>
                     )}
 
@@ -395,9 +448,14 @@ export default function FormView() {
                             onChange={(e) =>
                                 handleChange("modelo", e.target.value)
                             }
+                            ref={(el) => {
+                                refs.current.modelo = el;
+                            }}
+                            aria-invalid={Boolean(errores.modelo)}
                             placeholder="Modelo del fabricante"
-                            className={clasesInput}
+                            className={`${clasesInput} ${errores.modelo ? "border-rose-500" : ""}`}
                         />
+                        <ErrorCampo mensaje={errores.modelo} />
                     </label>
 
                     <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
@@ -446,6 +504,11 @@ export default function FormView() {
                                             e.target.value,
                                         )
                                     }
+                                    ref={(el) => {
+                                        if (form.estado_operacional === est || !refs.current.estado_operacional) {
+                                            refs.current.estado_operacional = el;
+                                        }
+                                    }}
                                     className="h-4 w-4 accent-blue-600"
                                 />
                                 <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
@@ -458,6 +521,7 @@ export default function FormView() {
                         </label>
                     ))}
                 </div>
+                <ErrorCampo mensaje={errores.estado_operacional} />
 
                 <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
@@ -469,9 +533,14 @@ export default function FormView() {
                             onChange={(e) =>
                                 handleChange("horometro", e.target.value)
                             }
+                            ref={(el) => {
+                                refs.current.horometro = el;
+                            }}
+                            aria-invalid={Boolean(errores.horometro)}
                             placeholder="Horas de uso"
-                            className={clasesInput}
+                            className={`${clasesInput} ${errores.horometro ? "border-rose-500" : ""}`}
                         />
+                        <ErrorCampo mensaje={errores.horometro} />
                     </label>
 
                     <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
@@ -482,9 +551,14 @@ export default function FormView() {
                             onChange={(e) =>
                                 handleChange("responsable", e.target.value)
                             }
+                            ref={(el) => {
+                                refs.current.responsable = el;
+                            }}
+                            aria-invalid={Boolean(errores.responsable)}
                             placeholder="Tu nombre completo"
-                            className={clasesInput}
+                            className={`${clasesInput} ${errores.responsable ? "border-rose-500" : ""}`}
                         />
+                        <ErrorCampo mensaje={errores.responsable} />
                     </label>
                 </div>
 
@@ -531,7 +605,7 @@ export default function FormView() {
                 <p className="mt-1 text-xs text-slate-500 dark:text-neutral-400">
                     Antes se enviaba al correo <strong>{PHOTO_EMAIL}</strong>.
                     Ahora se sube directamente al bucket{" "}
-                    <code className="rounded bg-slate-100 px-1 text-[0.7rem] dark:bg-white/10">
+                    <code className="rounded bg-slate-100 px-1 text-xs dark:bg-white/10">
                         equipos-fotos
                     </code>{" "}
                     en Supabase Storage.

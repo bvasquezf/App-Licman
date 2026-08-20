@@ -42,16 +42,22 @@ export function equipoVacio() {
 
 /**
  * Valida un equipo.
- * @returns {{ ok: boolean, errores: string[] }}
+ * @returns {{ ok: boolean, errores: string[], erroresPorCampo: Object }}
  */
 export function validarEquipo(data) {
     const errores = [];
+    const erroresPorCampo = {};
+    const agregarError = (campo, mensaje) => {
+        errores.push(mensaje);
+        if (!erroresPorCampo[campo]) erroresPorCampo[campo] = mensaje;
+    };
 
     // Campos requeridos vacíos
     for (const campo of CAMPOS_REQUERIDOS) {
         const v = data[campo];
         if (v === undefined || v === null || String(v).trim() === "") {
-            errores.push(
+            agregarError(
+                campo,
                 `El campo "${campo.replaceAll("_", " ")}" es obligatorio.`,
             );
         }
@@ -59,17 +65,21 @@ export function validarEquipo(data) {
 
     // Bodega válida
     if (data.bodega && !BODEGAS.includes(data.bodega)) {
-        errores.push(`Bodega inválida: "${data.bodega}".`);
+        agregarError("bodega", `Bodega inválida: "${data.bodega}".`);
     }
 
     // Tipo de equipo válido
     if (data.tipo_equipo && !TIPOS_EQUIPO.includes(data.tipo_equipo)) {
-        errores.push(`Tipo de equipo inválido: "${data.tipo_equipo}".`);
+        agregarError(
+            "tipo_equipo",
+            `Tipo de equipo inválido: "${data.tipo_equipo}".`,
+        );
     }
 
     // Estado operacional válido
     if (data.estado_operacional && !ESTADOS.includes(data.estado_operacional)) {
-        errores.push(
+        agregarError(
+            "estado_operacional",
             `Estado operacional inválido: "${data.estado_operacional}".`,
         );
     }
@@ -80,12 +90,13 @@ export function validarEquipo(data) {
             !data.marcaOtra ||
             String(data.marcaOtra).trim() === ""
         ) {
-            errores.push(
+            agregarError(
+                "marcaOtra",
                 'Elegiste "Otra" como marca. Escribe la marca en el campo de texto.',
             );
         }
     } else if (data.marca && !MARCAS.includes(data.marca)) {
-        errores.push(`Marca inválida: "${data.marca}".`);
+        agregarError("marca", `Marca inválida: "${data.marca}".`);
     }
 
     // Horómetro: si viene, debe ser número ≥ 0
@@ -96,9 +107,12 @@ export function validarEquipo(data) {
     ) {
         const n = Number(data.horometro);
         if (Number.isNaN(n) || n < 0) {
-            errores.push("Horómetro debe ser un número mayor o igual a 0.");
+            agregarError(
+                "horometro",
+                "Horómetro debe ser un número mayor o igual a 0.",
+            );
         }
     }
 
-    return { ok: errores.length === 0, errores };
+    return { ok: errores.length === 0, errores, erroresPorCampo };
 }

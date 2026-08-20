@@ -1,12 +1,16 @@
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Supabase recomienda la nueva publishable key para aplicaciones públicas.
+// Se mantiene compatibilidad con la anon key antigua durante la transición.
+const supabasePublicKey =
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Clave en localStorage que persiste la preferencia "Recordar sesión".
 // Vive en localStorage a propósito: si no, se borraría al cerrar la pestaña
 // y la preferencia no sobreviviría entre sesiones.
-const REMEMBER_KEY = "app_bodega_remember_session";
+export const REMEMBER_KEY = "app_bodega_remember_session";
 
 const getRememberPreference = () => {
     try {
@@ -15,6 +19,17 @@ const getRememberPreference = () => {
         return false;
     }
 };
+
+export const getRememberSession = getRememberPreference;
+
+export function setRememberSession(recordar) {
+    try {
+        localStorage.setItem(REMEMBER_KEY, recordar ? "true" : "false");
+    } catch {
+        // Safari puede bloquear storage en modo privado. Auth seguirá
+        // funcionando durante la pestaña actual mediante sessionStorage.
+    }
+}
 
 // Storage adapter personalizado:
 // - Si el usuario marcó "Recordar sesión" → usa localStorage (persiste entre pestañas/cierres)
@@ -52,7 +67,7 @@ const createAuthStorage = () => ({
     },
 });
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient(supabaseUrl, supabasePublicKey, {
     auth: {
         storage: createAuthStorage(),
         persistSession: true,

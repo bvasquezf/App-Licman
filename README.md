@@ -1,6 +1,6 @@
 # 📦 App Bodega Licman
 
-App web unificada de gestión para Licman — **3 secciones en una sola SPA**, en español chileno, usable desde iPhone y MacBook.
+App web unificada de gestión para Licman — **4 secciones en una sola SPA**, en español chileno, usable desde iPhone y MacBook.
 
 ## 🧭 Secciones
 
@@ -9,6 +9,7 @@ App web unificada de gestión para Licman — **3 secciones en una sola SPA**, e
 | **Bodega** | `/bodega/*` | Inventario de repuestos: productos, entradas (compras), salidas (consumos), stock, historial, valorización, export a Excel |
 | **Equipos** | `/equipos/*` | Inventario de equipos entre bodegas y clientes: altas con foto, movimientos, swaps, clientes, papelera, export |
 | **Mantenimiento** | `/mantenimiento/*` | Dashboard de OTs e informes de terreno: KPIs, técnicos, reincidencia, tiempos, con auto-refresh |
+| **Tareas** | `/tareas/*` | Planificación de taller y terreno: tablero, calendario, carga por técnico y trabajos finalizados |
 
 ## 🛠️ Stack
 
@@ -33,16 +34,23 @@ Requiere un `.env` con:
 
 ```
 VITE_SUPABASE_URL=...
-VITE_SUPABASE_ANON_KEY=...
+VITE_SUPABASE_PUBLISHABLE_KEY=...
 ```
+
+La variable antigua `VITE_SUPABASE_ANON_KEY` sigue siendo compatible durante
+la transición. Nunca agregar una secret key ni `service_role` al frontend.
 
 ## 🗄️ Base de datos
 
-Migraciones idempotentes en `supabase/migrations/` (000–006).
+La aplicación utiliza un backend Supabase administrado de forma privada. Este
+repositorio público no incluye migraciones SQL, configuración operativa ni el
+código de las funciones administrativas.
 
 - **Bodega**: `productos`, `stock_actual`, `bodega_movimientos`
 - **Equipos**: `equipos`, `equipos_bodegas`, `equipos_movimientos`, `clientes`
 - **Mantenimiento**: `mantenimiento_ots`, `mantenimiento_informes_terreno`, catálogos
+- **Tareas**: `tareas`, `tareas_tecnicos`, `tareas_historial`
+- **Accesos**: `perfiles`, `roles_app`, `permisos_app`, `roles_permisos_app`
 
 Las escrituras de equipos se hacen siempre vía RPC (`insert_equipo`, `registrar_movimiento`,
 `soft_delete_equipo`, `restore_equipo`, `hard_delete_equipo`), nunca con inserts directos.
@@ -50,23 +58,56 @@ Las escrituras de equipos se hacen siempre vía RPC (`insert_equipo`, `registrar
 ## 📴 Offline (sección Equipos)
 
 Los equipos se cachean en IndexedDB y las mutaciones hechas sin conexión se encolan
-(`pendingWrites`) y se sincronizan automáticamente al volver la red.
+(`pendingWrites`) con el ID del usuario que las creó. Se sincronizan automáticamente
+al volver la red, pero nunca a nombre de otra cuenta.
 Fotos y swaps requieren conexión (se bloquean en la UI).
 
-## 🔓 Acceso
+## 🔐 Acceso y primera configuración
 
-La app **no tiene login** (decisión consciente, uso interno): cualquiera con el link
-puede usarla, y el RLS de Supabase está abierto al rol `anon`. No exponer públicamente
-datos sensibles sin antes reactivar autenticación y cerrar las policies.
+La app usa Supabase Auth con correo y contraseña. El backend aplica RLS por módulo,
+mantiene el acceso anónimo cerrado y registra automáticamente quién creó cada
+movimiento o tarea.
+
+1. En Supabase Auth, agregar como Redirect URLs:
+   `http://localhost:5173/restablecer-clave` y la misma ruta del dominio productivo.
+2. Desplegar la infraestructura desde su repositorio privado.
+3. Abrir la app. Si todavía no hay usuarios, el login mostrará la configuración del
+   primer administrador.
+4. Después de crear el administrador, desactivar los registros públicos en Supabase
+   Auth. Los demás usuarios se crean desde **Usuarios y accesos**.
+
+Si Supabase conservaba cuentas de una versión anterior, la migración las deja como
+**Sin acceso** en vez de convertir una cuenta antigua en administrador automáticamente.
+
+Roles incluidos: Administrador, Supervisor, Bodega, Operador de equipos, Técnico,
+Planificador y Sin acceso. Los permisos se validan en React, RLS y triggers de base de
+datos; esconder una ruta no es la barrera de seguridad.
+
+## 🌐 Publicación en Netlify
+
+El repositorio incluye `netlify.toml` con el build de Vite, la redirección de la
+SPA, Node 22, caché de assets y encabezados de seguridad.
+
+1. Conectar este repositorio desde **Netlify → Add new project → Import an existing project**.
+2. Elegir la rama de producción y confirmar `npm run lint && npm run build` como
+   build command y `dist` como publish directory.
+3. En **Environment variables**, agregar `VITE_SUPABASE_URL` y
+   `VITE_SUPABASE_PUBLISHABLE_KEY`. Son las únicas variables Supabase del frontend.
+4. En Supabase Auth configurar el dominio final como **Site URL** y agregar
+   `/login` y `/restablecer-clave` a las Redirect URLs permitidas.
+5. Desactivar los registros públicos en Supabase Auth; las cuentas nuevas se
+   crean por invitación desde la aplicación.
+
+Cada `git push` a la rama de producción genera automáticamente un nuevo deploy.
 
 ## 📁 Estructura
 
 ```
 src/
 ├── pages/          # Sección Bodega
-├── views/          # Secciones Equipos y Mantenimiento
-├── components/     # forms/ equipos/ mantenimiento/ ui/
-├── context/        # Toast, Network (offline), Dashboard (mantenimiento)
+├── views/          # Equipos, Mantenimiento, Tareas y Auth
+├── components/     # forms/ equipos/ mantenimiento/ tareas/ auth/ ui/
+├── context/        # Auth, Toast, Network, Theme y Dashboard
 ├── hooks/          # useAsync, useUnsavedChanges, validaciones
 ├── lib/            # offlineDb/offlineQueue, equipos*, dashboard*
 ├── shell/          # AppShell + Sidebar + SubNavBar

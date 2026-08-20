@@ -4,41 +4,58 @@
  * Wrappers de Supabase Storage para el bucket `equipos-fotos` (privado).
  *
  * Convención de path:
- *   {correlativo:04d}_{timestamp}.{ext}
- *   ej. 0042_1735627800123.jpg
+ *   equipos/{equipo_id}/actual_{timestamp}_{aleatorio}.{ext}
+ *   ej. equipos/2197/actual_1735627800123_a1b2c3.jpg
+ *
+ * El timestamp evita sobrescribir la foto vigente antes de que el RPC del
+ * movimiento confirme. Después de confirmar, la aplicación elimina la ruta
+ * anterior, por lo que queda una sola foto activa por equipo.
  *
  * El bucket está privado: las fotos se acceden via signed URLs con
  * expiración corta (1h por default).
  */
 
 import { supabase } from "../services/supabase";
+import { compressImage } from "./compressImage";
 
 const BUCKET = "equipos-fotos";
 
 /**
  * Sube una foto al bucket y devuelve el path resultante.
  *
+ * Antes de subir, la foto pasa por `compressImage` (resize + JPEG en
+ * el navegador): lo que viaja y se almacena es la versión optimizada
+ * de ~300 KB, no el original de varios MB. Si la compresión no aplica
+ * (formato no decodificable), se sube el archivo original.
+ *
  * @param {File} file - Imagen seleccionada por el usuario.
- * @param {number} correlativo - Correlativo del equipo (para naming).
+ * @param {number|string} equipoId - ID estable del equipo (para naming).
  * @returns {Promise<string>} path del archivo en Storage.
  */
-export async function uploadFotoEquipo(file, correlativo) {
+export async function uploadFotoEquipo(file, equipoId) {
     if (!supabase) throw new Error("Supabase no configurado");
     if (!file) throw new Error("Archivo inválido");
 
-    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+    const idTexto = String(equipoId ?? "").trim();
+    if (!/^\d+$/.test(idTexto) || Number(idTexto) < 1) {
+        throw new Error("ID de equipo inválido para guardar la foto");
+    }
+
+    const optimizada = await compressImage(file);
+
+    const ext = (optimizada.name.split(".").pop() || "jpg").toLowerCase();
     const allowed = ["jpg", "jpeg", "png", "webp", "heic", "heif"];
     if (!allowed.includes(ext)) {
         throw new Error(`Formato no soportado: .${ext}`);
     }
 
-    const safeCorr = Math.max(1, Number(correlativo) || 1);
-    const path = `${String(safeCorr).padStart(4, "0")}_${Date.now()}.${ext}`;
+    const sufijo = Math.random().toString(36).slice(2, 8);
+    const path = `equipos/${idTexto}/actual_${Date.now()}_${sufijo}.${ext}`;
 
-    const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
+    const { error } = await supabase.storage.from(BUCKET).upload(path, optimizada, {
         cacheControl: "3600",
         upsert: false,
-        contentType: file.type || undefined,
+        contentType: optimizada.type || undefined,
     });
 
     if (error) throw error;
@@ -72,7 +89,7 @@ async function getFotoUrl(path, expiresIn = 3600) {
  *
  * @param {string} path
  */
-async function deleteFotoEquipo(path) {
+export async function deleteFotoEquipo(path) {
     if (!supabase) throw new Error("Supabase no configurado");
     if (!path) return;
     const { error } = await supabase.storage.from(BUCKET).remove([path]);
@@ -140,12 +157,12 @@ export async function getFotoUrlCached(path, expiresIn = 3600) {
  * pueden limpiar después con una cron SQL / Edge Function.
  *
  * @param {File} file
- * @param {number} correlativo - Correlativo del equipo (path naming)
+ * @param {number|string} equipoId - ID estable del equipo (path naming)
  * @param {string|null} oldPath - Path anterior (si había foto)
  * @returns {Promise<string>} path nuevo
  */
-export async function replaceFotoEquipo(file, correlativo, oldPath) {
-    const newPath = await uploadFotoEquipo(file, correlativo);
+export async function replaceFotoEquipo(file, equipoId, oldPath) {
+    const newPath = await uploadFotoEquipo(file, equipoId);
     if (oldPath && oldPath !== newPath) {
         try {
             await deleteFotoEquipo(oldPath);

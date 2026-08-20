@@ -3,11 +3,21 @@ import {
     BODEGAS,
     CATEGORIAS_SWAP,
     MOTIVOS_MOVIMIENTO,
+    MOTIVOS_TILES,
+    MOTIVO_POR_CATEGORIA_SWAP,
     camposPorMotivo,
     esSwap,
+    esVenta,
+    requiereDocumentosMovimiento,
 } from "../../lib/equiposConstants";
 import { supabase } from "../../services/supabase";
 import { useNetwork } from "../../context/NetworkContext";
+import {
+    useModalTransition,
+    useRetainedValue,
+} from "../../hooks/useModalTransition";
+import { useDialogA11y } from "../../hooks/useDialogA11y";
+import { useUnsavedChanges } from "../../hooks/useUnsavedChanges";
 import EquipoFoto from "./EquipoFoto";
 import PhotoUpload from "./PhotoUpload";
 
@@ -18,14 +28,52 @@ const estadoInicial = {
     motivo: "",
     bodega_destino: "",
     ubicacion_destino: "",
+    ubicacion_retorno: "",
     cliente_id: "",
     categoria: "",
     equipo_recibe_id: "",
     bodega_recibe_destino: "",
     destino_externo: "",
+    horometro: "",
+    horometro_recibe: "",
+    numero_acta: "",
+    numero_guia_despacho: "",
     responsable: "",
     notas: "",
 };
+
+function documentoEsValido(valor) {
+    const documento = String(valor ?? "").trim();
+    if (!documento) return false;
+
+    // Acta y guía se registran únicamente como números. Se mantiene la
+    // validación de mayor que cero para evitar folios inválidos.
+    return /^\d+$/.test(documento) && Number(documento) > 0;
+}
+
+function normalizarHorometro(valor) {
+    return String(valor ?? "")
+        .replace(",", ".")
+        .replace(/[^\d.]/g, "");
+}
+
+function horometroEsValido(valor, actual) {
+    const texto = String(valor ?? "").trim();
+    if (!/^\d+(\.\d+)?$/.test(texto)) return false;
+
+    const numero = Number(texto);
+    if (!Number.isFinite(numero) || numero < 0) return false;
+
+    return actual === null || actual === undefined || numero >= Number(actual);
+}
+
+function normalizarTextoBusqueda(valor) {
+    return String(valor ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+}
 
 /**
  * Diálogo controlado para registrar un movimiento de equipo.
@@ -52,18 +100,18 @@ const estadoInicial = {
  *  - onCancel(): void
  *
  * El form es dinámico: los campos mostrados dependen del motivo elegido.
- * El padre (ListView) decide si enrutar a onSubmit u onSubmitSwap.
+ * El padre (InventarioView) decide si enrutar a onSubmit u onSubmitSwap.
  *
  * El equipo_origen es implícito: viene del prop `equipo`. El usuario
  * no elige qué equipo se mueve (es el que disparó el dialog).
  *
  * El dialog NO toca Storage directamente. Si el usuario adjunta una
  * foto nueva, se pasa en `payload.fotoFile` y el padre la sube con
- * `replaceFotoEquipo`.
+ * `uploadFotoEquipo` (borrando la anterior solo si el RPC confirma).
  */
 export default function MovimientoDialog({
     open,
-    equipo,
+    equipo: equipoProp,
     clientes = [],
     onSubmit,
     onSubmitSwap,
@@ -71,64 +119,95 @@ export default function MovimientoDialog({
     onCancel,
 }) {
     const refs = useRef({});
+    const dialogRef = useRef(null);
     const { online } = useNetwork();
+    const transicion = useModalTransition(open);
+    const equipo = useRetainedValue(
+        equipoProp,
+        open && Boolean(equipoProp),
+    );
+    const origenCliente = Boolean(equipo?.cliente_id && !equipo?.bodega);
+    const equipoEnCliente = origenCliente;
+    const equipoEnMantencion = Boolean(equipo?.cliente_retorno_id);
     const [form, setForm] = useState(estadoInicial);
     const [errores, setErrores] = useState({});
     const [guardando, setGuardando] = useState(false);
     const [fotoFile, setFotoFile] = useState(null);
     const [fotoError, setFotoError] = useState(null);
-    const [equiposDelCliente, setEquiposDelCliente] = useState([]);
+    const [equiposParaSwap, setEquiposParaSwap] = useState([]);
     const [cargandoEquiposCliente, setCargandoEquiposCliente] = useState(false);
+    const [versionFormulario, setVersionFormulario] = useState(0);
+
+    useUnsavedChanges([form, Boolean(fotoFile)], {
+        habilitado: open && !guardando,
+        resetKey: versionFormulario,
+    });
 
     // Reset al abrir
     useEffect(() => {
         if (open) {
-            setForm({ ...estadoInicial, responsable: "" });
+            setForm({
+                ...estadoInicial,
+                responsable: "",
+                horometro:
+                    equipo?.horometro === null ||
+                    equipo?.horometro === undefined
+                        ? ""
+                        : String(equipo.horometro),
+            });
             setErrores({});
             setGuardando(false);
             setFotoFile(null);
             setFotoError(null);
-            setEquiposDelCliente([]);
+            setEquiposParaSwap([]);
+            setVersionFormulario((version) => version + 1);
         }
     }, [open, equipo]);
 
-    // Escape cierra
-    useEffect(() => {
-        if (!open) return undefined;
-        const handler = (e) => {
-            if (e.key === "Escape" && !guardando) onCancel();
-        };
-        window.addEventListener("keydown", handler);
-        return () => window.removeEventListener("keydown", handler);
-    }, [open, guardando, onCancel]);
+    useDialogA11y(open, {
+        dialogRef,
+        onClose: onCancel,
+        bloquearCierre: guardando,
+    });
 
-    // Carga lazy de equipos del cliente cuando es swap y se selecciona cliente
+    // Carga lazy de candidatos para el intercambio. Si el movimiento parte
+    // desde bodega, busca el equipo que volverá desde el cliente. Si se abre
+    // desde un equipo en cliente, busca su reemplazante disponible en bodega.
     useEffect(() => {
         if (!open) return;
         if (!esSwap(form.motivo)) {
-            setEquiposDelCliente([]);
+            setEquiposParaSwap([]);
             return;
         }
-        if (!form.cliente_id) {
-            setEquiposDelCliente([]);
+        if (!equipoEnCliente && !form.cliente_id) {
+            setEquiposParaSwap([]);
             return;
         }
         let cancelado = false;
         const cargar = async () => {
             setCargandoEquiposCliente(true);
             try {
-                const { data } = await supabase
+                let query = supabase
                     .from("equipos")
                     .select(
-                        "id, correlativo, marca, modelo, numero_interno, bodega",
+                        "id, correlativo, tipo_equipo, marca, modelo, numero_interno, numero_serie, bodega, cliente_id, cliente_retorno_id, estado_operacional, horometro, vendido",
                     )
-                    .eq("cliente_id", form.cliente_id)
-                    .is("deleted_at", null)
-                    .order("correlativo");
+                    .is("deleted_at", null);
+
+                query = equipoEnCliente
+                    ? query
+                          .not("bodega", "is", null)
+                          .is("cliente_id", null)
+                          .is("cliente_retorno_id", null)
+                          .or("vendido.eq.false,vendido.is.null")
+                    : query.eq("cliente_id", form.cliente_id);
+
+                const { data, error } = await query.order("correlativo");
+                if (error) throw error;
                 if (cancelado) return;
-                setEquiposDelCliente(data ?? []);
+                setEquiposParaSwap(data ?? []);
             } catch {
-                if (!cancelado) setEquiposDelCliente([]);
+                if (!cancelado) setEquiposParaSwap([]);
             } finally {
                 if (!cancelado) setCargandoEquiposCliente(false);
             }
@@ -137,27 +216,73 @@ export default function MovimientoDialog({
         return () => {
             cancelado = true;
         };
-    }, [open, form.motivo, form.cliente_id]);
+    }, [open, form.motivo, form.cliente_id, equipoEnCliente]);
 
-    if (!open || !equipo) return null;
+    if (!transicion.renderizar || !equipo) return null;
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
+        const valorNormalizado =
+            name === "numero_acta" || name === "numero_guia_despacho"
+                ? value.replace(/\D/g, "")
+                : name === "horometro" || name === "horometro_recibe"
+                  ? normalizarHorometro(value)
+                  : value;
+        setForm((prev) => ({ ...prev, [name]: valorNormalizado }));
         // Si cambia motivo o cliente_id, limpiar campos derivados
         if (name === "motivo") {
+            const swapDesdeCliente = equipoEnCliente && esSwap(value);
+            const retornoAlCliente =
+                equipoEnMantencion && value === "Retorno a cliente";
             setForm((prev) => ({
                 ...prev,
                 bodega_destino: "",
-                cliente_id: "",
+                cliente_id: retornoAlCliente
+                    ? String(equipo.cliente_retorno_id)
+                    : swapDesdeCliente
+                      ? String(equipo.cliente_id)
+                      : "",
                 categoria: "",
                 equipo_recibe_id: "",
                 bodega_recibe_destino: "",
                 destino_externo: "",
+                ubicacion_destino: retornoAlCliente
+                    ? equipo.ubicacion_retorno_cliente || ""
+                    : swapDesdeCliente
+                      ? equipo.ubicacion_actual || ""
+                      : "",
+                ubicacion_retorno: "",
+                numero_acta: "",
+                numero_guia_despacho: "",
             }));
-            setEquiposDelCliente([]);
+            setEquiposParaSwap([]);
         } else if (name === "cliente_id") {
-            setForm((prev) => ({ ...prev, equipo_recibe_id: "" }));
+            setForm((prev) => ({
+                ...prev,
+                equipo_recibe_id: "",
+                horometro_recibe: "",
+            }));
+        } else if (name === "equipo_recibe_id") {
+            const equipoRecibe = equiposParaSwap.find(
+                (item) => String(item.id) === String(value),
+            );
+            setForm((prev) => ({
+                ...prev,
+                horometro_recibe:
+                    equipoRecibe?.horometro === null ||
+                    equipoRecibe?.horometro === undefined
+                        ? ""
+                        : String(equipoRecibe.horometro),
+            }));
+        }
+        // En swaps, la categoría determina el motivo exacto que se guarda
+        // (renovacion → "Cambio de equipo (renovación)", etc.)
+        if (name === "categoria" && MOTIVO_POR_CATEGORIA_SWAP[value]) {
+            setForm((prev) =>
+                esSwap(prev.motivo)
+                    ? { ...prev, motivo: MOTIVO_POR_CATEGORIA_SWAP[value] }
+                    : prev,
+            );
         }
         if (errores[name]) {
             setErrores((prev) => {
@@ -173,6 +298,22 @@ export default function MovimientoDialog({
         if (!form.motivo) errs.motivo = "Selecciona un motivo";
         if (!MOTIVOS_MOVIMIENTO.includes(form.motivo))
             errs.motivo = "Motivo no válido";
+        if (
+            equipoEnMantencion &&
+            ![
+                "Retorno a cliente",
+                "Cierre de mantención en bodega",
+            ].includes(form.motivo)
+        ) {
+            errs.motivo =
+                "Selecciona si el equipo vuelve al cliente o queda en una bodega";
+        }
+        if (
+            form.motivo === "Retorno a cliente" &&
+            String(form.cliente_id) !== String(equipo.cliente_retorno_id)
+        ) {
+            errs.motivo = "El cliente de retorno no corresponde a esta mantención";
+        }
         if (!form.responsable.trim()) errs.responsable = "Indica quién registra";
 
         const { requiere } = camposPorMotivo(form.motivo);
@@ -197,6 +338,52 @@ export default function MovimientoDialog({
             errs.destino_externo = "Indica el destino externo";
         if (requiere.includes("notas") && !form.notas.trim())
             errs.notas = "Cuéntanos el motivo";
+        if (requiereDocumentosMovimiento(form.motivo)) {
+            const tieneActa = documentoEsValido(form.numero_acta);
+            const tieneGuia = documentoEsValido(form.numero_guia_despacho);
+            const ingresoActa = form.numero_acta.trim();
+            const ingresoGuia = form.numero_guia_despacho.trim();
+
+            if (ingresoActa && !tieneActa) {
+                errs.numero_acta = "Ingresa solo números mayores que cero";
+            }
+            if (ingresoGuia && !tieneGuia) {
+                errs.numero_guia_despacho = "Ingresa solo números mayores que cero";
+            }
+            if (!tieneActa && !tieneGuia && !ingresoActa && !ingresoGuia) {
+                errs.numero_acta =
+                    "Ingresa al menos el acta o la guía de despacho";
+            }
+        }
+
+        if (!horometroEsValido(form.horometro, equipo.horometro)) {
+            errs.horometro =
+                form.horometro.trim() === ""
+                    ? "Ingresa el horómetro actualizado"
+                    : equipo.horometro !== null && equipo.horometro !== undefined
+                      ? `Debe ser igual o mayor al actual (${equipo.horometro} h)`
+                      : "Ingresa un número de horómetro válido (igual o mayor que 0)";
+        }
+
+        if (esSwap(form.motivo) && form.equipo_recibe_id) {
+            const equipoRecibe = equiposParaSwap.find(
+                (item) => String(item.id) === String(form.equipo_recibe_id),
+            );
+            if (
+                !horometroEsValido(
+                    form.horometro_recibe,
+                    equipoRecibe?.horometro,
+                )
+            ) {
+                errs.horometro_recibe =
+                    form.horometro_recibe.trim() === ""
+                        ? "Ingresa el horómetro actualizado de este equipo"
+                        : equipoRecibe?.horometro !== null &&
+                            equipoRecibe?.horometro !== undefined
+                          ? `Debe ser igual o mayor al actual (${equipoRecibe.horometro} h)`
+                          : "Ingresa un número de horómetro válido (igual o mayor que 0)";
+            }
+        }
 
         return errs;
     };
@@ -232,9 +419,16 @@ export default function MovimientoDialog({
                     : null,
                 ubicacion_origen: equipo.ubicacion_actual ?? null,
                 ubicacion_destino: form.ubicacion_destino.trim() || null,
+                ubicacion_retorno: form.ubicacion_retorno.trim() || null,
                 motivo: form.motivo,
                 responsable: form.responsable.trim(),
                 notas: form.notas.trim() || null,
+                horometro: Number(form.horometro),
+                horometro_recibe: form.horometro_recibe
+                    ? Number(form.horometro_recibe)
+                    : null,
+                numero_acta: form.numero_acta.trim() || null,
+                numero_guia_despacho: form.numero_guia_despacho.trim() || null,
                 categoria: form.categoria || null,
                 destino_externo: form.destino_externo.trim() || null,
                 fotoFile: fotoFile || null,
@@ -255,34 +449,67 @@ export default function MovimientoDialog({
         }
     };
 
-    const origenCliente = equipo.cliente_id && !equipo.bodega;
+    const motivosVisibles = equipoEnMantencion
+        ? MOTIVOS_TILES.filter((tile) => tile.esCierreMantencion)
+        : equipoEnCliente
+          ? MOTIVOS_TILES.filter(
+                (tile) =>
+                    tile.motivo === "Mantención interna" ||
+                    tile.motivo === "Devolución definitiva" ||
+                    tile.esSwapTile,
+            )
+          : MOTIVOS_TILES.filter(
+                (tile) =>
+                    tile.motivo !== "Mantención interna" &&
+                    tile.motivo !== "Devolución definitiva" &&
+                    !tile.esCierreMantencion,
+            );
     const swapRequiereRed = esSwap(form.motivo) && !online;
-
+    const equipoRecibeSeleccionado = equiposParaSwap.find(
+        (item) => String(item.id) === String(form.equipo_recibe_id),
+    );
+    // Nombre del cliente comprador, para el aviso de equipo vendido.
+    const nombreClienteVendido = equipo.vendido
+        ? (clientes.find(
+              (c) => c.id === (equipo.cliente_id ?? equipo.cliente_retorno_id),
+          )?.razon_social ??
+          null)
+        : null;
+    const clienteRetorno = clientes.find(
+        (cliente) =>
+            String(cliente.id) === String(equipo.cliente_retorno_id),
+    );
     return (
         <div
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="movimiento-titulo"
-            className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+            aria-busy={guardando}
+            tabIndex={-1}
+            className={`fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 p-0 sm:items-center sm:p-4 ${transicion.claseFondo}`}
             onClick={(e) => {
                 if (e.target === e.currentTarget && !guardando) onCancel();
             }}
         >
-            <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl sm:rounded-2xl sm:p-6 dark:bg-carbon-900">
-                <header className="mb-4">
-                    <h2
-                        id="movimiento-titulo"
-                        className="text-[1.15rem] font-bold text-slate-900 dark:text-slate-100"
-                    >
-                        🔄 Registrar movimiento
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-600 dark:text-neutral-400">
+            <div
+                className={`max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl sm:rounded-2xl sm:p-6 dark:bg-carbon-900 ${transicion.clasePanel}`}
+            >
+                <header className="sticky top-0 z-30 -mx-5 -mt-5 mb-4 flex items-start justify-between gap-3 border-b border-slate-200 bg-white/95 px-5 py-4 backdrop-blur sm:-mx-6 sm:-mt-6 sm:px-6 dark:border-white/10 dark:bg-carbon-900/95">
+                    <div className="min-w-0">
+                        <h2
+                            id="movimiento-titulo"
+                            className="text-[1.15rem] font-bold text-slate-900 dark:text-slate-100"
+                        >
+                            🔄 Registrar movimiento
+                        </h2>
+                        <p className="mt-1 truncate text-sm text-slate-600 dark:text-neutral-400">
                         {equipo.marca} {equipo.modelo} ·{" "}
                         <span className="font-mono font-semibold">
                             {equipo.numero_interno}
                         </span>
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-neutral-400">
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-neutral-400">
                         Origen actual:{" "}
                         {origenCliente ? (
                             <>
@@ -304,8 +531,59 @@ export default function MovimientoDialog({
                                 </span>
                             </>
                         )}
-                    </p>
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onCancel}
+                        disabled={guardando}
+                        data-dialog-autofocus
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-xl text-slate-600 transition hover:bg-slate-200 disabled:opacity-50 dark:bg-white/5 dark:text-neutral-300 dark:hover:bg-white/10"
+                        aria-label="Cerrar registro de movimiento"
+                    >
+                        ×
+                    </button>
                 </header>
+
+                {/* Aviso de equipo vendido: los movimientos siguen
+                    permitidos (ej. mantención), solo es informativo */}
+                {equipo.vendido && (
+                    <div className="mb-4 rounded-[10px] border-l-4 border-amber-500 bg-amber-50 px-3 py-2 text-[0.8rem] text-amber-900 dark:bg-amber-500/10 dark:text-amber-300">
+                        💰 <strong>Equipo vendido</strong>
+                        {nombreClienteVendido
+                            ? ` a ${nombreClienteVendido}`
+                            : ""}
+                        . Los movimientos siguen permitidos (ej. mantención);
+                        deja el detalle en las notas.
+                    </div>
+                )}
+
+                {equipoEnMantencion && (
+                    <div className="mb-4 rounded-[10px] border-l-4 border-violet-500 bg-violet-50 px-3 py-2.5 text-sm text-violet-950 dark:bg-violet-500/10 dark:text-violet-200">
+                        <p className="font-extrabold">
+                            🛠️ Reparación proveniente de cliente
+                        </p>
+                        <p className="mt-1 text-xs">
+                            Debe volver a{" "}
+                            <strong>
+                                {clienteRetorno?.razon_social ??
+                                    `Cliente #${equipo.cliente_retorno_id}`}
+                            </strong>{" "}
+                            o cerrar su permanencia en una bodega Licman.
+                        </p>
+                    </div>
+                )}
+
+                {equipo.bateria_asociada && (
+                    <div className="mb-4 rounded-[10px] border border-cyan-200 bg-cyan-50 px-3 py-2.5 text-sm text-cyan-900 dark:border-cyan-500/25 dark:bg-cyan-500/10 dark:text-cyan-100">
+                        <p className="font-bold">
+                            🔋 Batería asociada: {equipo.bateria_asociada.numero_interno}
+                        </p>
+                        <p className="mt-0.5 text-xs text-cyan-800 dark:text-cyan-200">
+                            Serie {equipo.bateria_asociada.numero_serie}. Al guardar, este traslado quedará registrado automáticamente en el historial del equipo y de la batería.
+                        </p>
+                    </div>
+                )}
 
                 {/* Foto actual del equipo — solo referencia visual */}
                 <section className="mb-4 flex items-start gap-3 rounded-[10px] border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/5">
@@ -331,29 +609,70 @@ export default function MovimientoDialog({
                 </section>
 
                 <form onSubmit={handleSubmit} className="space-y-3" noValidate>
-                    {/* Motivo (siempre visible) */}
-                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
-                        Motivo
-                        <select
-                            name="motivo"
-                            value={form.motivo}
-                            onChange={handleChange}
-                            ref={(el) => (refs.current.motivo = el)}
-                            className={clasesInput}
+                    {/* Motivo — grilla de tiles grandes (touch-friendly) */}
+                    <div>
+                        <p className="text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
+                            Motivo
+                        </p>
+                        {equipoEnCliente && (
+                            <p className="mt-1 text-xs text-slate-600 dark:text-neutral-400">
+                                Este equipo está en cliente. Puedes cambiarlo
+                                por otro equipo disponible, ingresarlo a una
+                                bodega para mantención interna o registrar su
+                                devolución definitiva.
+                            </p>
+                        )}
+                        {equipoEnMantencion && (
+                            <p className="mt-1 text-xs text-slate-600 dark:text-neutral-400">
+                                La reparación tiene un cliente de retorno
+                                asociado. Elige cómo cerrar este ciclo.
+                            </p>
+                        )}
+                        <div
+                            role="radiogroup"
+                            aria-label="Motivo del movimiento"
+                            className="mt-1 grid grid-cols-2 gap-2 sm:grid-cols-3"
                         >
-                            <option value="">— Selecciona —</option>
-                            {MOTIVOS_MOVIMIENTO.map((m) => (
-                                <option key={m} value={m}>
-                                    {m}
-                                </option>
-                            ))}
-                        </select>
+                            {motivosVisibles.map((tile) => {
+                                const seleccionado = tile.esSwapTile
+                                    ? esSwap(form.motivo)
+                                    : form.motivo === tile.motivo;
+                                return (
+                                    <button
+                                        key={tile.label}
+                                        type="button"
+                                        role="radio"
+                                        aria-checked={seleccionado}
+                                        onClick={() =>
+                                            handleChange({
+                                                target: {
+                                                    name: "motivo",
+                                                    value: tile.motivo,
+                                                },
+                                            })
+                                        }
+                                        className={`flex min-h-[56px] flex-col items-center justify-center gap-0.5 rounded-[10px] border-[1.5px] px-2 py-2 text-center transition active:scale-[0.97] ${
+                                            seleccionado
+                                                ? "border-blue-600 bg-blue-50 text-blue-800 shadow-[0_0_0_3px_rgba(37,99,235,0.15)] dark:bg-blue-500/15 dark:text-blue-300"
+                                                : "border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-200 dark:hover:bg-white/10"
+                                        }`}
+                                    >
+                                        <span className="text-xl leading-none">
+                                            {tile.icono}
+                                        </span>
+                                        <span className="text-[0.8rem] font-bold leading-tight">
+                                            {tile.label}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
                         {errores.motivo && (
                             <p className="mt-1 text-xs font-medium text-rose-600">
                                 {errores.motivo}
                             </p>
                         )}
-                    </label>
+                    </div>
 
                     {/* Campos dinámicos según motivo */}
                     <CamposPorMotivo
@@ -363,10 +682,177 @@ export default function MovimientoDialog({
                         clasesInput={clasesInput}
                         onChange={handleChange}
                         clientes={clientes}
-                        equiposDelCliente={equiposDelCliente}
+                        equiposParaSwap={equiposParaSwap}
                         cargandoEquiposCliente={cargandoEquiposCliente}
                         onCrearCliente={onCrearCliente}
+                        equipoEnCliente={equipoEnCliente}
+                        equipoEnMantencion={equipoEnMantencion}
+                        bodegaOrigen={equipo.bodega}
+                        clienteActual={clientes.find(
+                            (cliente) =>
+                                String(cliente.id) ===
+                                String(equipo.cliente_id),
+                        )}
+                        clienteRetorno={clienteRetorno}
                     />
+
+                    {/* Horómetro: obligatorio para todo movimiento */}
+                    <section className="rounded-xl border border-blue-200 bg-blue-50/70 p-3 dark:border-blue-500/25 dark:bg-blue-500/10">
+                        <h3 className="text-sm font-extrabold text-blue-900 dark:text-blue-200">
+                            Horómetro del movimiento
+                        </h3>
+                        <p className="mt-1 text-xs text-blue-800 dark:text-blue-300">
+                            Registra la lectura actual antes de guardar. No puede
+                            ser menor que la última registrada.
+                        </p>
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                            <label className="block text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                {esSwap(form.motivo) && equipoEnCliente
+                                    ? "Equipo que vuelve a bodega"
+                                    : "Equipo que sale"}
+                                <span className="mt-1 block text-xs font-normal text-slate-500 dark:text-neutral-400">
+                                    Actual: {equipo.horometro ?? "sin registro"} h
+                                </span>
+                                <input
+                                    type="number"
+                                    inputMode="decimal"
+                                    min="0"
+                                    step="any"
+                                    name="horometro"
+                                    value={form.horometro}
+                                    onChange={handleChange}
+                                    ref={(el) => {
+                                        refs.current.horometro = el;
+                                    }}
+                                    placeholder="Ej. 1250.5"
+                                    className={clasesInput}
+                                />
+                                {errores.horometro && (
+                                    <p className="mt-1 text-xs font-medium text-rose-600">
+                                        {errores.horometro}
+                                    </p>
+                                )}
+                            </label>
+
+                            {esSwap(form.motivo) && equipoRecibeSeleccionado && (
+                                <label className="block text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                    {equipoEnCliente
+                                        ? "Equipo reemplazante"
+                                        : "Equipo que vuelve a bodega"}
+                                    <span className="mt-1 block text-xs font-normal text-slate-500 dark:text-neutral-400">
+                                        Actual: {equipoRecibeSeleccionado.horometro ?? "sin registro"} h
+                                    </span>
+                                    <input
+                                        type="number"
+                                        inputMode="decimal"
+                                        min="0"
+                                        step="any"
+                                        name="horometro_recibe"
+                                        value={form.horometro_recibe}
+                                        onChange={handleChange}
+                                        ref={(el) => {
+                                            refs.current.horometro_recibe = el;
+                                        }}
+                                        placeholder="Ej. 980.2"
+                                        className={clasesInput}
+                                    />
+                                    {errores.horometro_recibe && (
+                                        <p className="mt-1 text-xs font-medium text-rose-600">
+                                            {errores.horometro_recibe}
+                                        </p>
+                                    )}
+                                </label>
+                            )}
+                        </div>
+                    </section>
+
+                    {requiereDocumentosMovimiento(form.motivo) && (
+                        <section className="rounded-xl border border-amber-200 bg-amber-50/70 p-3 dark:border-amber-500/25 dark:bg-amber-500/10">
+                            <h3 className="text-sm font-extrabold text-amber-900 dark:text-amber-200">
+                                Documentos del movimiento
+                            </h3>
+                            <p className="mt-1 text-xs text-amber-800 dark:text-amber-300">
+                                Ingresa al menos uno: acta o guía de despacho.
+                                Si tienes ambos, registra los dos.
+                            </p>
+                            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                                <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
+                                    N° de acta{" "}
+                                    <span className="font-normal text-slate-500 dark:text-neutral-400">
+                                        (opcional si ingresas la guía)
+                                    </span>
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
+                                        name="numero_acta"
+                                        value={form.numero_acta}
+                                        onChange={handleChange}
+                                        ref={(el) => {
+                                            refs.current.numero_acta = el;
+                                        }}
+                                        placeholder="Ej. 123456"
+                                        className={clasesInput}
+                                    />
+                                    {errores.numero_acta && (
+                                        <p className="mt-1 text-xs font-medium text-rose-600">
+                                            {errores.numero_acta}
+                                        </p>
+                                    )}
+                                </label>
+                                <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
+                                    N° guía de despacho{" "}
+                                    <span className="font-normal text-slate-500 dark:text-neutral-400">
+                                        (opcional si ingresas el acta)
+                                    </span>
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
+                                        name="numero_guia_despacho"
+                                        value={form.numero_guia_despacho}
+                                        onChange={handleChange}
+                                        ref={(el) => {
+                                            refs.current.numero_guia_despacho = el;
+                                        }}
+                                        placeholder="Ej. 000123"
+                                        className={clasesInput}
+                                    />
+                                    {errores.numero_guia_despacho && (
+                                        <p className="mt-1 text-xs font-medium text-rose-600">
+                                            {errores.numero_guia_despacho}
+                                        </p>
+                                    )}
+                                </label>
+                            </div>
+                        </section>
+                    )}
+
+                    {/* Aviso al elegir venta: el equipo quedará marcado */}
+                    {esVenta(form.motivo) && (
+                        <div className="rounded-[10px] border border-amber-300 bg-amber-50 px-3 py-2 text-[0.8rem] text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+                            Al registrar, este equipo quedará marcado como{" "}
+                            <strong>💰 VENDIDO</strong>.
+                        </div>
+                    )}
+
+                    {/* Foto de evidencia del movimiento (opcional) */}
+                    <div className="rounded-[10px] border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-carbon-800">
+                        <PhotoUpload
+                            value={fotoFile}
+                            onChange={(f) => {
+                                setFotoFile(f);
+                                setFotoError(null);
+                            }}
+                            error={fotoError}
+                            disabled={guardando}
+                        />
+                        <p className="mt-2 text-xs text-slate-500 dark:text-neutral-400">
+                            Foto de evidencia del movimiento (opcional). Si la
+                            subes, reemplaza la foto actual del equipo; si no,
+                            se mantiene la existente.
+                        </p>
+                    </div>
 
                     {/* Responsable (siempre) */}
                     <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
@@ -376,7 +862,9 @@ export default function MovimientoDialog({
                             name="responsable"
                             value={form.responsable}
                             onChange={handleChange}
-                            ref={(el) => (refs.current.responsable = el)}
+                            ref={(el) => {
+                                refs.current.responsable = el;
+                            }}
                             placeholder="Tu nombre completo"
                             className={clasesInput}
                         />
@@ -402,7 +890,9 @@ export default function MovimientoDialog({
                             rows={2}
                             value={form.notas}
                             onChange={handleChange}
-                            ref={(el) => (refs.current.notas = el)}
+                            ref={(el) => {
+                                refs.current.notas = el;
+                            }}
                             placeholder="Cliente, condiciones, detalles relevantes..."
                             className={`${clasesInput} resize-y`}
                         />
@@ -413,23 +903,6 @@ export default function MovimientoDialog({
                         )}
                     </label>
 
-                    {/* Foto nueva (opcional) */}
-                    <div className="rounded-[10px] border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-carbon-800">
-                        <PhotoUpload
-                            value={fotoFile}
-                            onChange={(f) => {
-                                setFotoFile(f);
-                                setFotoError(null);
-                            }}
-                            error={fotoError}
-                            disabled={guardando}
-                        />
-                        <p className="mt-2 text-[0.7rem] text-slate-500 dark:text-neutral-400">
-                            Si subes una foto nueva, reemplazará la actual.
-                            Si no subes nada, se mantiene la foto existente.
-                        </p>
-                    </div>
-
                     {swapRequiereRed && (
                         <div className="rounded-[10px] border-l-4 border-amber-500 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-500/10 dark:text-amber-300">
                             Los cambios de equipo requieren conexión. Espera
@@ -437,7 +910,10 @@ export default function MovimientoDialog({
                         </div>
                     )}
 
-                    <div className="flex flex-col gap-2 pt-2 sm:flex-row-reverse">
+                    <div
+                        className="sticky bottom-0 z-30 -mx-5 -mb-5 flex flex-col gap-2 border-t border-slate-200 bg-white/95 px-5 pt-4 backdrop-blur sm:-mx-6 sm:-mb-6 sm:flex-row-reverse sm:px-6 dark:border-white/10 dark:bg-carbon-900/95"
+                        style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+                    >
                         <button
                             type="submit"
                             disabled={guardando}
@@ -461,51 +937,153 @@ export default function MovimientoDialog({
 }
 
 /**
- * Sub-componente que renderiza los campos dinámicos según motivo.
- * Aísla la lógica del switch para no inflar MovimientoDialog.
+ * Buscador reutilizable de clientes para arriendo, venta y swap.
+ * Permite buscar por cualquier parte del nombre, ignorando mayúsculas y
+ * tildes, sin depender del comportamiento limitado de un <select> nativo.
  */
-function CamposPorMotivo({
+function ClienteSelect({
+    name,
     form,
     errores,
     refs,
     clasesInput,
     onChange,
     clientes,
-    equiposDelCliente,
-    cargandoEquiposCliente,
     onCrearCliente,
 }) {
-    const { tipo } = useMemo(
-        () => camposPorMotivo(form.motivo),
-        [form.motivo],
+    const [busqueda, setBusqueda] = useState("");
+    const [abierto, setAbierto] = useState(false);
+    const clienteSeleccionado = clientes.find(
+        (cliente) => String(cliente.id) === String(form[name]),
     );
 
-    if (tipo === "ninguno") return null;
+    useEffect(() => {
+        if (!form[name]) {
+            setBusqueda("");
+            setAbierto(false);
+        }
+    }, [form, name]);
 
-    const opcionesBodegaSinOrigen = (origen) =>
-        BODEGAS.filter((b) => b !== origen);
+    const opcionesFiltradas = useMemo(() => {
+        const termino = normalizarTextoBusqueda(busqueda);
+        if (!termino) return clientes.slice(0, 60);
+        return clientes
+            .filter((cliente) =>
+                normalizarTextoBusqueda(cliente.razon_social).includes(termino),
+            )
+            .slice(0, 60);
+    }, [busqueda, clientes]);
 
-    // Dropdown reutilizable para seleccionar cliente, con botón "+ Nuevo"
-    // que abre el modal hermano de creación (orquestado por el padre).
-    const ClienteSelect = ({ name }) => (
+    const seleccionarCliente = (cliente) => {
+        onChange({
+            target: {
+                name,
+                value: String(cliente.id),
+            },
+        });
+        setBusqueda(cliente.razon_social);
+        setAbierto(false);
+    };
+
+    const valorInput = abierto
+        ? busqueda
+        : clienteSeleccionado?.razon_social ?? busqueda;
+
+    return (
         <div>
             <div className="flex items-end gap-2">
-                <label className="flex-1 text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
+                <label className="flex-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
                     Cliente
-                    <select
-                        name={name}
-                        value={form[name]}
-                        onChange={onChange}
-                        ref={(el) => (refs.current[name] = el)}
-                        className={clasesInput}
-                    >
-                        <option value="">— Selecciona —</option>
-                        {clientes.map((c) => (
-                            <option key={c.id} value={c.id}>
-                                {c.razon_social}
-                            </option>
-                        ))}
-                    </select>
+                    <div className="relative">
+                        <input
+                            type="text"
+                            role="combobox"
+                            aria-expanded={abierto}
+                            aria-autocomplete="list"
+                            placeholder="Busca por nombre o razón social"
+                            value={valorInput}
+                            onChange={(event) => {
+                                setBusqueda(event.target.value);
+                                setAbierto(true);
+                            }}
+                            onFocus={() => {
+                                setAbierto(true);
+                                setBusqueda("");
+                            }}
+                            onBlur={() => {
+                                window.setTimeout(() => setAbierto(false), 150);
+                            }}
+                            onKeyDown={(event) => {
+                                if (event.key === "Escape") {
+                                    setAbierto(false);
+                                    return;
+                                }
+                                if (
+                                    event.key === "Enter" &&
+                                    abierto &&
+                                    opcionesFiltradas[0]
+                                ) {
+                                    event.preventDefault();
+                                    seleccionarCliente(opcionesFiltradas[0]);
+                                }
+                            }}
+                            ref={(elemento) => {
+                                refs.current[name] = elemento;
+                            }}
+                            className={clasesInput + " pr-10"}
+                        />
+                        <span
+                            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                            aria-hidden="true"
+                        >
+                            🔎
+                        </span>
+
+                        {abierto && (
+                            <div
+                                role="listbox"
+                                className="absolute left-0 right-0 top-full z-20 mt-1 max-h-60 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl dark:border-white/15 dark:bg-carbon-800"
+                            >
+                                {opcionesFiltradas.length > 0 ? (
+                                    opcionesFiltradas.map((cliente) => (
+                                        <button
+                                            key={cliente.id}
+                                            type="button"
+                                            role="option"
+                                            aria-selected={
+                                                String(cliente.id) ===
+                                                String(form[name])
+                                            }
+                                            onMouseDown={(event) =>
+                                                event.preventDefault()
+                                            }
+                                            onClick={() =>
+                                                seleccionarCliente(cliente)
+                                            }
+                                            className={
+                                                "flex min-h-[44px] w-full items-center rounded-lg px-3 py-2 text-left text-sm transition hover:bg-blue-50 dark:hover:bg-blue-500/10 " +
+                                                (String(cliente.id) ===
+                                                String(form[name])
+                                                    ? "bg-blue-50 font-bold text-blue-800 dark:bg-blue-500/15 dark:text-blue-300"
+                                                    : "text-slate-700 dark:text-slate-200")
+                                            }
+                                        >
+                                            {cliente.razon_social}
+                                        </button>
+                                    ))
+                                ) : (
+                                    <p className="px-3 py-3 text-sm text-slate-500 dark:text-neutral-400">
+                                        No encontramos un cliente con ese texto.
+                                    </p>
+                                )}
+                                {clientes.length > 60 && !busqueda && (
+                                    <p className="border-t border-slate-100 px-3 py-2 text-xs text-slate-500 dark:border-white/10 dark:text-neutral-400">
+                                        Escribe para filtrar la lista.
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </label>
                 {onCrearCliente && (
                     <button
@@ -525,6 +1103,63 @@ function CamposPorMotivo({
             )}
         </div>
     );
+}
+
+/**
+ * Sub-componente que renderiza los campos dinámicos según motivo.
+ * Aísla la lógica del switch para no inflar MovimientoDialog.
+ */
+function CamposPorMotivo({
+    form,
+    errores,
+    refs,
+    clasesInput,
+    onChange,
+    clientes,
+    equiposParaSwap,
+    cargandoEquiposCliente,
+    onCrearCliente,
+    equipoEnCliente,
+    equipoEnMantencion,
+    bodegaOrigen,
+    clienteActual,
+    clienteRetorno,
+}) {
+    const [busquedaEquipo, setBusquedaEquipo] = useState("");
+    const { tipo } = useMemo(
+        () => camposPorMotivo(form.motivo),
+        [form.motivo],
+    );
+    const equiposSwapFiltrados = useMemo(() => {
+        const texto = normalizarTextoBusqueda(busquedaEquipo);
+        if (!texto) return equiposParaSwap;
+        return equiposParaSwap.filter(
+            (equipo) =>
+                String(equipo.id) === String(form.equipo_recibe_id) ||
+                [
+                    equipo.correlativo,
+                    equipo.numero_interno,
+                    equipo.numero_serie,
+                    equipo.tipo_equipo,
+                    equipo.marca,
+                    equipo.modelo,
+                    equipo.bodega,
+                ].some((valor) =>
+                    normalizarTextoBusqueda(valor).includes(texto),
+                ),
+        );
+    }, [busquedaEquipo, equiposParaSwap, form.equipo_recibe_id]);
+
+    useEffect(() => {
+        setBusquedaEquipo("");
+    }, [form.motivo, form.cliente_id]);
+
+    if (tipo === "ninguno") return null;
+
+    const opcionesBodega =
+        form.motivo === "Cambio de bodega"
+            ? BODEGAS.filter((bodega) => bodega !== bodegaOrigen)
+            : BODEGAS;
 
     return (
         <>
@@ -532,7 +1167,9 @@ function CamposPorMotivo({
             {tipo === "bodega" && (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
-                        Bodega destino
+                        {equipoEnMantencion
+                            ? "Bodega donde quedará"
+                            : "Bodega destino"}
                         <select
                             name="bodega_destino"
                             value={form.bodega_destino}
@@ -543,11 +1180,7 @@ function CamposPorMotivo({
                             className={clasesInput}
                         >
                             <option value="">— Selecciona —</option>
-                            {opcionesBodegaSinOrigen(
-                                form.motivo === "Devuelto de arriendo"
-                                    ? null
-                                    : null,
-                            ).map((b) => (
+                            {opcionesBodega.map((b) => (
                                 <option key={b} value={b}>
                                     {b}
                                 </option>
@@ -579,9 +1212,54 @@ function CamposPorMotivo({
             {/* Cliente destino (arriendo / venta) */}
             {tipo === "cliente" && (
                 <>
-                    <ClienteSelect name="cliente_id" />
+                    <ClienteSelect
+                        name="cliente_id"
+                        form={form}
+                        errores={errores}
+                        refs={refs}
+                        clasesInput={clasesInput}
+                        onChange={onChange}
+                        clientes={clientes}
+                        onCrearCliente={onCrearCliente}
+                    />
                     <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Ubicación{" "}
+                        <span className="font-normal text-slate-500 dark:text-neutral-400">
+                            (opcional)
+                        </span>
+                        <input
+                            type="text"
+                            name="ubicacion_destino"
+                            value={form.ubicacion_destino}
+                            onChange={onChange}
+                            ref={(el) => {
+                                refs.current.ubicacion_destino = el;
+                            }}
+                            placeholder="Ej. Patio norte, Galpón 2"
+                            className={clasesInput}
+                        />
+                    </label>
+                </>
+            )}
+
+            {/* Retorno fijo al cliente que originó la mantención interna */}
+            {tipo === "cliente_retorno" && (
+                <>
+                    <div className="rounded-[10px] border border-violet-200 bg-violet-50 px-3 py-2.5 text-sm text-violet-950 dark:border-violet-500/25 dark:bg-violet-500/10 dark:text-violet-200">
+                        <span className="block text-xs font-bold uppercase tracking-wider text-violet-700 dark:text-violet-400">
+                            Cliente de retorno
+                        </span>
+                        <strong>
+                            {clienteRetorno?.razon_social ??
+                                `Cliente #${form.cliente_id}`}
+                        </strong>
+                        <p className="mt-1 text-xs">
+                            El cliente está fijado por el ingreso a mantención y
+                            no se puede cambiar en este movimiento.
+                        </p>
+                    </div>
+                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
+                        Ubicación de retorno{" "}
                         <span className="font-normal text-slate-500 dark:text-neutral-400">
                             (opcional)
                         </span>
@@ -603,7 +1281,28 @@ function CamposPorMotivo({
             {/* Swap (cambio de equipo bidireccional) */}
             {tipo === "swap" && (
                 <>
-                    <ClienteSelect name="cliente_id" />
+                    {equipoEnCliente ? (
+                        <div className="rounded-[10px] border border-sky-200 bg-sky-50 px-3 py-2.5 text-sm text-sky-900 dark:border-sky-500/25 dark:bg-sky-500/10 dark:text-sky-200">
+                            <span className="block text-xs font-bold uppercase tracking-wider text-sky-700 dark:text-sky-400">
+                                Cliente del cambio
+                            </span>
+                            <strong>
+                                {clienteActual?.razon_social ??
+                                    `Cliente #${form.cliente_id}`}
+                            </strong>
+                        </div>
+                    ) : (
+                        <ClienteSelect
+                            name="cliente_id"
+                            form={form}
+                            errores={errores}
+                            refs={refs}
+                            clasesInput={clasesInput}
+                            onChange={onChange}
+                            clientes={clientes}
+                            onCrearCliente={onCrearCliente}
+                        />
+                    )}
 
                     <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Categoría
@@ -631,7 +1330,18 @@ function CamposPorMotivo({
                     </label>
 
                     <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
-                        Equipo que recibe del cliente
+                        {equipoEnCliente
+                            ? "Equipo reemplazante desde bodega"
+                            : "Equipo que vuelve desde el cliente"}
+                        <input
+                            type="search"
+                            value={busquedaEquipo}
+                            onChange={(event) =>
+                                setBusquedaEquipo(event.target.value)
+                            }
+                            placeholder="Buscar por N° interno, serie, marca o modelo…"
+                            className={clasesInput}
+                        />
                         <select
                             name="equipo_recibe_id"
                             value={form.equipo_recibe_id}
@@ -641,7 +1351,8 @@ function CamposPorMotivo({
                             }}
                             className={clasesInput}
                             disabled={
-                                !form.cliente_id || cargandoEquiposCliente
+                                (!equipoEnCliente && !form.cliente_id) ||
+                                cargandoEquiposCliente
                             }
                         >
                             <option value="">
@@ -649,7 +1360,7 @@ function CamposPorMotivo({
                                     ? "Cargando…"
                                     : "— Selecciona —"}
                             </option>
-                            {equiposDelCliente.map((e) => (
+                            {equiposSwapFiltrados.map((e) => (
                                 <option key={e.id} value={e.id}>
                                     #
                                     {String(e.correlativo).padStart(4, "0")} ·
@@ -657,6 +1368,12 @@ function CamposPorMotivo({
                                     {e.marca} {e.modelo}
                                     {e.numero_interno
                                         ? ` · ${e.numero_interno}`
+                                        : ""}
+                                    {equipoEnCliente && e.bodega
+                                        ? ` · ${e.bodega}`
+                                        : ""}
+                                    {e.estado_operacional
+                                        ? ` · ${e.estado_operacional}`
                                         : ""}
                                 </option>
                             ))}
@@ -668,17 +1385,25 @@ function CamposPorMotivo({
                         )}
                         {form.cliente_id &&
                             !cargandoEquiposCliente &&
-                            equiposDelCliente.length === 0 && (
+                            equiposParaSwap.length === 0 && (
                                 <p className="mt-1 text-xs text-slate-500 dark:text-neutral-400">
-                                    Este cliente no tiene equipos para
-                                    recibir. Verifica que esté en arriendo o
-                                    venta.
+                                    {equipoEnCliente
+                                        ? "No hay equipos disponibles en bodega para realizar el cambio."
+                                        : "Este cliente no tiene equipos para recibir. Verifica que esté en arriendo o venta."}
+                                </p>
+                            )}
+                        {equiposParaSwap.length > 0 &&
+                            equiposSwapFiltrados.length === 0 && (
+                                <p className="mt-1 text-xs text-slate-500 dark:text-neutral-400">
+                                    No hay equipos que coincidan con la búsqueda.
                                 </p>
                             )}
                     </label>
 
                     <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
-                        Bodega destino del equipo recibido
+                        {equipoEnCliente
+                            ? "Bodega a la que vuelve este equipo"
+                            : "Bodega destino del equipo recibido"}
                         <select
                             name="bodega_recibe_destino"
                             value={form.bodega_recibe_destino}
@@ -702,29 +1427,50 @@ function CamposPorMotivo({
                         )}
                     </label>
 
-                    <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
-                        Ubicación{" "}
-                        <span className="font-normal text-slate-500 dark:text-neutral-400">
-                            (opcional)
-                        </span>
-                        <input
-                            type="text"
-                            name="ubicacion_destino"
-                            value={form.ubicacion_destino}
-                            onChange={onChange}
-                            ref={(el) => {
-                                refs.current.ubicacion_destino = el;
-                            }}
-                            placeholder="Ej. Patio norte, Galpón 2"
-                            className={clasesInput}
-                        />
-                    </label>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                        <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
+                            Ubicación en cliente{" "}
+                            <span className="font-normal text-slate-500 dark:text-neutral-400">
+                                (opcional)
+                            </span>
+                            <input
+                                type="text"
+                                name="ubicacion_destino"
+                                value={form.ubicacion_destino}
+                                onChange={onChange}
+                                ref={(el) => {
+                                    refs.current.ubicacion_destino = el;
+                                }}
+                                placeholder="Ej. Patio norte, Galpón 2"
+                                className={clasesInput}
+                            />
+                        </label>
+                        <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
+                            Ubicación en bodega{" "}
+                            <span className="font-normal text-slate-500 dark:text-neutral-400">
+                                (opcional)
+                            </span>
+                            <input
+                                type="text"
+                                name="ubicacion_retorno"
+                                value={form.ubicacion_retorno}
+                                onChange={onChange}
+                                ref={(el) => {
+                                    refs.current.ubicacion_retorno = el;
+                                }}
+                                placeholder="Ej. Servicio técnico"
+                                className={clasesInput}
+                            />
+                        </label>
+                    </div>
 
                     <div className="rounded-[10px] border border-amber-200 bg-amber-50 px-3 py-2 text-[0.78rem] text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
-                        <strong>Cambio de equipo:</strong> se registrará el
-                        envío de este equipo al cliente y, simultáneamente,
-                        la recepción del equipo seleccionado. Ambas piernas
-                        quedan vinculadas en el historial.
+                        <strong>Cambio de equipo:</strong>{" "}
+                        {equipoEnCliente
+                            ? "el equipo seleccionado saldrá de bodega hacia el cliente y este equipo volverá a la bodega indicada."
+                            : "este equipo saldrá hacia el cliente y el equipo seleccionado volverá a la bodega indicada."}{" "}
+                        Ambos movimientos se guardan juntos y quedan vinculados
+                        en el historial.
                     </div>
                 </>
             )}

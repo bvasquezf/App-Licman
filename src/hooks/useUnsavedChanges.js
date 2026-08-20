@@ -1,7 +1,7 @@
 // Hook para advertir al usuario antes de abandonar la página con
 // cambios sin guardar. Solo usa beforeunload (sin localStorage drafts).
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 /**
  * @param {any|Array<any>} formData - Estado del form (o array de estados).
@@ -19,7 +19,10 @@ import { useEffect, useRef } from "react";
 export function useUnsavedChanges(formData, options = {}) {
     const { habilitado = true, resetKey } = options;
 
-    const values = Array.isArray(formData) ? formData : [formData];
+    const values = useMemo(
+        () => (Array.isArray(formData) ? formData : [formData]),
+        [formData],
+    );
 
     // Snapshot del estado "limpio". Se captura en el primer render
     // habilitado y se recaptura al cambiar resetKey, de modo que siempre

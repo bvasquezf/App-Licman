@@ -3,6 +3,7 @@ import { supabase } from "../services/supabase";
 import { exportToExcel } from "../utils/exportToExcel";
 import { useToast } from "../context/ToastContext";
 import { useAsync } from "../hooks/useAsync";
+import { useUrlFilters } from "../hooks/useUrlFilters";
 import { withRetry } from "../utils/withRetry";
 import PageHeader from "../components/ui/PageHeader";
 import EmptyState from "../components/ui/EmptyState";
@@ -11,10 +12,16 @@ import Skeleton from "../components/ui/Skeleton";
 import { formatCLP } from "../utils/format";
 
 function Historial() {
-    const [fechaDesde, setFechaDesde] = useState("");
-    const [fechaHasta, setFechaHasta] = useState("");
-    const [tipoFiltro, setTipoFiltro] = useState("todos"); // todos | entrada | salida
-    const [busqueda, setBusqueda] = useState("");
+    const [filtrosUrl, setFiltroUrl, limpiarFiltrosUrl] = useUrlFilters({
+        desde: "",
+        hasta: "",
+        tipo: "todos",
+        q: "",
+    });
+    const fechaDesde = filtrosUrl.desde;
+    const fechaHasta = filtrosUrl.hasta;
+    const tipoFiltro = filtrosUrl.tipo;
+    const busqueda = filtrosUrl.q;
     const [expandido, setExpandido] = useState(null);
     const { showToast } = useToast();
 
@@ -23,7 +30,7 @@ function Historial() {
             supabase
                 .from("bodega_movimientos")
                 .select(
-                    `id, tipo_movimiento, motivo_movimiento, cantidad, precio_unitario, proveedor, numero_documento, tipo_documento, solicitante, destino, observacion, fecha, productos (nombre, codigo)`
+                    `id, tipo_movimiento, motivo_movimiento, cantidad, precio_unitario, proveedor, numero_documento, tipo_documento, solicitante, destino, observacion, fecha, creado_por, productos (nombre, codigo), autor:perfiles!bodega_movimientos_creado_por_fkey(nombre_completo)`
                 )
                 .order("id", { ascending: false })
         );
@@ -59,6 +66,7 @@ function Historial() {
             Solicitante: mov.solicitante || "",
             Destino: mov.destino || "",
             Observación: mov.observacion || "",
+            "Registrado por": mov.autor?.nombre_completo || "",
         }));
         exportToExcel(dataExport, "historial_movimientos_bodega", "Historial");
         showToast("Reporte exportado");
@@ -91,13 +99,6 @@ function Historial() {
             return cumpleTipo && cumpleDesde && cumpleHasta && cumpleTexto;
         });
     }, [movimientos, fechaDesde, fechaHasta, tipoFiltro, busqueda]);
-
-    const limpiarFiltros = () => {
-        setFechaDesde("");
-        setFechaHasta("");
-        setTipoFiltro("todos");
-        setBusqueda("");
-    };
 
     const getMotivoLabel = (motivo) => {
         const labels = {
@@ -171,8 +172,8 @@ function Historial() {
                     type="text"
                     placeholder="Buscar por producto, código, proveedor..."
                     value={busqueda}
-                    onChange={(e) => setBusqueda(e.target.value)}
-                    className="w-full rounded-[14px] border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 shadow-[0_10px_30px_rgba(15,23,42,0.10)] transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/10 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500 sm:text-base"
+                    onChange={(e) => setFiltroUrl("q", e.target.value)}
+                    className="min-h-[44px] w-full rounded-[14px] border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 shadow-[0_10px_30px_rgba(15,23,42,0.10)] transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/10 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500 sm:text-base"
                 />
             </div>
 
@@ -198,8 +199,8 @@ function Historial() {
                     return (
                         <button
                             key={chip.key}
-                            onClick={() => setTipoFiltro(chip.key)}
-                            className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-200 active:scale-95 ${tones[chip.tone]}`}
+                            onClick={() => setFiltroUrl("tipo", chip.key)}
+                            className={`inline-flex min-h-[44px] items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-200 active:scale-95 ${tones[chip.tone]}`}
                         >
                             {chip.label}
                             <span
@@ -225,8 +226,8 @@ function Historial() {
                     <input
                         type="date"
                         value={fechaDesde}
-                        onChange={(e) => setFechaDesde(e.target.value)}
-                        className="w-full rounded-[10px] border border-slate-200/60 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/10 dark:bg-carbon-800 dark:text-slate-100 sm:w-auto"
+                        onChange={(e) => setFiltroUrl("desde", e.target.value)}
+                        className="min-h-[44px] w-full rounded-[10px] border border-slate-200/60 bg-white px-3 py-2 text-base text-slate-700 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 sm:w-auto sm:text-sm dark:border-white/10 dark:bg-carbon-800 dark:text-slate-100"
                     />
                 </div>
                 <div className="flex flex-1 flex-col sm:flex-none">
@@ -236,14 +237,14 @@ function Historial() {
                     <input
                         type="date"
                         value={fechaHasta}
-                        onChange={(e) => setFechaHasta(e.target.value)}
-                        className="w-full rounded-[10px] border border-slate-200/60 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/10 dark:bg-carbon-800 dark:text-slate-100 sm:w-auto"
+                        onChange={(e) => setFiltroUrl("hasta", e.target.value)}
+                        className="min-h-[44px] w-full rounded-[10px] border border-slate-200/60 bg-white px-3 py-2 text-base text-slate-700 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 sm:w-auto sm:text-sm dark:border-white/10 dark:bg-carbon-800 dark:text-slate-100"
                     />
                 </div>
                 {filtrosActivos && (
                     <button
-                        onClick={limpiarFiltros}
-                        className="rounded-[10px] border border-slate-200/60 bg-white px-3 py-2 text-sm text-slate-500 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-carbon-800 dark:text-neutral-400 dark:hover:bg-white/5"
+                        onClick={limpiarFiltrosUrl}
+                        className="min-h-[44px] rounded-[10px] border border-slate-200/60 bg-white px-3 py-2 text-sm text-slate-500 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-carbon-800 dark:text-neutral-400 dark:hover:bg-white/5"
                     >
                         Limpiar todo
                     </button>
@@ -334,6 +335,10 @@ function Historial() {
                                                         </span>
                                                     </>
                                                 )}
+                                                <span>·</span>
+                                                <span>
+                                                    Registrado por {mov.autor?.nombre_completo ?? "sistema anterior"}
+                                                </span>
                                             </div>
                                         </div>
 

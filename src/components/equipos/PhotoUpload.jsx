@@ -9,6 +9,11 @@
  * junto con el INSERT del equipo). Mientras tanto muestra la preview
  * local con `URL.createObjectURL`.
  *
+ * Dos vías de captura, pensadas para iPhone:
+ *  - "📷 Tomar foto": input con `capture="environment"` → abre la cámara
+ *    trasera directo, sin pasar por el selector de archivos.
+ *  - "🖼 Galería": input clásico con los formatos soportados.
+ *
  * Props:
  *  - value: File actual (estado controlado).
  *  - onChange(file|null): callback al elegir/quitar.
@@ -19,11 +24,19 @@ export default function PhotoUpload({ value, onChange, error, disabled }) {
     const handleSeleccionar = (e) => {
         const file = e.target.files?.[0];
         if (file) onChange(file);
+        // Permite re-elegir el mismo archivo (ej. foto mala → retomar)
+        e.target.value = "";
     };
 
     const handleQuitar = () => {
         onChange(null);
     };
+
+    const clasesBoton = `flex min-h-[52px] flex-1 cursor-pointer flex-col items-center justify-center gap-1 rounded-[10px] border-2 border-dashed px-3 py-3 text-center transition ${
+        disabled
+            ? "cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400 dark:border-white/10 dark:bg-white/5 dark:text-neutral-500"
+            : "border-slate-300 bg-slate-50 text-slate-700 hover:border-blue-400 hover:bg-blue-50/40 active:scale-[0.98] dark:border-white/15 dark:bg-white/5 dark:text-neutral-300 dark:hover:bg-blue-500/10"
+    }`;
 
     return (
         <div className="space-y-2">
@@ -60,32 +73,44 @@ export default function PhotoUpload({ value, onChange, error, disabled }) {
                             {(value.size / 1024).toFixed(0)} KB ·{" "}
                             {value.type || "tipo desconocido"}
                         </p>
-                        <p className="mt-1 text-[0.7rem] text-slate-500 dark:text-neutral-400">
-                            Se subirá al bucket privado al guardar el equipo.
+                        <p className="mt-1 text-xs text-slate-500 dark:text-neutral-400">
+                            Se subirá al bucket privado al guardar.
                         </p>
                     </div>
                 </div>
             ) : (
-                <label
-                    className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-[10px] border-2 border-dashed px-4 py-6 text-center text-sm transition ${
-                        disabled
-                            ? "cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400 dark:border-white/10 dark:bg-white/5 dark:text-neutral-500"
-                            : "border-slate-300 bg-slate-50 text-slate-600 hover:border-blue-400 hover:bg-blue-50/40 dark:border-white/15 dark:bg-white/5 dark:text-neutral-400 dark:hover:bg-blue-500/10"
-                    }`}
-                >
-                    <span className="text-2xl">📷</span>
-                    <span className="font-semibold">Elegir foto</span>
-                    <span className="text-xs text-slate-500 dark:text-neutral-400">
-                        JPG, PNG, WEBP, HEIC · hasta 5 MB
-                    </span>
-                    <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-                        onChange={handleSeleccionar}
-                        disabled={disabled}
-                        className="sr-only"
-                    />
-                </label>
+                <div className="flex gap-2">
+                    <label className={clasesBoton}>
+                        <span className="text-2xl">📷</span>
+                        <span className="text-sm font-bold">Tomar foto</span>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            onChange={handleSeleccionar}
+                            disabled={disabled}
+                            className="sr-only"
+                        />
+                    </label>
+                    <label className={clasesBoton}>
+                        <span className="text-2xl">🖼️</span>
+                        <span className="text-sm font-bold">Galería</span>
+                        <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                            onChange={handleSeleccionar}
+                            disabled={disabled}
+                            className="sr-only"
+                        />
+                    </label>
+                </div>
+            )}
+
+            {!value && (
+                <p className="text-xs text-slate-500 dark:text-neutral-400">
+                    JPG, PNG, WEBP, HEIC · se optimizan solas antes de subir
+                    (~300 KB)
+                </p>
             )}
 
             {error && (

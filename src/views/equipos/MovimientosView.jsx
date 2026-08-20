@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { supabase } from "../../services/supabase";
 import { useToast } from "../../context/ToastContext";
 import { useAsync } from "../../hooks/useAsync";
@@ -9,6 +9,7 @@ import PageHeader from "../../components/ui/PageHeader";
 import Card from "../../components/ui/Card";
 import EmptyState from "../../components/ui/EmptyState";
 import Skeleton from "../../components/ui/Skeleton";
+import { useUrlFilters } from "../../hooks/useUrlFilters";
 
 const MAX_MOVIMIENTOS = 200;
 
@@ -31,15 +32,23 @@ const CATEGORIA_LABEL = {
  */
 export default function MovimientosView() {
     const { showToast } = useToast();
-    const [busqueda, setBusqueda] = useState("");
-    const [motivoFiltro, setMotivoFiltro] = useState("todos");
-    const [bodegaFiltro, setBodegaFiltro] = useState("todas");
-    const [clienteFiltro, setClienteFiltro] = useState("todos");
-    const [fechaDesde, setFechaDesde] = useState("");
-    const [fechaHasta, setFechaHasta] = useState("");
+    const [filtrosUrl, setFiltroUrl, limpiarFiltrosUrl] = useUrlFilters({
+        q: "",
+        motivo: "todos",
+        bodega: "todas",
+        cliente: "todos",
+        desde: "",
+        hasta: "",
+    });
+    const busqueda = filtrosUrl.q;
+    const motivoFiltro = filtrosUrl.motivo;
+    const bodegaFiltro = filtrosUrl.bodega;
+    const clienteFiltro = filtrosUrl.cliente;
+    const fechaDesde = filtrosUrl.desde;
+    const fechaHasta = filtrosUrl.hasta;
 
     const cargarTodo = useCallback(async () => {
-        const [movsRes, equiposRes, clientesRes] = await Promise.all([
+        const [movsRes, equiposRes, clientesRes, perfilesRes] = await Promise.all([
             withRetry(() =>
                 supabase
                     .from("equipos_movimientos")
@@ -50,7 +59,7 @@ export default function MovimientosView() {
             withRetry(() =>
                 supabase
                     .from("equipos")
-                    .select("id, correlativo, marca, modelo, numero_interno"),
+                    .select("id, correlativo, tipo_equipo, marca, modelo, numero_interno"),
             ),
             withRetry(() =>
                 supabase
@@ -58,9 +67,16 @@ export default function MovimientosView() {
                     .select("id, razon_social")
                     .order("razon_social", { ascending: true }),
             ),
+            withRetry(() =>
+                supabase.from("perfiles").select("id, nombre_completo"),
+            ),
         ]);
 
-        const err = movsRes.error || equiposRes.error || clientesRes.error;
+        const err =
+            movsRes.error ||
+            equiposRes.error ||
+            clientesRes.error ||
+            perfilesRes.error;
         if (err) throw err;
 
         const equiposById = new Map(
@@ -69,12 +85,16 @@ export default function MovimientosView() {
         const clientesById = new Map(
             (clientesRes.data ?? []).map((c) => [c.id, c]),
         );
+        const perfilesById = new Map(
+            (perfilesRes.data ?? []).map((perfil) => [perfil.id, perfil]),
+        );
 
         const movimientos = (movsRes.data ?? []).map((m) => ({
             ...m,
             equipo: equiposById.get(m.equipo_id) ?? null,
             cliente_origen: clientesById.get(m.cliente_origen_id) ?? null,
             cliente_destino: clientesById.get(m.cliente_destino_id) ?? null,
+            autor: perfilesById.get(m.creado_por) ?? null,
         }));
 
         return { movimientos, clientes: clientesRes.data ?? [] };
@@ -117,10 +137,19 @@ export default function MovimientosView() {
                 e ? `#${String(e.correlativo).padStart(4, "0")}` : "",
                 e ? String(e.correlativo) : "",
                 m.responsable,
+                m.autor?.nombre_completo,
                 m.notas,
+                m.numero_acta,
+                m.numero_guia_despacho,
                 m.cliente_origen?.razon_social,
                 m.cliente_destino?.razon_social,
                 m.destino_externo,
+                m.bateria_contexto?.numero_interno,
+                m.bateria_contexto?.numero_serie,
+                m.bateria_contexto?.anterior?.numero_interno,
+                m.bateria_contexto?.anterior?.numero_serie,
+                m.bateria_contexto?.nueva?.numero_interno,
+                m.bateria_contexto?.nueva?.numero_serie,
             ]
                 .filter(Boolean)
                 .join(" ")
@@ -137,15 +166,6 @@ export default function MovimientosView() {
         fechaHasta,
     ]);
 
-    const limpiarFiltros = () => {
-        setBusqueda("");
-        setMotivoFiltro("todos");
-        setBodegaFiltro("todas");
-        setClienteFiltro("todos");
-        setFechaDesde("");
-        setFechaHasta("");
-    };
-
     const hayFiltrosActivos =
         busqueda ||
         motivoFiltro !== "todos" ||
@@ -155,13 +175,13 @@ export default function MovimientosView() {
         fechaHasta;
 
     const clasesInput =
-        "w-full rounded-[10px] border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100";
+        "min-h-[44px] w-full rounded-[10px] border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 sm:text-sm dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100";
 
     return (
         <div className="space-y-4">
             <PageHeader
                 title="Movimientos de equipos"
-                subtitle={`Historial global · últimos ${MAX_MOVIMIENTOS} registros`}
+                subtitle={`Equipos y baterías asociadas · últimos ${MAX_MOVIMIENTOS} registros`}
                 icon="🕓"
             />
 
@@ -170,14 +190,15 @@ export default function MovimientosView() {
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     <input
                         type="search"
+                        aria-label="Buscar movimientos de equipos"
                         value={busqueda}
-                        onChange={(e) => setBusqueda(e.target.value)}
+                        onChange={(e) => setFiltroUrl("q", e.target.value)}
                         placeholder="Buscar por equipo, correlativo, responsable…"
                         className={clasesInput}
                     />
                     <select
                         value={motivoFiltro}
-                        onChange={(e) => setMotivoFiltro(e.target.value)}
+                        onChange={(e) => setFiltroUrl("motivo", e.target.value)}
                         className={clasesInput}
                     >
                         <option value="todos">Todos los motivos</option>
@@ -189,7 +210,7 @@ export default function MovimientosView() {
                     </select>
                     <select
                         value={bodegaFiltro}
-                        onChange={(e) => setBodegaFiltro(e.target.value)}
+                        onChange={(e) => setFiltroUrl("bodega", e.target.value)}
                         className={clasesInput}
                     >
                         <option value="todas">Todas las bodegas</option>
@@ -201,7 +222,7 @@ export default function MovimientosView() {
                     </select>
                     <select
                         value={clienteFiltro}
-                        onChange={(e) => setClienteFiltro(e.target.value)}
+                        onChange={(e) => setFiltroUrl("cliente", e.target.value)}
                         className={clasesInput}
                     >
                         <option value="todos">Todos los clientes</option>
@@ -214,7 +235,7 @@ export default function MovimientosView() {
                     <input
                         type="date"
                         value={fechaDesde}
-                        onChange={(e) => setFechaDesde(e.target.value)}
+                        onChange={(e) => setFiltroUrl("desde", e.target.value)}
                         className={clasesInput}
                         aria-label="Desde"
                     />
@@ -222,15 +243,15 @@ export default function MovimientosView() {
                         <input
                             type="date"
                             value={fechaHasta}
-                            onChange={(e) => setFechaHasta(e.target.value)}
+                            onChange={(e) => setFiltroUrl("hasta", e.target.value)}
                             className={clasesInput}
                             aria-label="Hasta"
                         />
                         {hayFiltrosActivos && (
                             <button
                                 type="button"
-                                onClick={limpiarFiltros}
-                                className="shrink-0 rounded-[10px] border border-slate-300 px-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50 dark:border-white/15 dark:text-neutral-300 dark:hover:bg-white/5"
+                                onClick={limpiarFiltrosUrl}
+                                className="min-h-[44px] shrink-0 rounded-[10px] border border-slate-300 px-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50 dark:border-white/15 dark:text-neutral-300 dark:hover:bg-white/5"
                             >
                                 Limpiar
                             </button>
@@ -270,7 +291,7 @@ export default function MovimientosView() {
                         {filtrados.map((m) => (
                             <li key={m.id}>
                                 <Card padding="p-3 sm:p-4">
-                                    <div className="flex items-start gap-3">
+                                    <div className="flex items-start gap-2.5 sm:gap-3">
                                         <span
                                             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-900 text-base text-white dark:bg-white/10"
                                             aria-hidden="true"
@@ -278,55 +299,99 @@ export default function MovimientosView() {
                                             {iconoPorMotivo(m.motivo)}
                                         </span>
                                         <div className="min-w-0 flex-1">
-                                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                            <div className="flex flex-wrap items-start gap-x-2 gap-y-1">
+                                                <div className="min-w-0 basis-full sm:basis-auto">
                                                     {m.equipo ? (
                                                         <>
-                                                            <span className="font-mono text-brand-700 dark:text-brand-400">
-                                                                #
-                                                                {String(
-                                                                    m.equipo
-                                                                        .correlativo,
-                                                                ).padStart(
-                                                                    4,
-                                                                    "0",
-                                                                )}
-                                                            </span>{" "}
-                                                            {m.equipo.marca}{" "}
-                                                            {m.equipo.modelo}
+                                                            <p className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                                                                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-neutral-400">
+                                                                    N° interno
+                                                                </span>
+                                                                <span className="font-mono text-xl font-black leading-none text-slate-950 dark:text-white">
+                                                                    {m.equipo.numero_interno || "—"}
+                                                                </span>
+                                                                <span className="text-xs font-medium tabular-nums text-slate-400 dark:text-neutral-500">
+                                                                    · ID {String(m.equipo.correlativo).padStart(4, "0")}
+                                                                </span>
+                                                            </p>
+                                                            <p className="mt-1 text-sm font-bold text-slate-800 dark:text-slate-100">
+                                                                {m.equipo.tipo_equipo || "Equipo"}
+                                                            </p>
+                                                            <p className="text-sm font-semibold text-slate-600 dark:text-neutral-300">
+                                                                {m.equipo.marca} {m.equipo.modelo}
+                                                            </p>
                                                         </>
                                                     ) : (
-                                                        "Equipo eliminado"
+                                                        <p className="text-sm font-semibold text-slate-600 dark:text-neutral-300">
+                                                            Equipo eliminado
+                                                        </p>
                                                     )}
-                                                </p>
-                                                <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[0.7rem] font-bold text-violet-800 dark:bg-violet-500/10 dark:text-violet-400">
+                                                </div>
+                                                <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-bold text-violet-800 dark:bg-violet-500/10 dark:text-violet-400">
                                                     {m.motivo}
                                                 </span>
                                                 {m.categoria && (
-                                                    <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[0.7rem] font-bold text-sky-800 dark:bg-sky-500/10 dark:text-sky-400">
+                                                    <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-bold text-sky-800 dark:bg-sky-500/10 dark:text-sky-400">
                                                         {CATEGORIA_LABEL[
                                                             m.categoria
                                                         ] ?? m.categoria}
                                                     </span>
                                                 )}
                                             </div>
-                                            <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">
+                                            <p className="mt-2 break-words text-sm text-slate-700 dark:text-slate-200">
+                                                <span className="block text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-neutral-400 sm:inline sm:normal-case sm:tracking-normal">
+                                                    Desde{" "}
+                                                </span>
                                                 {renderOrigen(m)}
-                                                <span className="mx-2 text-slate-400 dark:text-neutral-500">
+                                                <span className="mx-1.5 text-slate-400 dark:text-neutral-500 sm:mx-2">
                                                     →
+                                                </span>
+                                                <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-neutral-400 sm:hidden">
+                                                    Hasta{" "}
                                                 </span>
                                                 <span className="font-semibold text-brand-700 dark:text-brand-400">
                                                     {renderDestino(m)}
                                                 </span>
                                             </p>
                                             <p className="mt-1 text-xs text-slate-500 dark:text-neutral-400">
-                                                {formatearFecha(m.fecha)} · 👤{" "}
-                                                {m.responsable}
+                                                {formatearFecha(m.fecha)} · Responsable: {m.responsable}
+                                            </p>
+                                            <p className="mt-0.5 text-xs font-semibold text-slate-600 dark:text-neutral-300">
+                                                Registrado por: {m.autor?.nombre_completo ?? "Registro anterior al inicio de sesión"}
                                             </p>
                                             {m.notas && (
                                                 <p className="mt-1.5 rounded border-l-[3px] border-slate-300 bg-slate-50 px-2 py-1 text-xs text-slate-700 dark:border-white/15 dark:bg-white/5 dark:text-slate-200">
                                                     {m.notas}
                                                 </p>
+                                            )}
+                                            <BateriaContexto
+                                                contexto={m.bateria_contexto}
+                                            />
+                                            {m.horometro !== null &&
+                                                m.horometro !== undefined && (
+                                                    <p className="mt-1.5 text-xs text-slate-600 dark:text-neutral-300">
+                                                        ⏱ Horómetro:{" "}
+                                                        <strong>{m.horometro} h</strong>
+                                                    </p>
+                                                )}
+                                            {(m.numero_acta ||
+                                                m.numero_guia_despacho) && (
+                                                <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600 dark:text-neutral-300">
+                                                    {m.numero_acta && (
+                                                        <span>
+                                                            📄 Acta:{" "}
+                                                            <strong>{m.numero_acta}</strong>
+                                                        </span>
+                                                    )}
+                                                    {m.numero_guia_despacho && (
+                                                        <span>
+                                                            🚚 Guía:{" "}
+                                                            <strong>
+                                                                {m.numero_guia_despacho}
+                                                            </strong>
+                                                        </span>
+                                                    )}
+                                                </div>
                                             )}
                                         </div>
                                     </div>
@@ -353,4 +418,32 @@ function renderDestino(m) {
     }
     if (m.destino_externo) return `🔧 ${m.destino_externo}`;
     return m.bodega_destino ?? "—";
+}
+
+function BateriaContexto({ contexto }) {
+    if (!contexto) return null;
+
+    if (contexto.tipo === "acompanante") {
+        return (
+            <p className="mt-2 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs text-cyan-900 dark:border-cyan-500/25 dark:bg-cyan-500/10 dark:text-cyan-100">
+                🔋 Batería <strong className="font-mono">{contexto.numero_interno || "—"}</strong>
+                {contexto.numero_serie ? ` · Serie ${contexto.numero_serie}` : ""}
+            </p>
+        );
+    }
+
+    if (contexto.tipo === "cambio") {
+        return (
+            <div className="mt-2 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs text-cyan-900 dark:border-cyan-500/25 dark:bg-cyan-500/10 dark:text-cyan-100">
+                <p className="font-bold">🔋 Cambio asociado</p>
+                <p className="mt-0.5">
+                    {contexto.anterior?.numero_interno || "Sin batería anterior"}
+                    {" → "}
+                    {contexto.nueva?.numero_interno || "Sin batería nueva"}
+                </p>
+            </div>
+        );
+    }
+
+    return null;
 }

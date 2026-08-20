@@ -15,7 +15,7 @@ export default function KpiCard({ title, value, sub, accent = "blue" }) {
             <div
                 className={`pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${accents[accent] ?? accents.blue}`}
             />
-            <p className="text-[0.72rem] font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-neutral-400">
                 {title}
             </p>
             <p className="mt-1.5 text-[1.85rem] font-extrabold leading-none text-slate-900 tabular-nums dark:text-slate-100">

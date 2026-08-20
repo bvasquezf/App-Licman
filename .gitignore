@@ -12,6 +12,14 @@ dist
 dist-ssr
 .env
 *.local
+.netlify/
+supabase/.temp/
+.git-backups/
+
+# Infraestructura privada. El repositorio público conserva solamente una
+# descripción general; SQL, migraciones y Edge Functions se administran aparte.
+supabase/*
+!supabase/README.md
 
 # Editor directories and files
 .vscode/*

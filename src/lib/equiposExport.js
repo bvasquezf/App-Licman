@@ -27,7 +27,7 @@ export function exportarAExcel(equipos, opts = {}) {
             let val = e[key];
 
             // Mapeos especiales
-            if (key === "foto_enviada") {
+            if (key === "foto_enviada" || key === "vendido") {
                 val = val ? "Sí" : "No";
             } else if (key === "elementos_faltantes") {
                 val = Array.isArray(val) ? val.join(", ") : val || "";
@@ -60,6 +60,7 @@ export function exportarAExcel(equipos, opts = {}) {
         Observaciones: 30,
         Responsable: 18,
         "Foto Enviada": 14,
+        Vendido: 10,
         "Fecha Registro": 22,
     };
     ws["!cols"] = Object.keys(EXCEL_HEADERS).map((k) => ({

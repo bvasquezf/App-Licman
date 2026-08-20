@@ -11,7 +11,7 @@ import { supabase } from "../../services/supabase";
  * Vista de Exportar inventario (Equipos).
  * Carga los equipos activos desde Supabase y permite exportar a Excel.
  */
-export default function ExportView() {
+export default function ExportarView() {
     const toast = useToast();
     const [bodega, setBodega] = useState("todas");
 
