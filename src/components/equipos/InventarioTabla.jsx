@@ -666,6 +666,13 @@ function EquipoEdicionForm({
     const [guardando, setGuardando] = useState(false);
     const inicialRef = useRef(valoresIniciales);
     const refs = useRef({});
+    const faltantesFueraCatalogo = parseFaltantes(
+        equipo.elementos_faltantes,
+    ).filter((elemento) => !ELEMENTOS_FALTANTES.includes(elemento));
+    const opcionesFaltantes = [
+        ...ELEMENTOS_FALTANTES,
+        ...faltantesFueraCatalogo,
+    ];
     const estaSucio =
         JSON.stringify(form) !== JSON.stringify(inicialRef.current);
 
@@ -837,27 +844,63 @@ function EquipoEdicionForm({
             </section>
 
             <section>
-                <h3 className="text-sm font-extrabold uppercase tracking-wide text-slate-500 dark:text-neutral-400">
-                    Estado de información
-                </h3>
-                <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                    {ELEMENTOS_FALTANTES.map((elemento) => (
-                        <label
-                            key={elemento}
-                            className="flex min-h-[44px] cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/[0.04]"
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="text-sm font-extrabold uppercase tracking-wide text-slate-500 dark:text-neutral-400">
+                        Estado de información
+                    </h3>
+                    {form.elementos_faltantes.length > 0 && (
+                        <button
+                            type="button"
+                            onClick={() => cambiar("elementos_faltantes", [])}
+                            className="min-h-[44px] rounded-xl px-3 text-sm font-bold text-rose-600 transition hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-500/10"
                         >
-                            <input
-                                type="checkbox"
-                                checked={form.elementos_faltantes.includes(elemento)}
-                                onChange={() => alternarFaltante(elemento)}
-                                className="h-4 w-4 accent-blue-600"
-                            />
-                            <span className="text-slate-700 dark:text-slate-200">
-                                {elemento}
-                            </span>
-                        </label>
-                    ))}
+                            Limpiar faltantes
+                        </button>
+                    )}
                 </div>
+                <p className="mt-1 text-xs text-slate-500 dark:text-neutral-400">
+                    Desmarca lo que ya tenga el equipo. Los datos antiguos también
+                    aparecen aquí para que puedas corregirlos.
+                </p>
+                <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    {opcionesFaltantes.map((elemento) => {
+                        const esDatoAnterior =
+                            !ELEMENTOS_FALTANTES.includes(elemento);
+                        const seleccionado =
+                            form.elementos_faltantes.includes(elemento);
+
+                        return (
+                            <label
+                                key={elemento}
+                                className={`flex min-h-[44px] min-w-0 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm transition ${
+                                    esDatoAnterior
+                                        ? "border-amber-300 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10"
+                                        : "border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-white/[0.04]"
+                                }`}
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={seleccionado}
+                                    onChange={() => alternarFaltante(elemento)}
+                                    className="h-4 w-4 shrink-0 accent-blue-600"
+                                />
+                                <span className="min-w-0 break-words text-slate-700 dark:text-slate-200">
+                                    {elemento}
+                                    {esDatoAnterior && (
+                                        <span className="mt-0.5 block text-xs font-bold text-amber-700 dark:text-amber-300">
+                                            Registro anterior
+                                        </span>
+                                    )}
+                                </span>
+                            </label>
+                        );
+                    })}
+                </div>
+                {form.elementos_faltantes.length === 0 && (
+                    <p className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300">
+                        Sin elementos faltantes.
+                    </p>
+                )}
                 <label className="mt-3 block text-sm font-semibold text-slate-800 dark:text-slate-100">
                     Observaciones
                     <textarea
