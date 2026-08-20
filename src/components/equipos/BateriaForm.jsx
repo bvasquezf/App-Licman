@@ -2,6 +2,7 @@ import { forwardRef, useEffect, useMemo, useRef, useState } from "react";
 import { useModalTransition } from "../../hooks/useModalTransition";
 import { useDialogA11y } from "../../hooks/useDialogA11y";
 import { useUnsavedChanges } from "../../hooks/useUnsavedChanges";
+import { useResponsableSesion } from "../../hooks/useResponsableSesion";
 
 const clasesInput =
     "mt-1 block w-full rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2.5 text-base font-medium text-slate-900 outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500";
@@ -20,7 +21,11 @@ const estadoInicial = {
 
 export default function BateriaForm({ open, equipos = [], onSubmit, onCancel }) {
     const transicion = useModalTransition(open);
-    const [form, setForm] = useState(estadoInicial);
+    const responsableSesion = useResponsableSesion();
+    const [form, setForm] = useState(() => ({
+        ...estadoInicial,
+        responsable: responsableSesion,
+    }));
     const [errores, setErrores] = useState({});
     const [guardando, setGuardando] = useState(false);
     const [asociarEquipo, setAsociarEquipo] = useState(false);
@@ -36,13 +41,13 @@ export default function BateriaForm({ open, equipos = [], onSubmit, onCancel }) 
 
     useEffect(() => {
         if (!open) return;
-        setForm(estadoInicial);
+        setForm({ ...estadoInicial, responsable: responsableSesion });
         setErrores({});
         setGuardando(false);
         setAsociarEquipo(false);
         setBusquedaEquipo("");
         setVersionFormulario((version) => version + 1);
-    }, [open]);
+    }, [open, responsableSesion]);
 
     useDialogA11y(open, {
         dialogRef,
@@ -409,12 +414,12 @@ export default function BateriaForm({ open, equipos = [], onSubmit, onCancel }) 
                             label="Responsable del ingreso"
                             name="responsable"
                             value={form.responsable}
-                            onChange={cambiar}
+                            readOnly
+                            aria-readonly="true"
                             error={errores.responsable}
                             ref={(element) => {
                                 refs.current.responsable = element;
                             }}
-                            placeholder="Nombre de quien registra"
                         />
                     </div>
 

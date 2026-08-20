@@ -16,6 +16,7 @@ import { deleteFotoEquipo, uploadFotoEquipo } from "../../lib/equiposStorage";
 import PhotoUpload from "../../components/equipos/PhotoUpload";
 import EquiposHeader from "../../components/equipos/EquiposHeader";
 import { useUnsavedChanges } from "../../hooks/useUnsavedChanges";
+import { useResponsableSesion } from "../../hooks/useResponsableSesion";
 import {
     cacheEquipos,
     enqueuePendingWrite,
@@ -46,10 +47,12 @@ function ErrorCampo({ mensaje }) {
 export default function RegistrarEquipoView() {
     const toast = useToast();
     const { online, refrescarPending } = useNetwork();
+    const responsableSesion = useResponsableSesion();
     const refs = useRef({});
 
     const [form, setForm] = useState(() => ({
         ...equipoVacio(),
+        responsable: responsableSesion,
     }));
     const [errores, setErrores] = useState({});
     const [guardando, setGuardando] = useState(false);
@@ -62,6 +65,14 @@ export default function RegistrarEquipoView() {
     const [equipos, setEquipos] = useState([]);
 
     useUnsavedChanges([form, Boolean(fotoFile)], { habilitado: !guardando });
+
+    useEffect(() => {
+        setForm((prev) =>
+            prev.responsable === responsableSesion
+                ? prev
+                : { ...prev, responsable: responsableSesion },
+        );
+    }, [responsableSesion]);
 
     useEffect(() => {
         let cancelado = false;
@@ -208,7 +219,7 @@ export default function RegistrarEquipoView() {
                 toast.info(
                     "Sin conexión — guardado localmente, se sincronizará al reconectar.",
                 );
-                setForm(equipoVacio());
+                setForm({ ...equipoVacio(), responsable: responsableSesion });
                 setFotoFile(null);
                 setFotoError(null);
             } else {
@@ -266,7 +277,7 @@ export default function RegistrarEquipoView() {
                         fotoGuardada ? " · foto guardada" : ""
                     }`,
                 );
-                setForm(equipoVacio());
+                setForm({ ...equipoVacio(), responsable: responsableSesion });
                 setFotoFile(null);
                 setFotoError(null);
             }
@@ -548,14 +559,12 @@ export default function RegistrarEquipoView() {
                         <input
                             type="text"
                             value={form.responsable}
-                            onChange={(e) =>
-                                handleChange("responsable", e.target.value)
-                            }
+                            readOnly
+                            aria-readonly="true"
                             ref={(el) => {
                                 refs.current.responsable = el;
                             }}
                             aria-invalid={Boolean(errores.responsable)}
-                            placeholder="Tu nombre completo"
                             className={`${clasesInput} ${errores.responsable ? "border-rose-500" : ""}`}
                         />
                         <ErrorCampo mensaje={errores.responsable} />

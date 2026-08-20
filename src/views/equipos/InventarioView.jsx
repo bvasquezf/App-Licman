@@ -194,9 +194,15 @@ function cumpleFiltroBodega(equipo, filtroBodega) {
     return equipo.bodega === filtroBodega;
 }
 
-function cumpleVistaRapida(equipo, vista) {
+function cumpleVistaRapida(equipo, vista, filtroBodega = "todas") {
     switch (vista) {
         case "disponibles":
+            // Dentro del ámbito "En cliente", este chip representa los
+            // equipos actualmente asignados en arriendo/préstamo, no los
+            // disponibles físicamente en una bodega Licman.
+            if (filtroBodega === BODEGA_EN_CLIENTE) {
+                return Boolean(equipo.cliente_id && !equipo.vendido);
+            }
             return Boolean(
                 equipo.bodega &&
                     !equipo.cliente_id &&
@@ -453,7 +459,11 @@ export default function InventarioView() {
                     filtro.id === "todos"
                         ? base.length
                         : base.filter((equipo) =>
-                              cumpleVistaRapida(equipo, filtro.id),
+                              cumpleVistaRapida(
+                                  equipo,
+                                  filtro.id,
+                                  filtroBodega,
+                              ),
                           ).length,
                 ]),
             );
@@ -477,7 +487,7 @@ export default function InventarioView() {
         return equiposActivos.filter((e) => {
             // Filtro de ubicación: bodega específica, "todas", o "En cliente"
             if (!cumpleFiltroBodega(e, filtroBodega)) return false;
-            if (!cumpleVistaRapida(e, vistaRapida)) return false;
+            if (!cumpleVistaRapida(e, vistaRapida, filtroBodega)) return false;
             if (!texto) return true;
             return [
                 ...CAMPOS_BUSQUEDA.map((campo) => e[campo]),
@@ -570,6 +580,28 @@ export default function InventarioView() {
         });
         return lista;
     }, [equiposFiltrados, clientesById, ordenCampo, ordenDireccion]);
+
+    const filtrosInventario = useMemo(
+        () =>
+            FILTROS_INVENTARIO.map((filtro) => {
+                if (filtroBodega !== BODEGA_EN_CLIENTE) return filtro;
+                if (filtro.id === "disponibles") {
+                    return {
+                        ...filtro,
+                        icono: "🏢",
+                        label: "En arriendo",
+                    };
+                }
+                if (filtro.id === "sin_bateria") {
+                    return {
+                        ...filtro,
+                        label: "Batería por asociar",
+                    };
+                }
+                return filtro;
+            }),
+        [filtroBodega],
+    );
 
     const totalPaginas = Math.max(
         1,
@@ -1054,7 +1086,7 @@ export default function InventarioView() {
                             role="group"
                             aria-label="Filtros del inventario"
                         >
-                            {FILTROS_INVENTARIO.map((filtro) => {
+                            {filtrosInventario.map((filtro) => {
                                 const activo =
                                     filtro.id === "todos"
                                         ? !vistaRapida

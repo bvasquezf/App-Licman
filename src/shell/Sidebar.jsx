@@ -260,7 +260,6 @@ function SidebarContenido({ expandido, onCerrarMobile }) {
                 >
                     <ThemeToggle
                         variante="sidebar"
-                        mostrarLabel={expandido}
                     />
                 </div>
                 <div

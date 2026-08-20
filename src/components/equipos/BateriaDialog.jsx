@@ -3,6 +3,7 @@ import { useToast } from "../../context/ToastContext";
 import { useAsync } from "../../hooks/useAsync";
 import { useDialogA11y } from "../../hooks/useDialogA11y";
 import { useUnsavedChanges } from "../../hooks/useUnsavedChanges";
+import { useResponsableSesion } from "../../hooks/useResponsableSesion";
 import {
     useModalTransition,
     useRetainedValue,
@@ -31,6 +32,7 @@ function horometroValido(valor, actual) {
 
 export default function BateriaDialog({ open, equipo, onSubmit, onCancel }) {
     const toast = useToast();
+    const responsableSesion = useResponsableSesion();
     const dialogRef = useRef(null);
     const transicion = useModalTransition(open);
     const equipoVisible = useRetainedValue(equipo, open);
@@ -112,7 +114,7 @@ export default function BateriaDialog({ open, equipo, onSubmit, onCancel }) {
                 ? ""
                 : String(equipo.horometro),
         );
-        setResponsable("");
+        setResponsable(responsableSesion);
         setMotivo("Cambio de batería");
         setNotas("");
         setBusqueda("");
@@ -120,7 +122,13 @@ export default function BateriaDialog({ open, equipo, onSubmit, onCancel }) {
         setGuardando(false);
         setVersionFormulario((version) => version + 1);
         recargarOpciones();
-    }, [open, equipo?.id, equipo?.horometro, recargarOpciones]);
+    }, [
+        open,
+        equipo?.id,
+        equipo?.horometro,
+        recargarOpciones,
+        responsableSesion,
+    ]);
 
     useDialogA11y(open, {
         dialogRef,
@@ -375,12 +383,9 @@ export default function BateriaDialog({ open, equipo, onSubmit, onCancel }) {
                             </span>
                             <input
                                 value={responsable}
-                                onChange={(event) => {
-                                    setResponsable(event.target.value);
-                                    setErrores((prev) => ({ ...prev, responsable: undefined }));
-                                }}
+                                readOnly
+                                aria-readonly="true"
                                 className={`${clasesInput} ${errores.responsable ? "border-red-500" : ""}`}
-                                placeholder="Quién realiza el cambio"
                                 disabled={guardando}
                             />
                             {errores.responsable && (

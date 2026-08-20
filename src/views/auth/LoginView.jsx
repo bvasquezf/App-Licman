@@ -115,7 +115,7 @@ export default function LoginView() {
             </div>
 
             <div className="absolute right-4 top-4 z-10">
-                <ThemeToggle />
+                <ThemeToggle variante="login" />
             </div>
 
             <section className="relative z-10 w-full max-w-md rounded-3xl border border-white/80 bg-white/90 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.16)] backdrop-blur-xl dark:border-white/10 dark:bg-carbon-900/90 sm:p-8">

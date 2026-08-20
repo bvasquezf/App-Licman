@@ -6,6 +6,7 @@ import {
 } from "../../hooks/useModalTransition";
 import { useDialogA11y } from "../../hooks/useDialogA11y";
 import { useUnsavedChanges } from "../../hooks/useUnsavedChanges";
+import { useResponsableSesion } from "../../hooks/useResponsableSesion";
 import EstadoBadge from "./EstadoBadge";
 
 const clasesInput =
@@ -40,6 +41,7 @@ export default function EstadoDialog({
     onCancel,
 }) {
     const dialogRef = useRef(null);
+    const responsableSesion = useResponsableSesion();
     const transicion = useModalTransition(open);
     const equipo = useRetainedValue(
         equipoProp,
@@ -67,13 +69,13 @@ export default function EstadoDialog({
                     ? ""
                     : String(equipo.horometro),
             );
-            setResponsable("");
+            setResponsable(responsableSesion);
             setNotas("");
             setErrores({});
             setGuardando(false);
             setVersionFormulario((version) => version + 1);
         }
-    }, [open, equipo]);
+    }, [open, equipo, responsableSesion]);
 
     useDialogA11y(open, {
         dialogRef,
@@ -248,21 +250,14 @@ export default function EstadoDialog({
                         )}
                     </label>
 
-                    {/* Responsable */}
+                    {/* Responsable autenticado */}
                     <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Responsable
                         <input
                             type="text"
                             value={responsable}
-                            onChange={(e) => {
-                                setResponsable(e.target.value);
-                                setErrores((prev) => {
-                                    const next = { ...prev };
-                                    delete next.responsable;
-                                    return next;
-                                });
-                            }}
-                            placeholder="Tu nombre completo"
+                            readOnly
+                            aria-readonly="true"
                             className={clasesInput}
                         />
                         {errores.responsable && (

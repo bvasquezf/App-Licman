@@ -81,6 +81,24 @@ body {
     overflow-x: clip;
 }
 
+/* La clase vive solo durante el clic del selector de tema. Así los fondos,
+   bordes, textos e iconos cambian en conjunto sin volver lentas las demás
+   interacciones de la aplicación. */
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+    transition-duration: 0.32s !important;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html.theme-transitioning *,
+    html.theme-transitioning *::before,
+    html.theme-transitioning *::after {
+        transition-duration: 0s !important;
+    }
+}
+
 /* Prevenir que cualquier elemento desborde su contenedor */
 img,
 table,
@@ -373,6 +391,57 @@ select {
 
 .animate-modal-contenido-in {
     animation: modal-contenido-in 0.22s ease-out backwards;
+}
+
+/* Scroll interno de diálogos extensos. En teléfono se oculta la barra porque
+   el gesto táctil ya comunica el desplazamiento; en escritorio queda una guía
+   fina, separada de los bordes redondeados del modal. */
+.dialog-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.dialog-scrollbar::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
+@media (min-width: 640px) {
+    .dialog-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(100, 116, 139, 0.42) transparent;
+        scrollbar-gutter: stable;
+    }
+
+    .dialog-scrollbar::-webkit-scrollbar {
+        width: 9px;
+    }
+
+    .dialog-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .dialog-scrollbar::-webkit-scrollbar-thumb {
+        min-height: 44px;
+        border: 2px solid transparent;
+        border-radius: 999px;
+        background: rgba(100, 116, 139, 0.42);
+        background-clip: padding-box;
+    }
+
+    .dialog-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: rgba(71, 85, 105, 0.62);
+        background-clip: padding-box;
+    }
+
+    html.dark .dialog-scrollbar {
+        scrollbar-color: rgba(255, 255, 255, 0.24) transparent;
+    }
+
+    html.dark .dialog-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.24);
+        background-clip: padding-box;
+    }
 }
 
 @keyframes filter-results-in {

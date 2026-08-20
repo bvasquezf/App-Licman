@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 
 const ThemeContext = createContext();
 
@@ -24,6 +24,7 @@ const getInitialTheme = () => {
 
 export const ThemeProvider = ({ children }) => {
     const [theme, setTheme] = useState(getInitialTheme);
+    const transitionTimerRef = useRef(null);
 
     // Aplicar/quitar la clase `dark` en el <html> para que Tailwind
     // active las variantes `dark:*`.
@@ -51,7 +52,31 @@ export const ThemeProvider = ({ children }) => {
         return () => mq.removeEventListener?.("change", onChange);
     }, []);
 
+    useEffect(
+        () => () => {
+            if (transitionTimerRef.current) {
+                window.clearTimeout(transitionTimerRef.current);
+            }
+        },
+        [],
+    );
+
     const toggleTheme = () => {
+        const root = document.documentElement;
+        const reduceMotion = window.matchMedia(
+            "(prefers-reduced-motion: reduce)",
+        ).matches;
+
+        if (!reduceMotion) {
+            root.classList.add("theme-transitioning");
+            if (transitionTimerRef.current) {
+                window.clearTimeout(transitionTimerRef.current);
+            }
+            transitionTimerRef.current = window.setTimeout(() => {
+                root.classList.remove("theme-transitioning");
+                transitionTimerRef.current = null;
+            }, 420);
+        }
         setTheme((t) => (t === "dark" ? "light" : "dark"));
     };
 
