@@ -39,9 +39,22 @@ const estadoInicial = {
     horometro_recibe: "",
     numero_acta: "",
     numero_guia_despacho: "",
+    numero_acta_salida: "",
+    numero_guia_despacho_salida: "",
+    numero_acta_vuelve: "",
+    numero_guia_despacho_vuelve: "",
     responsable: "",
     notas: "",
 };
+
+const CAMPOS_DOCUMENTOS = new Set([
+    "numero_acta",
+    "numero_guia_despacho",
+    "numero_acta_salida",
+    "numero_guia_despacho_salida",
+    "numero_acta_vuelve",
+    "numero_guia_despacho_vuelve",
+]);
 
 function documentoEsValido(valor) {
     const documento = String(valor ?? "").trim();
@@ -74,6 +87,20 @@ function normalizarTextoBusqueda(valor) {
         .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase()
         .trim();
+}
+
+function descripcionEquipoDocumento(equipo) {
+    if (!equipo) return "Selecciona el equipo para identificar sus documentos";
+
+    return [
+        equipo.correlativo !== null && equipo.correlativo !== undefined
+            ? `#${String(equipo.correlativo).padStart(4, "0")}`
+            : null,
+        equipo.numero_interno || null,
+        [equipo.marca, equipo.modelo].filter(Boolean).join(" ") || null,
+    ]
+        .filter(Boolean)
+        .join(" · ");
 }
 
 /**
@@ -225,7 +252,7 @@ export default function MovimientoDialog({
     const handleChange = (e) => {
         const { name, value } = e.target;
         const valorNormalizado =
-            name === "numero_acta" || name === "numero_guia_despacho"
+            CAMPOS_DOCUMENTOS.has(name)
                 ? value.replace(/\D/g, "")
                 : name === "horometro" || name === "horometro_recibe"
                   ? normalizarHorometro(value)
@@ -256,6 +283,10 @@ export default function MovimientoDialog({
                 ubicacion_retorno: "",
                 numero_acta: "",
                 numero_guia_despacho: "",
+                numero_acta_salida: "",
+                numero_guia_despacho_salida: "",
+                numero_acta_vuelve: "",
+                numero_guia_despacho_vuelve: "",
             }));
             setEquiposParaSwap([]);
         } else if (name === "cliente_id") {
@@ -341,20 +372,36 @@ export default function MovimientoDialog({
         if (requiere.includes("notas") && !form.notas.trim())
             errs.notas = "Cuéntanos el motivo";
         if (requiereDocumentosMovimiento(form.motivo)) {
-            const tieneActa = documentoEsValido(form.numero_acta);
-            const tieneGuia = documentoEsValido(form.numero_guia_despacho);
-            const ingresoActa = form.numero_acta.trim();
-            const ingresoGuia = form.numero_guia_despacho.trim();
+            const validarDocumentos = (campoActa, campoGuia, contexto = "") => {
+                const tieneActa = documentoEsValido(form[campoActa]);
+                const tieneGuia = documentoEsValido(form[campoGuia]);
+                const ingresoActa = form[campoActa].trim();
+                const ingresoGuia = form[campoGuia].trim();
 
-            if (ingresoActa && !tieneActa) {
-                errs.numero_acta = "Ingresa solo números mayores que cero";
-            }
-            if (ingresoGuia && !tieneGuia) {
-                errs.numero_guia_despacho = "Ingresa solo números mayores que cero";
-            }
-            if (!tieneActa && !tieneGuia && !ingresoActa && !ingresoGuia) {
-                errs.numero_acta =
-                    "Ingresa al menos el acta o la guía de despacho";
+                if (ingresoActa && !tieneActa) {
+                    errs[campoActa] = "Ingresa solo números mayores que cero";
+                }
+                if (ingresoGuia && !tieneGuia) {
+                    errs[campoGuia] = "Ingresa solo números mayores que cero";
+                }
+                if (!tieneActa && !tieneGuia && !ingresoActa && !ingresoGuia) {
+                    errs[campoActa] = `Ingresa al menos el acta o la guía${contexto}`;
+                }
+            };
+
+            if (esSwap(form.motivo)) {
+                validarDocumentos(
+                    "numero_acta_salida",
+                    "numero_guia_despacho_salida",
+                    " del equipo que sale al cliente",
+                );
+                validarDocumentos(
+                    "numero_acta_vuelve",
+                    "numero_guia_despacho_vuelve",
+                    " del equipo que vuelve a bodega",
+                );
+            } else {
+                validarDocumentos("numero_acta", "numero_guia_despacho");
             }
         }
 
@@ -431,6 +478,14 @@ export default function MovimientoDialog({
                     : null,
                 numero_acta: form.numero_acta.trim() || null,
                 numero_guia_despacho: form.numero_guia_despacho.trim() || null,
+                numero_acta_salida:
+                    form.numero_acta_salida.trim() || null,
+                numero_guia_despacho_salida:
+                    form.numero_guia_despacho_salida.trim() || null,
+                numero_acta_vuelve:
+                    form.numero_acta_vuelve.trim() || null,
+                numero_guia_despacho_vuelve:
+                    form.numero_guia_despacho_vuelve.trim() || null,
                 categoria: form.categoria || null,
                 destino_externo: form.destino_externo.trim() || null,
                 fotoFile: fotoFile || null,
@@ -470,6 +525,12 @@ export default function MovimientoDialog({
     const equipoRecibeSeleccionado = equiposParaSwap.find(
         (item) => String(item.id) === String(form.equipo_recibe_id),
     );
+    const equipoSalidaSwap = equipoEnCliente
+        ? equipoRecibeSeleccionado
+        : equipo;
+    const equipoVuelveSwap = equipoEnCliente
+        ? equipo
+        : equipoRecibeSeleccionado;
     // Nombre del cliente comprador, para el aviso de equipo vendido.
     const nombreClienteVendido = equipo.vendido
         ? (clientes.find(
@@ -787,61 +848,60 @@ export default function MovimientoDialog({
                     {requiereDocumentosMovimiento(form.motivo) && (
                         <section className="rounded-xl border border-amber-200 bg-amber-50/70 p-3 dark:border-amber-500/25 dark:bg-amber-500/10">
                             <h3 className="text-sm font-extrabold text-amber-900 dark:text-amber-200">
-                                Documentos del movimiento
+                                {esSwap(form.motivo)
+                                    ? "Documentos de ambos equipos"
+                                    : "Documentos del movimiento"}
                             </h3>
                             <p className="mt-1 text-xs text-amber-800 dark:text-amber-300">
-                                Ingresa al menos uno: acta o guía de despacho.
-                                Si tienes ambos, registra los dos.
+                                {esSwap(form.motivo)
+                                    ? "Registra por separado el respaldo del equipo que sale y del que vuelve. Cada uno necesita al menos acta o guía de despacho."
+                                    : "Ingresa al menos uno: acta o guía de despacho. Si tienes ambos, registra los dos."}
                             </p>
-                            <div className="mt-3 grid items-start gap-3 sm:grid-cols-2">
-                                <label className="block min-w-0 text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
-                                    <span className="block">N° de acta</span>
-                                    <span className="mt-0.5 block min-h-5 text-xs font-normal leading-5 text-slate-500 dark:text-neutral-400">
-                                        Opcional si ingresas la guía
-                                    </span>
-                                    <input
-                                        type="text"
-                                        inputMode="numeric"
-                                        pattern="[0-9]*"
-                                        name="numero_acta"
-                                        value={form.numero_acta}
+                            <div
+                                className={`mt-3 grid items-start gap-3 ${
+                                    esSwap(form.motivo)
+                                        ? "md:grid-cols-2"
+                                        : "sm:grid-cols-2"
+                                }`}
+                            >
+                                {esSwap(form.motivo) ? (
+                                    <>
+                                        <CamposDocumentosMovimiento
+                                            titulo="Equipo que sale al cliente"
+                                            equipo={equipoSalidaSwap}
+                                            campoActa="numero_acta_salida"
+                                            campoGuia="numero_guia_despacho_salida"
+                                            form={form}
+                                            errores={errores}
+                                            refs={refs}
+                                            onChange={handleChange}
+                                            clasesInput={clasesInput}
+                                            enTarjeta
+                                        />
+                                        <CamposDocumentosMovimiento
+                                            titulo="Equipo que vuelve a bodega"
+                                            equipo={equipoVuelveSwap}
+                                            campoActa="numero_acta_vuelve"
+                                            campoGuia="numero_guia_despacho_vuelve"
+                                            form={form}
+                                            errores={errores}
+                                            refs={refs}
+                                            onChange={handleChange}
+                                            clasesInput={clasesInput}
+                                            enTarjeta
+                                        />
+                                    </>
+                                ) : (
+                                    <CamposDocumentosMovimiento
+                                        campoActa="numero_acta"
+                                        campoGuia="numero_guia_despacho"
+                                        form={form}
+                                        errores={errores}
+                                        refs={refs}
                                         onChange={handleChange}
-                                        ref={(el) => {
-                                            refs.current.numero_acta = el;
-                                        }}
-                                        placeholder="Ej. 123456"
-                                        className={clasesInput}
+                                        clasesInput={clasesInput}
                                     />
-                                    {errores.numero_acta && (
-                                        <p className="mt-1 text-xs font-medium text-rose-600">
-                                            {errores.numero_acta}
-                                        </p>
-                                    )}
-                                </label>
-                                <label className="block min-w-0 text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
-                                    <span className="block">N° guía de despacho</span>
-                                    <span className="mt-0.5 block min-h-5 text-xs font-normal leading-5 text-slate-500 dark:text-neutral-400">
-                                        Opcional si ingresas el acta
-                                    </span>
-                                    <input
-                                        type="text"
-                                        inputMode="numeric"
-                                        pattern="[0-9]*"
-                                        name="numero_guia_despacho"
-                                        value={form.numero_guia_despacho}
-                                        onChange={handleChange}
-                                        ref={(el) => {
-                                            refs.current.numero_guia_despacho = el;
-                                        }}
-                                        placeholder="Ej. 000123"
-                                        className={clasesInput}
-                                    />
-                                    {errores.numero_guia_despacho && (
-                                        <p className="mt-1 text-xs font-medium text-rose-600">
-                                            {errores.numero_guia_despacho}
-                                        </p>
-                                    )}
-                                </label>
+                                )}
                             </div>
                         </section>
                     )}
@@ -953,6 +1013,86 @@ export default function MovimientoDialog({
                     </footer>
                 </form>
             </div>
+        </div>
+    );
+}
+
+function CamposDocumentosMovimiento({
+    titulo,
+    equipo,
+    campoActa,
+    campoGuia,
+    form,
+    errores,
+    refs,
+    onChange,
+    clasesInput,
+    enTarjeta = false,
+}) {
+    const campos = (
+        <>
+            <label className="block min-w-0 text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
+                <span className="block">N° de acta</span>
+                <span className="mt-0.5 block min-h-5 text-xs font-normal leading-5 text-slate-500 dark:text-neutral-400">
+                    Opcional si ingresas la guía
+                </span>
+                <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    name={campoActa}
+                    value={form[campoActa]}
+                    onChange={onChange}
+                    ref={(el) => {
+                        refs.current[campoActa] = el;
+                    }}
+                    placeholder="Ej. 123456"
+                    className={clasesInput}
+                />
+                {errores[campoActa] && (
+                    <p className="mt-1 text-xs font-medium text-rose-600">
+                        {errores[campoActa]}
+                    </p>
+                )}
+            </label>
+            <label className="block min-w-0 text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
+                <span className="block">N° guía de despacho</span>
+                <span className="mt-0.5 block min-h-5 text-xs font-normal leading-5 text-slate-500 dark:text-neutral-400">
+                    Opcional si ingresas el acta
+                </span>
+                <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    name={campoGuia}
+                    value={form[campoGuia]}
+                    onChange={onChange}
+                    ref={(el) => {
+                        refs.current[campoGuia] = el;
+                    }}
+                    placeholder="Ej. 000123"
+                    className={clasesInput}
+                />
+                {errores[campoGuia] && (
+                    <p className="mt-1 text-xs font-medium text-rose-600">
+                        {errores[campoGuia]}
+                    </p>
+                )}
+            </label>
+        </>
+    );
+
+    if (!enTarjeta) return campos;
+
+    return (
+        <div className="min-w-0 rounded-xl border border-amber-200 bg-white/80 p-3 dark:border-amber-500/20 dark:bg-carbon-800/80">
+            <p className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
+                {titulo}
+            </p>
+            <p className="mt-1 min-h-8 break-words text-xs font-medium text-slate-600 dark:text-neutral-300">
+                {descripcionEquipoDocumento(equipo)}
+            </p>
+            <div className="mt-2 grid gap-3">{campos}</div>
         </div>
     );
 }

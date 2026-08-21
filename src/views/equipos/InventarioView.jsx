@@ -831,9 +831,14 @@ export default function InventarioView() {
                     p_notas: payload.notas ?? null,
                     p_horometro_salida: horometroSalida,
                     p_horometro_vuelve: horometroVuelve,
-                    p_numero_acta: payload.numero_acta ?? null,
-                    p_numero_guia_despacho:
-                        payload.numero_guia_despacho ?? null,
+                    p_numero_acta_salida:
+                        payload.numero_acta_salida ?? null,
+                    p_numero_guia_despacho_salida:
+                        payload.numero_guia_despacho_salida ?? null,
+                    p_numero_acta_vuelve:
+                        payload.numero_acta_vuelve ?? null,
+                    p_numero_guia_despacho_vuelve:
+                        payload.numero_guia_despacho_vuelve ?? null,
                     p_foto_url_salida: desdeCliente ? null : nuevaFotoUrl,
                     p_foto_url_vuelve: desdeCliente ? nuevaFotoUrl : null,
                 },
