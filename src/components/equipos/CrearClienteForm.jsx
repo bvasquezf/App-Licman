@@ -5,6 +5,7 @@ import {
 } from "../../hooks/useModalTransition";
 import { useDialogA11y } from "../../hooks/useDialogA11y";
 import { useUnsavedChanges } from "../../hooks/useUnsavedChanges";
+import { formatearRut } from "../../utils/rut";
 
 const clasesInput =
     "mt-1 block w-full rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2.5 text-base font-medium text-slate-900 outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500";
@@ -18,17 +19,6 @@ const estadoInicial = {
     direccion: "",
     comuna: "",
 };
-
-function formatearRut(value) {
-    // Solo limpieza básica: sin puntos ni guión, mayúsculas. No validamos
-    // dígito verificador acá — el operador lo escribe como viene.
-    return String(value || "")
-        .replace(/\./g, "")
-        .replace(/-/g, "")
-        .trim()
-        .toUpperCase()
-        .slice(0, 12);
-}
 
 /**
  * Modal controlado para crear / editar un cliente del catálogo.
@@ -65,7 +55,15 @@ export default function CrearClienteForm({
 
     useEffect(() => {
         if (open) {
-            setForm(clienteInicial ? { ...estadoInicial, ...clienteInicial } : estadoInicial);
+            setForm(
+                clienteInicial
+                    ? {
+                          ...estadoInicial,
+                          ...clienteInicial,
+                          rut: formatearRut(clienteInicial.rut),
+                      }
+                    : estadoInicial,
+            );
             setErrores({});
             setGuardando(false);
             setVersionFormulario((version) => version + 1);
@@ -151,17 +149,26 @@ export default function CrearClienteForm({
             }}
         >
             <div
-                className={`max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl sm:rounded-2xl sm:p-6 dark:bg-carbon-900 ${transicion.clasePanel}`}
+                className={`flex max-h-[calc(100dvh-0.5rem)] w-full max-w-xl flex-col overflow-hidden rounded-t-[24px] border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.28)] sm:max-h-[min(92dvh,780px)] sm:rounded-[24px] dark:border-white/10 dark:bg-carbon-900 ${transicion.clasePanel}`}
             >
-                <header className="sticky top-0 z-10 -mx-5 -mt-5 mb-4 flex items-start justify-between gap-3 border-b border-slate-200 bg-white/95 px-5 py-4 backdrop-blur sm:-mx-6 sm:-mt-6 sm:px-6 dark:border-white/10 dark:bg-carbon-900/95">
-                    <div>
+                <header
+                    className="relative flex shrink-0 items-start justify-between gap-3 border-b border-slate-200 bg-white px-5 pb-4 pt-5 sm:px-6 dark:border-white/10 dark:bg-carbon-900"
+                    style={{
+                        paddingTop: "max(1.25rem, env(safe-area-inset-top))",
+                    }}
+                >
+                    <span
+                        className="absolute left-1/2 top-2 h-1 w-10 -translate-x-1/2 rounded-full bg-slate-300 sm:hidden dark:bg-white/20"
+                        aria-hidden="true"
+                    />
+                    <div className="min-w-0">
                         <h2
                             id="cliente-titulo"
-                            className="text-[1.15rem] font-bold text-slate-900 dark:text-slate-100"
+                            className="text-lg font-black text-slate-950 dark:text-white"
                         >
                             {modoEdicion ? "✏️ Editar cliente" : "👥 Nuevo cliente"}
                         </h2>
-                        <p className="mt-1 text-sm text-slate-600 dark:text-neutral-400">
+                        <p className="mt-1 max-w-md text-sm leading-relaxed text-slate-600 dark:text-neutral-400">
                             {modoEdicion
                                 ? "Modifica los datos del cliente en el catálogo."
                                 : "Agrega un cliente al catálogo. Luego podrás asignarlo a equipos en arriendo, venta o garantía."}
@@ -172,14 +179,19 @@ export default function CrearClienteForm({
                         onClick={onCancel}
                         disabled={guardando}
                         data-dialog-autofocus
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-xl text-slate-600 transition hover:bg-slate-200 disabled:opacity-50 dark:bg-white/5 dark:text-neutral-300 dark:hover:bg-white/10"
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-2xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50 dark:text-neutral-400 dark:hover:bg-white/10 dark:hover:text-white"
                         aria-label="Cerrar formulario de cliente"
                     >
                         ×
                     </button>
                 </header>
 
-                <form onSubmit={handleSubmit} className="space-y-3" noValidate>
+                <form
+                    onSubmit={handleSubmit}
+                    className="flex min-h-0 flex-1 flex-col"
+                    noValidate
+                >
+                    <div className="dialog-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-4 sm:px-6 sm:py-5">
                     <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Razón social{" "}
                         <span className="font-normal text-rose-600">*</span>
@@ -216,8 +228,18 @@ export default function CrearClienteForm({
                                 placeholder="76.302.113-0"
                                 autoComplete="off"
                                 inputMode="text"
+                                autoCapitalize="characters"
+                                spellCheck={false}
+                                maxLength={12}
+                                aria-describedby="cliente-rut-ayuda"
                                 className={clasesInput}
                             />
+                            <span
+                                id="cliente-rut-ayuda"
+                                className="mt-1 block text-xs font-normal text-slate-500 dark:text-neutral-400"
+                            >
+                                Se agregan puntos y guion automáticamente.
+                            </span>
                         </label>
 
                         <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
@@ -310,15 +332,19 @@ export default function CrearClienteForm({
                             className={clasesInput}
                         />
                     </label>
+                    </div>
 
-                    <div
-                        className="sticky bottom-0 z-10 -mx-5 -mb-5 flex flex-col gap-2 border-t border-slate-200 bg-white/95 px-5 pt-4 backdrop-blur sm:-mx-6 sm:-mb-6 sm:flex-row-reverse sm:px-6 dark:border-white/10 dark:bg-carbon-900/95"
-                        style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+                    <footer
+                        className="grid shrink-0 grid-cols-2 gap-2 border-t border-slate-200 bg-white px-5 pt-3 shadow-[0_-10px_30px_rgba(15,23,42,0.06)] sm:px-6 dark:border-white/10 dark:bg-carbon-900"
+                        style={{
+                            paddingBottom:
+                                "max(0.75rem, env(safe-area-inset-bottom))",
+                        }}
                     >
                         <button
                             type="submit"
                             disabled={guardando}
-                            className="flex-1 rounded-[10px] bg-blue-600 px-4 py-3 text-base font-bold text-white shadow-[0_4px_12px_rgba(37,99,235,0.3)] transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="order-2 min-h-[48px] rounded-xl bg-blue-600 px-4 text-sm font-extrabold text-white shadow-[0_4px_12px_rgba(37,99,235,0.24)] transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             {guardando
                                 ? "Guardando…"
@@ -330,11 +356,11 @@ export default function CrearClienteForm({
                             type="button"
                             onClick={onCancel}
                             disabled={guardando}
-                            className="flex-1 rounded-[10px] bg-slate-100 px-4 py-3 text-base font-bold text-slate-900 transition hover:bg-slate-200 disabled:opacity-50 dark:bg-carbon-800 dark:text-slate-200 dark:hover:bg-white/10"
+                            className="order-1 min-h-[48px] rounded-xl border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-200 dark:hover:bg-white/10"
                         >
                             Cancelar
                         </button>
-                    </div>
+                    </footer>
                 </form>
             </div>
         </div>
