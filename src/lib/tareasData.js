@@ -41,13 +41,30 @@ function revisarRespuesta(respuesta) {
     return respuesta.data;
 }
 
+function normalizarTarea(tarea) {
+    return {
+        ...tarea,
+        tecnicos: (tarea.tareas_tecnicos ?? [])
+            .map((asignacion) => asignacion.tecnico_nombre)
+            .filter(Boolean)
+            .sort((a, b) => a.localeCompare(b, "es")),
+    };
+}
+
 export async function cargarModuloTareas() {
     if (!supabase) {
-        return { tareas: [], tecnicos: [], clientes: [], equipos: [] };
+        return {
+            tareas: [],
+            eliminadas: [],
+            tecnicos: [],
+            clientes: [],
+            equipos: [],
+        };
     }
 
     const [
         tareasRespuesta,
+        eliminadasRespuesta,
         tecnicosRespuesta,
         clientesRespuesta,
         equiposRespuesta,
@@ -59,8 +76,19 @@ export async function cargarModuloTareas() {
                     .select(
                         "*, tareas_tecnicos(tecnico_nombre), autor:perfiles!tareas_creado_por_fkey(nombre_completo)",
                     )
+                    .is("eliminada_at", null)
                     .order("updated_at", { ascending: false })
                     .limit(2000),
+            ),
+            withRetry(() =>
+                supabase
+                    .from("tareas")
+                    .select(
+                        "*, tareas_tecnicos(tecnico_nombre), autor:perfiles!tareas_creado_por_fkey(nombre_completo), eliminador:perfiles!tareas_eliminada_por_fkey(nombre_completo)",
+                    )
+                    .not("eliminada_at", "is", null)
+                    .order("eliminada_at", { ascending: false })
+                    .limit(500),
             ),
             withRetry(() =>
                 supabase
@@ -80,16 +108,16 @@ export async function cargarModuloTareas() {
             withRetry(() => supabase.rpc("listar_equipos_para_tareas")),
         ]);
 
-    const tareas = (revisarRespuesta(tareasRespuesta) ?? []).map((tarea) => ({
-        ...tarea,
-        tecnicos: (tarea.tareas_tecnicos ?? [])
-            .map((asignacion) => asignacion.tecnico_nombre)
-            .filter(Boolean)
-            .sort((a, b) => a.localeCompare(b, "es")),
-    }));
+    const tareas = (revisarRespuesta(tareasRespuesta) ?? []).map(
+        normalizarTarea,
+    );
+    const eliminadas = (revisarRespuesta(eliminadasRespuesta) ?? []).map(
+        normalizarTarea,
+    );
 
     return {
         tareas,
+        eliminadas,
         tecnicos: revisarRespuesta(tecnicosRespuesta) ?? [],
         clientes: revisarRespuesta(clientesRespuesta) ?? [],
         equipos: revisarRespuesta(equiposRespuesta) ?? [],
@@ -136,6 +164,25 @@ export async function cambiarEstadoTarea(tareaId, estado, detalle = null) {
     return revisarRespuesta(respuesta);
 }
 
+export async function eliminarTarea(tareaId, motivo = null) {
+    const respuesta = await withRetry(() =>
+        supabase.rpc("eliminar_tarea", {
+            p_tarea_id: tareaId,
+            p_motivo: motivo || null,
+        }),
+    );
+    return revisarRespuesta(respuesta);
+}
+
+export async function restaurarTarea(tareaId) {
+    const respuesta = await withRetry(() =>
+        supabase.rpc("restaurar_tarea", {
+            p_tarea_id: tareaId,
+        }),
+    );
+    return revisarRespuesta(respuesta);
+}
+
 export async function cargarHistorialTarea(tareaId) {
     if (!tareaId || !supabase) return [];
     const respuesta = await withRetry(() =>
@@ -175,6 +222,19 @@ export async function vincularMiTecnicoTareas(nombre) {
     const respuesta = await withRetry(() =>
         supabase.rpc("vincular_mi_tecnico_tareas", {
             p_nombre: limpio,
+        }),
+    );
+    return revisarRespuesta(respuesta);
+}
+
+export async function cambiarEstadoTecnicoTareas(nombre, activo) {
+    const limpio = String(nombre ?? "").trim();
+    if (!limpio) throw new Error("Selecciona un técnico");
+
+    const respuesta = await withRetry(() =>
+        supabase.rpc("cambiar_estado_tecnico_tareas", {
+            p_nombre: limpio,
+            p_activo: Boolean(activo),
         }),
     );
     return revisarRespuesta(respuesta);

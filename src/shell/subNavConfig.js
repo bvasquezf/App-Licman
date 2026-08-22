@@ -183,6 +183,11 @@ export const SUB_NAV_POR_SECCION = {
             label: "Finalizadas",
             icon: "✅",
         },
+        {
+            to: "/tareas/eliminadas",
+            label: "Papelera",
+            icon: "🗑️",
+        },
     ],
 };
 

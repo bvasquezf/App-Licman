@@ -12,19 +12,24 @@ import TareaEstadoDialog from "../../components/tareas/TareaEstadoDialog";
 import AgendaHoy from "../../components/tareas/AgendaHoy";
 import PorProgramar from "../../components/tareas/PorProgramar";
 import MisTareas from "../../components/tareas/MisTareas";
+import GestionTecnicos from "../../components/tareas/GestionTecnicos";
+import TareasEliminadas from "../../components/tareas/TareasEliminadas";
 import { useToast } from "../../context/ToastContext";
 import { useAuth } from "../../context/AuthContext";
 import { useAsync } from "../../hooks/useAsync";
 import { useUrlFilters } from "../../hooks/useUrlFilters";
 import {
     PRIORIDADES_TAREA,
+    cambiarEstadoTecnicoTareas,
     cambiarEstadoTarea,
     cargarModuloTareas,
     compararTareas,
     crearTecnicoTareas,
     estaTareaActiva,
+    eliminarTarea,
     fechaLocalISO,
     guardarTarea,
+    restaurarTarea,
     vincularMiTecnicoTareas,
 } from "../../lib/tareasData";
 
@@ -64,6 +69,11 @@ const VISTAS = {
         subtitulo:
             "Consulta trabajos cerrados, cancelados o reabre una tarea si vuelve a ser necesaria.",
     },
+    eliminadas: {
+        titulo: "Papelera de tareas",
+        subtitulo:
+            "Recupera solicitudes eliminadas sin perder su planificación ni historial.",
+    },
 };
 
 export default function TareasView({ vista = "agenda" }) {
@@ -87,7 +97,13 @@ export default function TareasView({ vista = "agenda" }) {
 
     const cargar = useCallback(() => cargarModuloTareas(), []);
     const {
-        data = { tareas: [], tecnicos: [], clientes: [], equipos: [] },
+        data = {
+            tareas: [],
+            eliminadas: [],
+            tecnicos: [],
+            clientes: [],
+            equipos: [],
+        },
         loading,
         error,
         refetch,
@@ -120,13 +136,17 @@ export default function TareasView({ vista = "agenda" }) {
 
     const tareasFiltradas = useMemo(() => {
         const texto = busqueda.trim().toLocaleLowerCase("es");
-        const visibles = data.tareas.filter((tarea) => {
+        const fuente =
+            vista === "eliminadas" ? data.eliminadas : data.tareas;
+        const visibles = fuente.filter((tarea) => {
             const perteneceArchivo = ["Finalizada", "Cancelada"].includes(
                 tarea.estado,
             );
-            if (vista === "finalizadas" && !perteneceArchivo) return false;
-            if (vista !== "finalizadas" && tarea.estado === "Cancelada") {
-                return false;
+            if (vista !== "eliminadas") {
+                if (vista === "finalizadas" && !perteneceArchivo) return false;
+                if (vista !== "finalizadas" && tarea.estado === "Cancelada") {
+                    return false;
+                }
             }
             if (
                 filtroPrioridad !== "todas" &&
@@ -163,6 +183,11 @@ export default function TareasView({ vista = "agenda" }) {
         });
 
         return visibles.sort((a, b) => {
+            if (vista === "eliminadas") {
+                return String(b.eliminada_at).localeCompare(
+                    String(a.eliminada_at),
+                );
+            }
             if (vista === "finalizadas") {
                 return String(b.fecha_finalizada ?? b.updated_at).localeCompare(
                     String(a.fecha_finalizada ?? a.updated_at),
@@ -172,6 +197,7 @@ export default function TareasView({ vista = "agenda" }) {
         });
     }, [
         busqueda,
+        data.eliminadas,
         data.tareas,
         filtroPrioridad,
         filtroTecnico,
@@ -253,7 +279,7 @@ export default function TareasView({ vista = "agenda" }) {
                 ...prev.filter((tecnico) => tecnico.nombre !== creado.nombre),
                 creado,
             ]);
-            toast.success("Técnico agregado y seleccionado");
+            toast.success("Técnico agregado");
             return creado.nombre;
         } catch (err) {
             toast.error(err?.message ?? "No se pudo agregar el técnico");
@@ -270,6 +296,67 @@ export default function TareasView({ vista = "agenda" }) {
         } catch (err) {
             toast.error(err?.message ?? "No se pudo vincular tu cuenta");
             return false;
+        }
+    };
+
+    const handleCambiarActivoTecnico = async (nombre, activo) => {
+        try {
+            const actualizado = await cambiarEstadoTecnicoTareas(
+                nombre,
+                activo,
+            );
+            setTecnicosNuevos((prev) => [
+                ...prev.filter(
+                    (tecnico) => tecnico.nombre !== actualizado.nombre,
+                ),
+                actualizado,
+            ]);
+            toast.success(
+                activo
+                    ? "Técnico reactivado"
+                    : "Técnico eliminado del equipo activo",
+            );
+            await refetch();
+            return true;
+        } catch (err) {
+            toast.error(err?.message ?? "No se pudo actualizar el técnico");
+            return false;
+        }
+    };
+
+    const handleEliminarTarea = async (tarea) => {
+        if (
+            !window.confirm(
+                `¿Mover la tarea #${String(tarea.id).padStart(4, "0")} a la papelera? Podrás restaurarla después.`,
+            )
+        ) {
+            return false;
+        }
+
+        setCambiandoId(tarea.id);
+        try {
+            await eliminarTarea(tarea.id);
+            toast.success("Tarea movida a la papelera");
+            await refetch();
+            return true;
+        } catch (err) {
+            toast.error(err?.message ?? "No se pudo eliminar la tarea");
+            return false;
+        } finally {
+            setCambiandoId(null);
+        }
+    };
+
+    const handleRestaurarTarea = async (tarea) => {
+        setCambiandoId(tarea.id);
+        try {
+            await restaurarTarea(tarea.id);
+            toast.success("Tarea restaurada");
+            await refetch();
+        } catch (err) {
+            toast.error(err?.message ?? "No se pudo restaurar la tarea");
+        } finally {
+            setCambiandoId(null);
         }
     };
 
@@ -448,14 +535,22 @@ export default function TareasView({ vista = "agenda" }) {
                     onNuevaFecha={abrirNueva}
                 />
             ) : vista === "tecnicos" ? (
-                <CargaTecnicos
-                    tareas={tareasFiltradas}
-                    tecnicos={tecnicos}
-                    tecnicoFiltro={filtroTecnico}
-                    onEditar={abrirEditar}
-                    onCambiarEstado={handleCambiarEstado}
-                    onNueva={() => abrirNueva()}
-                />
+                <>
+                    <GestionTecnicos
+                        tareas={data.tareas}
+                        tecnicos={tecnicos}
+                        onCrear={handleCrearTecnico}
+                        onCambiarActivo={handleCambiarActivoTecnico}
+                    />
+                    <CargaTecnicos
+                        tareas={tareasFiltradas}
+                        tecnicos={tecnicos}
+                        tecnicoFiltro={filtroTecnico}
+                        onEditar={abrirEditar}
+                        onCambiarEstado={handleCambiarEstado}
+                        onNueva={() => abrirNueva()}
+                    />
+                </>
             ) : vista === "mis_tareas" ? (
                 <MisTareas
                     tareas={tareasFiltradas}
@@ -464,6 +559,11 @@ export default function TareasView({ vista = "agenda" }) {
                     onEditar={abrirEditar}
                     onCambiarEstado={handleCambiarEstado}
                     onVincular={handleVincularTecnico}
+                />
+            ) : vista === "eliminadas" ? (
+                <TareasEliminadas
+                    tareas={tareasFiltradas}
+                    onRestaurar={handleRestaurarTarea}
                 />
             ) : vista === "finalizadas" ? (
                 tareasFiltradas.length > 0 ? (
@@ -509,6 +609,7 @@ export default function TareasView({ vista = "agenda" }) {
                 onClose={cerrarModal}
                 onGuardar={handleGuardar}
                 onCrearTecnico={handleCrearTecnico}
+                onEliminar={handleEliminarTarea}
             />
 
             <TareaEstadoDialog

@@ -62,6 +62,7 @@ export default function TareaFormDialog({
     onClose,
     onGuardar,
     onCrearTecnico,
+    onEliminar,
 }) {
     const transicion = useModalTransition(open);
     const dialogRef = useRef(null);
@@ -346,6 +347,17 @@ export default function TareaFormDialog({
                 inicialRef.current = payload;
                 intentarCerrar(true);
             }
+        } finally {
+            setGuardando(false);
+        }
+    };
+
+    const eliminarActual = async () => {
+        if (!form.id || guardando) return;
+        setGuardando(true);
+        try {
+            const eliminada = await onEliminar(form);
+            if (eliminada) intentarCerrar(true);
         } finally {
             setGuardando(false);
         }
@@ -947,6 +959,28 @@ export default function TareaFormDialog({
                                     </section>
                                 )}
                             </>
+                        )}
+
+                        {modoEdicion && (
+                            <section className="border-t border-slate-200 pt-5 dark:border-white/10">
+                                <div className="rounded-2xl border border-rose-200 bg-rose-50/60 p-4 dark:border-rose-500/25 dark:bg-rose-500/5">
+                                    <h3 className="text-sm font-extrabold text-rose-900 dark:text-rose-200">
+                                        Eliminar tarea
+                                    </h3>
+                                    <p className="mt-1 text-sm leading-relaxed text-rose-700 dark:text-rose-300">
+                                        Se moverá a la papelera y podrás restaurarla
+                                        después con todo su historial.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={eliminarActual}
+                                        disabled={guardando}
+                                        className="mt-3 min-h-[44px] rounded-xl border border-rose-300 bg-white px-4 text-sm font-bold text-rose-700 hover:bg-rose-100 disabled:opacity-50 dark:border-rose-500/30 dark:bg-carbon-900 dark:text-rose-300"
+                                    >
+                                        🗑️ Mover a la papelera
+                                    </button>
+                                </div>
+                            </section>
                         )}
 
                         {modoEdicion && <TareaHistorial tareaId={form.id} />}

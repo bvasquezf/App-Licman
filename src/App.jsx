@@ -152,6 +152,10 @@ function App() {
                             path="/tareas/finalizadas"
                             element={<TareasView vista="finalizadas" />}
                         />
+                        <Route
+                            path="/tareas/eliminadas"
+                            element={<TareasView vista="eliminadas" />}
+                        />
                     </Route>
 
                     <Route path="*" element={<Navigate to="/bodega" replace />} />
