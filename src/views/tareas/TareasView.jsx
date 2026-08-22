@@ -8,7 +8,12 @@ import TareasCalendario from "../../components/tareas/TareasCalendario";
 import CargaTecnicos from "../../components/tareas/CargaTecnicos";
 import TareaCard from "../../components/tareas/TareaCard";
 import TareaFormDialog from "../../components/tareas/TareaFormDialog";
+import TareaEstadoDialog from "../../components/tareas/TareaEstadoDialog";
+import AgendaHoy from "../../components/tareas/AgendaHoy";
+import PorProgramar from "../../components/tareas/PorProgramar";
+import MisTareas from "../../components/tareas/MisTareas";
 import { useToast } from "../../context/ToastContext";
+import { useAuth } from "../../context/AuthContext";
 import { useAsync } from "../../hooks/useAsync";
 import { useUrlFilters } from "../../hooks/useUrlFilters";
 import {
@@ -17,11 +22,23 @@ import {
     cargarModuloTareas,
     compararTareas,
     crearTecnicoTareas,
+    estaTareaActiva,
     fechaLocalISO,
     guardarTarea,
+    vincularMiTecnicoTareas,
 } from "../../lib/tareasData";
 
 const VISTAS = {
+    agenda: {
+        titulo: "Agenda de hoy",
+        subtitulo:
+            "Coordina la jornada, resuelve atrasos y registra las visitas que van apareciendo.",
+    },
+    por_programar: {
+        titulo: "Por programar",
+        subtitulo:
+            "Ordena solicitudes nuevas y completa las que todavía no tienen fecha o técnico.",
+    },
     tablero: {
         titulo: "Planificación de tareas",
         subtitulo:
@@ -37,6 +54,11 @@ const VISTAS = {
         subtitulo:
             "Mira rápidamente en qué está cada técnico y quién tiene disponibilidad.",
     },
+    mis_tareas: {
+        titulo: "Mis tareas",
+        subtitulo:
+            "Vista personal para ejecutar los trabajos asignados desde el teléfono.",
+    },
     finalizadas: {
         titulo: "Tareas finalizadas",
         subtitulo:
@@ -44,8 +66,9 @@ const VISTAS = {
     },
 };
 
-export default function TareasView({ vista = "tablero" }) {
+export default function TareasView({ vista = "agenda" }) {
     const toast = useToast();
+    const { profile } = useAuth();
     const [filtrosUrl, setFiltroUrl, limpiarFiltrosUrl] = useUrlFilters({
         q: "",
         prioridad: "todas",
@@ -59,11 +82,12 @@ export default function TareasView({ vista = "tablero" }) {
     const [modalAbierto, setModalAbierto] = useState(false);
     const [tareaEditar, setTareaEditar] = useState(null);
     const [cambiandoId, setCambiandoId] = useState(null);
+    const [cambioPendiente, setCambioPendiente] = useState(null);
     const [tecnicosNuevos, setTecnicosNuevos] = useState([]);
 
     const cargar = useCallback(() => cargarModuloTareas(), []);
     const {
-        data = { tareas: [], tecnicos: [], clientes: [] },
+        data = { tareas: [], tecnicos: [], clientes: [], equipos: [] },
         loading,
         error,
         refetch,
@@ -83,12 +107,11 @@ export default function TareasView({ vista = "tablero" }) {
     }, [data.tecnicos, tecnicosNuevos]);
 
     const hoy = fechaLocalISO();
-    const activas = data.tareas.filter((tarea) =>
-        ["Pendiente", "En proceso"].includes(tarea.estado),
-    );
+    const activas = data.tareas.filter(estaTareaActiva);
     const estadisticas = {
-        pendientes: activas.filter((tarea) => tarea.estado === "Pendiente")
-            .length,
+        porProgramar: activas.filter(
+            (tarea) => tarea.estado === "Por programar",
+        ).length,
         enProceso: activas.filter((tarea) => tarea.estado === "En proceso")
             .length,
         hoy: activas.filter((tarea) => tarea.fecha_programada === hoy).length,
@@ -156,8 +179,14 @@ export default function TareasView({ vista = "tablero" }) {
         vista,
     ]);
 
-    const abrirNueva = (fecha = null) => {
-        setTareaEditar(fecha ? { fecha_programada: fecha } : null);
+    const abrirNueva = (datos = null) => {
+        setTareaEditar(
+            typeof datos === "string"
+                ? { fecha_programada: datos }
+                : datos
+                  ? { ...datos }
+                  : null,
+        );
         setModalAbierto(true);
     };
 
@@ -183,22 +212,38 @@ export default function TareasView({ vista = "tablero" }) {
         }
     };
 
-    const handleCambiarEstado = async (tarea, estado) => {
+    const ejecutarCambioEstado = async (tarea, estado, detalle = null) => {
         if (cambiandoId) return;
         setCambiandoId(tarea.id);
         try {
-            await cambiarEstadoTarea(tarea.id, estado);
+            await cambiarEstadoTarea(tarea.id, estado, detalle);
+            const mensajes = {
+                Finalizada: "Tarea finalizada con su resultado",
+                "En espera": "Tarea en espera con motivo registrado",
+                "En proceso": "Tarea iniciada",
+                Programada: "Tarea reabierta y programada",
+                "Por programar": "Tarea reabierta por programar",
+            };
             toast.success(
-                estado === "Finalizada"
-                    ? "Tarea finalizada"
-                    : `Tarea marcada como ${estado.toLowerCase()}`,
+                mensajes[estado] ??
+                    `Tarea marcada como ${estado.toLowerCase()}`,
             );
             await refetch();
+            return true;
         } catch (err) {
             toast.error(err?.message ?? "No se pudo cambiar el estado");
+            return false;
         } finally {
             setCambiandoId(null);
         }
+    };
+
+    const handleCambiarEstado = (tarea, estado) => {
+        if (["En espera", "Finalizada"].includes(estado)) {
+            setCambioPendiente({ tarea, estado });
+            return;
+        }
+        void ejecutarCambioEstado(tarea, estado);
     };
 
     const handleCrearTecnico = async (nombre) => {
@@ -213,6 +258,18 @@ export default function TareasView({ vista = "tablero" }) {
         } catch (err) {
             toast.error(err?.message ?? "No se pudo agregar el técnico");
             return null;
+        }
+    };
+
+    const handleVincularTecnico = async (nombre) => {
+        try {
+            await vincularMiTecnicoTareas(nombre);
+            toast.success("Tu cuenta quedó vinculada al técnico seleccionado");
+            await refetch();
+            return true;
+        } catch (err) {
+            toast.error(err?.message ?? "No se pudo vincular tu cuenta");
+            return false;
         }
     };
 
@@ -235,17 +292,17 @@ export default function TareasView({ vista = "tablero" }) {
                         onClick={() => abrirNueva()}
                         className="min-h-[44px] rounded-xl bg-blue-600 px-4 text-sm font-extrabold text-white shadow-[0_4px_14px_rgba(37,99,235,0.25)] transition hover:bg-blue-700"
                     >
-                        + Nueva tarea
+                        + Nueva solicitud
                     </button>
                 }
             />
 
             <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <StatCard
-                    label="Pendientes"
-                    value={estadisticas.pendientes}
-                    hint="por comenzar o programadas"
-                    icon="🕓"
+                    label="Por programar"
+                    value={estadisticas.porProgramar}
+                    hint="sin fecha o técnico definido"
+                    icon="📥"
                     tone="amber"
                 />
                 <StatCard
@@ -256,7 +313,7 @@ export default function TareasView({ vista = "tablero" }) {
                     tone="brand"
                 />
                 <StatCard
-                    label="Programadas hoy"
+                    label="Trabajos hoy"
                     value={estadisticas.hoy}
                     hint="taller y visitas a terreno"
                     icon="📅"
@@ -369,6 +426,20 @@ export default function TareasView({ vista = "tablero" }) {
                         </button>
                     }
                 />
+            ) : vista === "agenda" ? (
+                <AgendaHoy
+                    tareas={tareasFiltradas}
+                    onEditar={abrirEditar}
+                    onCambiarEstado={handleCambiarEstado}
+                    onNueva={abrirNueva}
+                />
+            ) : vista === "por_programar" ? (
+                <PorProgramar
+                    tareas={tareasFiltradas}
+                    onEditar={abrirEditar}
+                    onCambiarEstado={handleCambiarEstado}
+                    onNueva={() => abrirNueva()}
+                />
             ) : vista === "calendario" ? (
                 <TareasCalendario
                     tareas={tareasFiltradas}
@@ -384,6 +455,15 @@ export default function TareasView({ vista = "tablero" }) {
                     onEditar={abrirEditar}
                     onCambiarEstado={handleCambiarEstado}
                     onNueva={() => abrirNueva()}
+                />
+            ) : vista === "mis_tareas" ? (
+                <MisTareas
+                    tareas={tareasFiltradas}
+                    tecnicos={tecnicos}
+                    perfil={profile}
+                    onEditar={abrirEditar}
+                    onCambiarEstado={handleCambiarEstado}
+                    onVincular={handleVincularTecnico}
                 />
             ) : vista === "finalizadas" ? (
                 tareasFiltradas.length > 0 ? (
@@ -425,9 +505,24 @@ export default function TareasView({ vista = "tablero" }) {
                 tareas={data.tareas}
                 tecnicos={tecnicos}
                 clientes={data.clientes}
+                equipos={data.equipos}
                 onClose={cerrarModal}
                 onGuardar={handleGuardar}
                 onCrearTecnico={handleCrearTecnico}
+            />
+
+            <TareaEstadoDialog
+                open={Boolean(cambioPendiente)}
+                tarea={cambioPendiente?.tarea ?? null}
+                estado={cambioPendiente?.estado ?? null}
+                onClose={() => setCambioPendiente(null)}
+                onConfirmar={(detalle) =>
+                    ejecutarCambioEstado(
+                        cambioPendiente.tarea,
+                        cambioPendiente.estado,
+                        detalle,
+                    )
+                }
             />
         </div>
     );

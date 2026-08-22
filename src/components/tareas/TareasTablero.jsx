@@ -3,11 +3,18 @@ import TareaCard from "./TareaCard";
 
 const COLUMNAS = [
     {
-        estado: "Pendiente",
-        titulo: "Pendientes",
-        descripcion: "Asignadas o programadas para más adelante",
-        icono: "🕓",
+        estado: "Por programar",
+        titulo: "Por programar",
+        descripcion: "Solicitudes que necesitan fecha o responsable",
+        icono: "📥",
         borde: "border-amber-300 dark:border-amber-500/30",
+    },
+    {
+        estado: "Programada",
+        titulo: "Programadas",
+        descripcion: "Con fecha y técnico definidos",
+        icono: "📅",
+        borde: "border-violet-300 dark:border-violet-500/30",
     },
     {
         estado: "En proceso",
@@ -17,11 +24,11 @@ const COLUMNAS = [
         borde: "border-blue-300 dark:border-blue-500/30",
     },
     {
-        estado: "Finalizada",
-        titulo: "Finalizadas recientes",
-        descripcion: "Últimos trabajos terminados",
-        icono: "✅",
-        borde: "border-emerald-300 dark:border-emerald-500/30",
+        estado: "En espera",
+        titulo: "En espera",
+        descripcion: "Detenidas con un motivo registrado",
+        icono: "⏸️",
+        borde: "border-orange-300 dark:border-orange-500/30",
     },
 ];
 
@@ -32,11 +39,10 @@ export default function TareasTablero({
     onNueva,
 }) {
     return (
-        <div className="grid items-start gap-4 lg:grid-cols-3">
+        <div className="grid items-start gap-4 lg:grid-cols-2 xl:grid-cols-4">
             {COLUMNAS.map((columna) => {
                 const tareasColumna = tareas
-                    .filter((tarea) => tarea.estado === columna.estado)
-                    .slice(0, columna.estado === "Finalizada" ? 8 : undefined);
+                    .filter((tarea) => tarea.estado === columna.estado);
                 return (
                     <section
                         key={columna.estado}
@@ -70,12 +76,12 @@ export default function TareasTablero({
                                     icon={columna.icono}
                                     title={`Sin tareas ${columna.titulo.toLowerCase()}`}
                                     description={
-                                        columna.estado === "Pendiente"
+                                        columna.estado === "Por programar"
                                             ? "Las nuevas solicitudes aparecerán aquí."
                                             : "No hay trabajos en este estado con los filtros actuales."
                                     }
                                     action={
-                                        columna.estado === "Pendiente" ? (
+                                        columna.estado === "Por programar" ? (
                                             <button
                                                 type="button"
                                                 onClick={onNueva}

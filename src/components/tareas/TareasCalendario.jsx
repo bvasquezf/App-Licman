@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import EmptyState from "../ui/EmptyState";
 import TareaCard from "./TareaCard";
-import { fechaLocalISO } from "../../lib/tareasData";
+import { compararTareas, fechaLocalISO } from "../../lib/tareasData";
 
 const DIAS_SEMANA = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
@@ -41,6 +41,9 @@ function colorTarea(tarea) {
     if (tarea.estado === "En proceso") {
         return "border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-200";
     }
+    if (tarea.estado === "En espera") {
+        return "border-orange-200 bg-orange-50 text-orange-800 dark:border-orange-500/20 dark:bg-orange-500/10 dark:text-orange-200";
+    }
     if (tarea.prioridad === "Urgente") {
         return "border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-200";
     }
@@ -66,6 +69,7 @@ export default function TareasCalendario({
             grupo.push(tarea);
             grupos.set(tarea.fecha_programada, grupo);
         }
+        for (const grupo of grupos.values()) grupo.sort(compararTareas);
         return grupos;
     }, [tareas]);
 

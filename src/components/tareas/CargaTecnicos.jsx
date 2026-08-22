@@ -3,6 +3,7 @@ import EmptyState from "../ui/EmptyState";
 import TareaCard from "./TareaCard";
 import {
     compararTareas,
+    estaTareaActiva,
     fechaLocalISO,
 } from "../../lib/tareasData";
 
@@ -35,9 +36,7 @@ export default function CargaTecnicos({
             .sort((a, b) => a.localeCompare(b, "es"));
     }, [tareas, tecnicos, tecnicoFiltro]);
 
-    const activas = tareas.filter((tarea) =>
-        ["Pendiente", "En proceso"].includes(tarea.estado),
-    );
+    const activas = tareas.filter(estaTareaActiva);
     const sinAsignar = activas
         .filter((tarea) => !tarea.tecnicos?.length)
         .sort(compararTareas);
@@ -70,6 +69,8 @@ export default function CargaTecnicos({
                         if (a.estado !== b.estado) {
                             if (a.estado === "En proceso") return -1;
                             if (b.estado === "En proceso") return 1;
+                            if (a.estado === "En espera") return -1;
+                            if (b.estado === "En espera") return 1;
                         }
                         return compararTareas(a, b);
                     });
@@ -79,12 +80,20 @@ export default function CargaTecnicos({
                 const programadasHoy = asignadas.filter(
                     (tarea) => tarea.fecha_programada === hoy,
                 ).length;
+                const enEspera = asignadas.filter(
+                    (tarea) => tarea.estado === "En espera",
+                ).length;
                 const estado =
                     enProceso > 0
                         ? {
                               texto: "Trabajando ahora",
                               clase: "bg-blue-100 text-blue-800 dark:bg-blue-500/15 dark:text-blue-300",
                           }
+                        : enEspera > 0
+                          ? {
+                                texto: `${enEspera} en espera`,
+                                clase: "bg-orange-100 text-orange-800 dark:bg-orange-500/15 dark:text-orange-300",
+                            }
                         : programadasHoy > 0
                           ? {
                                 texto: `${programadasHoy} programada${programadasHoy === 1 ? "" : "s"} hoy`,

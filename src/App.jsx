@@ -126,6 +126,14 @@ function App() {
                     >
                         <Route
                             path="/tareas"
+                            element={<TareasView vista="agenda" />}
+                        />
+                        <Route
+                            path="/tareas/por-programar"
+                            element={<TareasView vista="por_programar" />}
+                        />
+                        <Route
+                            path="/tareas/tablero"
                             element={<TareasView vista="tablero" />}
                         />
                         <Route
@@ -135,6 +143,10 @@ function App() {
                         <Route
                             path="/tareas/tecnicos"
                             element={<TareasView vista="tecnicos" />}
+                        />
+                        <Route
+                            path="/tareas/mis-tareas"
+                            element={<TareasView vista="mis_tareas" />}
                         />
                         <Route
                             path="/tareas/finalizadas"

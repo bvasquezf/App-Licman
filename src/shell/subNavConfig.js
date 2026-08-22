@@ -149,9 +149,19 @@ export const SUB_NAV_POR_SECCION = {
     tareas: [
         {
             to: "/tareas",
-            label: "Tablero",
-            icon: "📋",
+            label: "Hoy",
+            icon: "☀️",
             end: true,
+        },
+        {
+            to: "/tareas/mis-tareas",
+            label: "Mis tareas",
+            icon: "🪪",
+        },
+        {
+            to: "/tareas/por-programar",
+            label: "Por programar",
+            icon: "📥",
         },
         {
             to: "/tareas/calendario",
@@ -162,6 +172,11 @@ export const SUB_NAV_POR_SECCION = {
             to: "/tareas/tecnicos",
             label: "Por técnico",
             icon: "👷",
+        },
+        {
+            to: "/tareas/tablero",
+            label: "Tablero",
+            icon: "📋",
         },
         {
             to: "/tareas/finalizadas",

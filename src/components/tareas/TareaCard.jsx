@@ -4,10 +4,14 @@ import {
 } from "../../lib/tareasData";
 
 const ESTADO_CLASES = {
-    Pendiente:
+    "Por programar":
         "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300",
+    Programada:
+        "bg-violet-100 text-violet-800 dark:bg-violet-500/15 dark:text-violet-300",
     "En proceso":
         "bg-blue-100 text-blue-800 dark:bg-blue-500/15 dark:text-blue-300",
+    "En espera":
+        "bg-orange-100 text-orange-800 dark:bg-orange-500/15 dark:text-orange-300",
     Finalizada:
         "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300",
     Cancelada:
@@ -29,7 +33,12 @@ export default function TareaCard({
     onCambiarEstado,
     compacta = false,
 }) {
-    const activa = ["Pendiente", "En proceso"].includes(tarea.estado);
+    const activa = [
+        "Por programar",
+        "Programada",
+        "En proceso",
+        "En espera",
+    ].includes(tarea.estado);
     const vencida =
         activa &&
         tarea.fecha_programada &&
@@ -41,14 +50,31 @@ export default function TareaCard({
                   : ""
           }`
         : null;
+    const estadoReapertura =
+        tarea.fecha_programada && tarea.tecnicos?.length
+            ? "Programada"
+            : "Por programar";
     const accionEstado =
-        tarea.estado === "Pendiente"
-            ? { estado: "En proceso", label: "Iniciar", icon: "▶" }
-            : tarea.estado === "En proceso"
-              ? { estado: "Finalizada", label: "Finalizar", icon: "✓" }
-              : tarea.estado === "Finalizada"
-                ? { estado: "Pendiente", label: "Reabrir", icon: "↩" }
-                : { estado: "Pendiente", label: "Reactivar", icon: "↩" };
+        tarea.estado === "Por programar"
+            ? { editar: true, label: "Programar", icon: "📅" }
+            : tarea.estado === "Programada"
+              ? { estado: "En proceso", label: "Iniciar", icon: "▶" }
+              : tarea.estado === "En proceso"
+                ? { estado: "Finalizada", label: "Finalizar", icon: "✓" }
+                : tarea.estado === "En espera"
+                  ? { estado: "En proceso", label: "Reanudar", icon: "▶" }
+                  : tarea.estado === "Finalizada"
+                    ? {
+                          estado: estadoReapertura,
+                          label: "Reabrir",
+                          icon: "↩",
+                      }
+                    : {
+                          estado: estadoReapertura,
+                          label: "Reactivar",
+                          icon: "↩",
+                      };
+    const puedePausar = tarea.estado === "En proceso";
 
     return (
         <article
@@ -72,7 +98,7 @@ export default function TareaCard({
                             <span
                                 className={`rounded-full px-2 py-0.5 text-xs font-bold ${
                                     ESTADO_CLASES[tarea.estado] ??
-                                    ESTADO_CLASES.Pendiente
+                                    ESTADO_CLASES["Por programar"]
                                 }`}
                             >
                                 {tarea.estado}
@@ -123,6 +149,21 @@ export default function TareaCard({
                     {!compacta && tarea.ubicacion && (
                         <p className="truncate">📍 {tarea.ubicacion}</p>
                     )}
+                    {!compacta && tarea.equipo_referencia && (
+                        <p className="truncate">
+                            🚜 {tarea.equipo_referencia}
+                        </p>
+                    )}
+                    {tarea.estado === "En espera" && tarea.motivo_espera && (
+                        <p className="line-clamp-2 font-bold text-orange-700 dark:text-orange-300">
+                            ⏸ {tarea.motivo_espera}
+                        </p>
+                    )}
+                    {tarea.estado === "Finalizada" && tarea.resultado && !compacta && (
+                        <p className="line-clamp-2 font-semibold text-emerald-700 dark:text-emerald-300">
+                            ✓ {tarea.resultado}
+                        </p>
+                    )}
                     {!compacta && (
                         <p className="truncate text-slate-500 dark:text-neutral-400">
                             Registrada por: {tarea.autor?.nombre_completo ?? "Registro anterior al inicio de sesión"}
@@ -131,7 +172,11 @@ export default function TareaCard({
                 </div>
             </button>
 
-            <div className="grid grid-cols-2 gap-2 border-t border-slate-100 p-2.5 dark:border-white/5">
+            <div
+                className={`grid gap-2 border-t border-slate-100 p-2.5 dark:border-white/5 ${
+                    puedePausar ? "grid-cols-3" : "grid-cols-2"
+                }`}
+            >
                 <button
                     type="button"
                     onClick={() => onEditar(tarea)}
@@ -139,9 +184,22 @@ export default function TareaCard({
                 >
                     ✏️ Editar
                 </button>
+                {puedePausar && (
+                    <button
+                        type="button"
+                        onClick={() => onCambiarEstado(tarea, "En espera")}
+                        className="min-h-[44px] rounded-xl bg-amber-100 px-2 text-xs font-bold text-amber-800 transition hover:bg-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:hover:bg-amber-500/25"
+                    >
+                        ⏸ Espera
+                    </button>
+                )}
                 <button
                     type="button"
-                    onClick={() => onCambiarEstado(tarea, accionEstado.estado)}
+                    onClick={() =>
+                        accionEstado.editar
+                            ? onEditar(tarea)
+                            : onCambiarEstado(tarea, accionEstado.estado)
+                    }
                     className={`min-h-[44px] rounded-xl px-3 text-xs font-bold text-white transition ${
                         accionEstado.estado === "Finalizada"
                             ? "bg-emerald-600 hover:bg-emerald-700"
@@ -159,7 +217,7 @@ export function EstadoTareaBadge({ estado }) {
     return (
         <span
             className={`inline-flex rounded-full px-2 py-0.5 text-xs font-bold ${
-                ESTADO_CLASES[estado] ?? ESTADO_CLASES.Pendiente
+                ESTADO_CLASES[estado] ?? ESTADO_CLASES["Por programar"]
             }`}
         >
             {estado}
