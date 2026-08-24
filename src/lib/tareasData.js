@@ -42,12 +42,35 @@ function revisarRespuesta(respuesta) {
 }
 
 function normalizarTarea(tarea) {
+    const asignacionesTecnicos = (tarea.tareas_tecnicos ?? [])
+        .map((asignacion) => {
+            const activo = Boolean(
+                asignacion.tecnico?.activo &&
+                    asignacion.tecnico?.rol?.codigo === "tecnico",
+            );
+            return {
+                id: asignacion.tecnico_id ?? null,
+                nombre:
+                    asignacion.tecnico?.nombre_completo ??
+                    asignacion.tecnico_nombre,
+                activo,
+                cargo: asignacion.tecnico?.cargo ?? null,
+                esLegado: !asignacion.tecnico_id,
+            };
+        })
+        .filter((asignacion) => asignacion.nombre)
+        .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+
     return {
         ...tarea,
-        tecnicos: (tarea.tareas_tecnicos ?? [])
-            .map((asignacion) => asignacion.tecnico_nombre)
-            .filter(Boolean)
-            .sort((a, b) => a.localeCompare(b, "es")),
+        asignaciones_tecnicos: asignacionesTecnicos,
+        tecnico_ids: asignacionesTecnicos
+            .filter((asignacion) => asignacion.activo)
+            .map((asignacion) => asignacion.id)
+            .filter(Boolean),
+        tecnicos: asignacionesTecnicos.map(
+            (asignacion) => asignacion.nombre,
+        ),
     };
 }
 
@@ -74,7 +97,7 @@ export async function cargarModuloTareas() {
                 supabase
                     .from("tareas")
                     .select(
-                        "*, tareas_tecnicos(tecnico_nombre), autor:perfiles!tareas_creado_por_fkey(nombre_completo)",
+                        "*, tareas_tecnicos(tecnico_id, tecnico_nombre, tecnico:perfiles!tareas_tecnicos_tecnico_id_fkey(id, nombre_completo, cargo, activo, rol:roles_app!perfiles_rol_id_fkey(codigo))), autor:perfiles!tareas_creado_por_fkey(nombre_completo)",
                     )
                     .is("eliminada_at", null)
                     .order("updated_at", { ascending: false })
@@ -84,18 +107,13 @@ export async function cargarModuloTareas() {
                 supabase
                     .from("tareas")
                     .select(
-                        "*, tareas_tecnicos(tecnico_nombre), autor:perfiles!tareas_creado_por_fkey(nombre_completo), eliminador:perfiles!tareas_eliminada_por_fkey(nombre_completo)",
+                        "*, tareas_tecnicos(tecnico_id, tecnico_nombre, tecnico:perfiles!tareas_tecnicos_tecnico_id_fkey(id, nombre_completo, cargo, activo, rol:roles_app!perfiles_rol_id_fkey(codigo))), autor:perfiles!tareas_creado_por_fkey(nombre_completo), eliminador:perfiles!tareas_eliminada_por_fkey(nombre_completo)",
                     )
                     .not("eliminada_at", "is", null)
                     .order("eliminada_at", { ascending: false })
                     .limit(500),
             ),
-            withRetry(() =>
-                supabase
-                    .from("mantenimiento_catalogo_tecnicos")
-                    .select("nombre, especialidad, activo, perfil_id")
-                    .order("nombre", { ascending: true }),
-            ),
+            withRetry(() => supabase.rpc("listar_tecnicos_tareas")),
             withRetry(() =>
                 supabase
                     .from("clientes")
@@ -141,21 +159,21 @@ export async function guardarTarea(tarea) {
         p_contacto: tarea.contacto || null,
         p_equipo_referencia: tarea.equipo_referencia || null,
         p_observaciones: tarea.observaciones || null,
-        p_tecnicos: tarea.tecnicos ?? [],
+        p_tecnico_ids: tarea.tecnico_ids ?? [],
         p_equipo_id: tarea.equipo_id || null,
         p_motivo_espera: tarea.motivo_espera || null,
         p_resultado: tarea.resultado || null,
     };
 
     const respuesta = await withRetry(() =>
-        supabase.rpc("guardar_tarea", params),
+        supabase.rpc("guardar_tarea_usuarios", params),
     );
     return revisarRespuesta(respuesta);
 }
 
 export async function cambiarEstadoTarea(tareaId, estado, detalle = null) {
     const respuesta = await withRetry(() =>
-        supabase.rpc("cambiar_estado_tarea", {
+        supabase.rpc("cambiar_estado_tarea_usuarios", {
             p_tarea_id: tareaId,
             p_estado: estado,
             p_detalle: detalle || null,
@@ -196,48 +214,6 @@ export async function cargarHistorialTarea(tareaId) {
             .limit(80),
     );
     return revisarRespuesta(respuesta) ?? [];
-}
-
-export async function crearTecnicoTareas(nombre) {
-    const limpio = String(nombre ?? "").trim();
-    if (!limpio) throw new Error("Ingresa el nombre del técnico");
-
-    const respuesta = await withRetry(() =>
-        supabase
-            .from("mantenimiento_catalogo_tecnicos")
-            .upsert(
-                { nombre: limpio, activo: true },
-                { onConflict: "nombre" },
-            )
-            .select("nombre, especialidad, activo, perfil_id")
-            .single(),
-    );
-    return revisarRespuesta(respuesta);
-}
-
-export async function vincularMiTecnicoTareas(nombre) {
-    const limpio = String(nombre ?? "").trim();
-    if (!limpio) throw new Error("Selecciona tu nombre en el catálogo");
-
-    const respuesta = await withRetry(() =>
-        supabase.rpc("vincular_mi_tecnico_tareas", {
-            p_nombre: limpio,
-        }),
-    );
-    return revisarRespuesta(respuesta);
-}
-
-export async function cambiarEstadoTecnicoTareas(nombre, activo) {
-    const limpio = String(nombre ?? "").trim();
-    if (!limpio) throw new Error("Selecciona un técnico");
-
-    const respuesta = await withRetry(() =>
-        supabase.rpc("cambiar_estado_tecnico_tareas", {
-            p_nombre: limpio,
-            p_activo: Boolean(activo),
-        }),
-    );
-    return revisarRespuesta(respuesta);
 }
 
 export function fechaLocalISO(fecha = new Date()) {
@@ -281,30 +257,12 @@ export function compararTareas(a, b) {
 
 export function estadoSegunPlanificacion(tarea) {
     const tieneFecha = Boolean(tarea.fecha_programada);
-    const tieneTecnico = Boolean(tarea.tecnicos?.length);
+    const tieneTecnico = Boolean(tarea.tecnico_ids?.length);
     return tieneFecha && tieneTecnico ? "Programada" : "Por programar";
 }
 
 export function estaTareaActiva(tarea) {
     return ESTADOS_TAREA_ACTIVA.includes(tarea.estado);
-}
-
-export function tecnicosDeMiPerfil(tecnicos, perfil) {
-    if (!perfil?.id) return [];
-    const nombrePerfil = String(perfil.nombre_completo ?? "")
-        .trim()
-        .toLocaleLowerCase("es");
-
-    return tecnicos
-        .filter((tecnico) => {
-            if (tecnico.perfil_id) return tecnico.perfil_id === perfil.id;
-            return (
-                String(tecnico.nombre ?? "")
-                    .trim()
-                    .toLocaleLowerCase("es") === nombrePerfil
-            );
-        })
-        .map((tecnico) => tecnico.nombre);
 }
 
 export function tareasSeSolapan(a, b) {

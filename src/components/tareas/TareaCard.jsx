@@ -50,12 +50,15 @@ export default function TareaCard({
                   : ""
           }`
         : null;
-    const estadoReapertura =
-        tarea.fecha_programada && tarea.tecnicos?.length
-            ? "Programada"
-            : "Por programar";
+    const planificacionCompleta = Boolean(
+        tarea.fecha_programada && tarea.tecnico_ids?.length,
+    );
+    const estadoReapertura = planificacionCompleta
+        ? "Programada"
+        : "Por programar";
     const accionEstado =
-        tarea.estado === "Por programar"
+        tarea.estado === "Por programar" ||
+        (tarea.estado === "Programada" && !planificacionCompleta)
             ? { editar: true, label: "Programar", icon: "📅" }
             : tarea.estado === "Programada"
               ? { estado: "En proceso", label: "Iniciar", icon: "▶" }

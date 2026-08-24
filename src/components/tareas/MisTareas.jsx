@@ -1,11 +1,9 @@
-import { useState } from "react";
 import EmptyState from "../ui/EmptyState";
 import TareaCard from "./TareaCard";
 import {
     compararTareas,
     estaTareaActiva,
     fechaLocalISO,
-    tecnicosDeMiPerfil,
 } from "../../lib/tareasData";
 
 function Lista({ tareas, onEditar, onCambiarEstado }) {
@@ -25,83 +23,20 @@ function Lista({ tareas, onEditar, onCambiarEstado }) {
 
 export default function MisTareas({
     tareas,
-    tecnicos,
     perfil,
     onEditar,
     onCambiarEstado,
-    onVincular,
 }) {
     const hoy = fechaLocalISO();
-    const misNombres = tecnicosDeMiPerfil(tecnicos, perfil);
-    const [tecnicoSeleccionado, setTecnicoSeleccionado] = useState("");
-    const [vinculando, setVinculando] = useState(false);
 
-    if (misNombres.length === 0) {
-        const disponibles = tecnicos.filter(
-            (tecnico) => tecnico.activo && !tecnico.perfil_id,
-        );
+    if (perfil?.rol_codigo !== "tecnico") {
         return (
             <div className="mx-auto max-w-2xl">
                 <EmptyState
                     icon="🪪"
-                    title="Vincula tu cuenta con tu nombre de técnico"
-                    description={`Tu perfil figura como “${perfil?.nombre_completo ?? "Sin nombre"}”. Selecciona una identidad disponible para recibir aquí tus asignaciones.`}
-                    action={
-                        disponibles.length > 0 ? (
-                            <div className="grid w-full max-w-md gap-2 sm:grid-cols-[1fr_auto]">
-                                <select
-                                    value={tecnicoSeleccionado}
-                                    onChange={(event) =>
-                                        setTecnicoSeleccionado(
-                                            event.target.value,
-                                        )
-                                    }
-                                    className="min-h-[48px] rounded-xl border-[1.5px] border-slate-300 bg-white px-3 text-base font-semibold text-slate-800 outline-none focus:border-blue-600 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100"
-                                    aria-label="Seleccionar mi nombre de técnico"
-                                >
-                                    <option value="">
-                                        Selecciona tu nombre
-                                    </option>
-                                    {disponibles.map((tecnico) => (
-                                        <option
-                                            key={tecnico.nombre}
-                                            value={tecnico.nombre}
-                                        >
-                                            {tecnico.nombre}
-                                        </option>
-                                    ))}
-                                </select>
-                                <button
-                                    type="button"
-                                    disabled={
-                                        !tecnicoSeleccionado || vinculando
-                                    }
-                                    onClick={async () => {
-                                        setVinculando(true);
-                                        try {
-                                            await onVincular(
-                                                tecnicoSeleccionado,
-                                            );
-                                        } finally {
-                                            setVinculando(false);
-                                        }
-                                    }}
-                                    className="min-h-[48px] rounded-xl bg-blue-600 px-4 text-sm font-extrabold text-white hover:bg-blue-700 disabled:opacity-50"
-                                >
-                                    {vinculando
-                                        ? "Vinculando…"
-                                        : "Vincular cuenta"}
-                                </button>
-                            </div>
-                        ) : null
-                    }
+                    title="Esta es la vista personal de los técnicos"
+                    description={`Tu cuenta “${perfil?.nombre_completo ?? "Sin nombre"}” tiene el rol ${perfil?.rol_nombre ?? "actual"}. Las asignaciones personales aparecen automáticamente para las cuentas con rol Técnico.`}
                 />
-                {disponibles.length === 0 && (
-                    <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-center text-sm text-amber-800 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-300">
-                        No quedan técnicos disponibles. Un administrador debe
-                        revisar las vinculaciones existentes.
-                    </p>
-                )}
             </div>
         );
     }
@@ -109,7 +44,7 @@ export default function MisTareas({
     const asignadas = tareas
         .filter(
             (tarea) =>
-                tarea.tecnicos?.some((nombre) => misNombres.includes(nombre)) &&
+                tarea.tecnico_ids?.includes(perfil.id) &&
                 tarea.estado !== "Cancelada",
         )
         .sort(compararTareas);
@@ -139,8 +74,9 @@ export default function MisTareas({
                     Hola, {perfil?.nombre_completo?.split(" ")[0] ?? "técnico"}
                 </h2>
                 <p className="mt-2 text-sm text-blue-100">
-                    Asignación: {misNombres.join(", ")}. Desde aquí puedes iniciar,
-                    pausar y cerrar tus trabajos.
+                    Tus asignaciones están vinculadas directamente a esta
+                    cuenta. Desde aquí puedes iniciar, pausar y cerrar tus
+                    trabajos.
                 </p>
                 <div className="mt-5 grid grid-cols-3 gap-2">
                     {[

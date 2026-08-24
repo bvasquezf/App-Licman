@@ -61,7 +61,7 @@ export default function AgendaHoy({
         (tarea) =>
             tarea.estado === "Por programar" ||
             !tarea.fecha_programada ||
-            !tarea.tecnicos?.length,
+            !tarea.tecnico_ids?.length,
     ).length;
     const enProceso = delDia.filter(
         (tarea) => tarea.estado === "En proceso",

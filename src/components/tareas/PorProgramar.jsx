@@ -55,14 +55,14 @@ export default function PorProgramar({
                 estaTareaActiva(tarea) &&
                 (tarea.estado === "Por programar" ||
                     !tarea.fecha_programada ||
-                    !tarea.tecnicos?.length),
+                    !tarea.tecnico_ids?.length),
         )
         .sort(compararTareas);
     const nuevas = pendientes.filter(
-        (tarea) => !tarea.fecha_programada && !tarea.tecnicos?.length,
+        (tarea) => !tarea.fecha_programada && !tarea.tecnico_ids?.length,
     );
     const incompletas = pendientes.filter(
-        (tarea) => tarea.fecha_programada || tarea.tecnicos?.length,
+        (tarea) => tarea.fecha_programada || tarea.tecnico_ids?.length,
     );
 
     if (pendientes.length === 0) {

@@ -39,7 +39,7 @@ function valoresIniciales(tarea) {
         observaciones: tarea?.observaciones ?? "",
         motivo_espera: tarea?.motivo_espera ?? "",
         resultado: tarea?.resultado ?? "",
-        tecnicos: tarea?.tecnicos ?? [],
+        tecnico_ids: tarea?.tecnico_ids ?? [],
     };
 }
 
@@ -61,7 +61,6 @@ export default function TareaFormDialog({
     equipos,
     onClose,
     onGuardar,
-    onCrearTecnico,
     onEliminar,
 }) {
     const transicion = useModalTransition(open);
@@ -73,8 +72,6 @@ export default function TareaFormDialog({
     const [versionFormulario, setVersionFormulario] = useState(0);
     const [errores, setErrores] = useState({});
     const [guardando, setGuardando] = useState(false);
-    const [nuevoTecnico, setNuevoTecnico] = useState("");
-    const [creandoTecnico, setCreandoTecnico] = useState(false);
     const [tecnicosLocales, setTecnicosLocales] = useState([]);
     const [planificacionAbierta, setPlanificacionAbierta] = useState(false);
 
@@ -85,22 +82,29 @@ export default function TareaFormDialog({
             setForm(inicial);
             setErrores({});
             setGuardando(false);
-            setNuevoTecnico("");
+            const porId = new Map(
+                tecnicos
+                    .filter((tecnico) => tecnico.activo)
+                    .map((tecnico) => [tecnico.id, tecnico]),
+            );
+            for (const asignacion of tarea?.asignaciones_tecnicos ?? []) {
+                if (asignacion.id && !porId.has(asignacion.id)) {
+                    porId.set(asignacion.id, {
+                        ...asignacion,
+                        activo: false,
+                    });
+                }
+            }
             setTecnicosLocales(
-                [
-                    ...new Set([
-                        ...tecnicos
-                            .filter((tecnico) => tecnico.activo)
-                            .map((tecnico) => tecnico.nombre),
-                        ...inicial.tecnicos,
-                    ]),
-                ].sort((a, b) => a.localeCompare(b, "es")),
+                [...porId.values()].sort((a, b) =>
+                    a.nombre.localeCompare(b.nombre, "es"),
+                ),
             );
             setPlanificacionAbierta(
                 Boolean(
                     inicial.id ||
                         inicial.fecha_programada ||
-                        inicial.tecnicos.length,
+                        inicial.tecnico_ids.length,
                 ),
             );
             setVersionFormulario((version) => version + 1);
@@ -114,7 +118,7 @@ export default function TareaFormDialog({
     });
 
     const conflictos = useMemo(() => {
-        if (!form.fecha_programada || form.tecnicos.length === 0) return [];
+        if (!form.fecha_programada || form.tecnico_ids.length === 0) return [];
         return tareas
             .filter(
                 (otra) =>
@@ -122,8 +126,8 @@ export default function TareaFormDialog({
                     ["Programada", "En proceso", "En espera"].includes(
                         otra.estado,
                     ) &&
-                    otra.tecnicos?.some((nombre) =>
-                        form.tecnicos.includes(nombre),
+                    otra.tecnico_ids?.some((tecnicoId) =>
+                        form.tecnico_ids.includes(tecnicoId),
                     ) &&
                     tareasSeSolapan(form, otra),
             )
@@ -235,39 +239,13 @@ export default function TareaFormDialog({
         }));
     };
 
-    const alternarTecnico = (nombre) => {
+    const alternarTecnico = (tecnicoId) => {
         setForm((prev) => ({
             ...prev,
-            tecnicos: prev.tecnicos.includes(nombre)
-                ? prev.tecnicos.filter((actual) => actual !== nombre)
-                : [...prev.tecnicos, nombre],
+            tecnico_ids: prev.tecnico_ids.includes(tecnicoId)
+                ? prev.tecnico_ids.filter((actual) => actual !== tecnicoId)
+                : [...prev.tecnico_ids, tecnicoId],
         }));
-    };
-
-    const agregarTecnico = async () => {
-        const limpio = nuevoTecnico.trim();
-        if (!limpio || creandoTecnico) return;
-        setCreandoTecnico(true);
-        try {
-            const creado = await onCrearTecnico(limpio);
-            if (!creado) return;
-            setTecnicosLocales((prev) =>
-                prev.includes(creado)
-                    ? prev
-                    : [...prev, creado].sort((a, b) =>
-                          a.localeCompare(b, "es"),
-                      ),
-            );
-            setForm((prev) => ({
-                ...prev,
-                tecnicos: prev.tecnicos.includes(creado)
-                    ? prev.tecnicos
-                    : [...prev.tecnicos, creado],
-            }));
-            setNuevoTecnico("");
-        } finally {
-            setCreandoTecnico(false);
-        }
     };
 
     const enviar = async (event) => {
@@ -306,9 +284,21 @@ export default function TareaFormDialog({
         }
         if (
             ["Programada", "En proceso"].includes(estado) &&
-            form.tecnicos.length === 0
+            form.tecnico_ids.length === 0
         ) {
             nextErrores.tecnicos = "Asigna al menos un técnico";
+        }
+        if (
+            form.tecnico_ids.some(
+                (tecnicoId) =>
+                    !tecnicos.some(
+                        (tecnico) =>
+                            tecnico.id === tecnicoId && tecnico.activo,
+                    ),
+            )
+        ) {
+            nextErrores.tecnicos =
+                "Quita o reemplaza los técnicos que ya no están disponibles";
         }
         if (estado === "En espera" && !form.motivo_espera.trim()) {
             nextErrores.motivo_espera =
@@ -666,18 +656,22 @@ export default function TareaFormDialog({
                                             Técnicos asignados
                                         </h3>
                                         <span className="text-xs font-semibold text-slate-500 dark:text-neutral-400">
-                                            {form.tecnicos.length} seleccionado
-                                            {form.tecnicos.length === 1 ? "" : "s"}
+                                            {form.tecnico_ids.length} seleccionado
+                                            {form.tecnico_ids.length === 1
+                                                ? ""
+                                                : "s"}
                                         </span>
                                     </div>
                                     {tecnicosLocales.length > 0 ? (
                                         <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                                            {tecnicosLocales.map((nombre) => {
+                                            {tecnicosLocales.map((tecnico) => {
                                                 const seleccionado =
-                                                    form.tecnicos.includes(nombre);
+                                                    form.tecnico_ids.includes(
+                                                        tecnico.id,
+                                                    );
                                                 return (
                                                     <label
-                                                        key={nombre}
+                                                        key={tecnico.id}
                                                         className={`flex min-h-[44px] cursor-pointer items-center gap-3 rounded-xl border px-3 py-2 text-sm font-semibold transition ${
                                                             seleccionado
                                                                 ? "border-blue-500 bg-blue-50 text-blue-800 dark:border-blue-400/50 dark:bg-blue-500/10 dark:text-blue-200"
@@ -689,13 +683,21 @@ export default function TareaFormDialog({
                                                             checked={seleccionado}
                                                             onChange={() =>
                                                                 alternarTecnico(
-                                                                    nombre,
+                                                                    tecnico.id,
                                                                 )
                                                             }
                                                             className="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                                                         />
-                                                        <span className="truncate">
-                                                            {nombre}
+                                                        <span className="min-w-0">
+                                                            <span className="block truncate">
+                                                                {tecnico.nombre}
+                                                            </span>
+                                                            <span className="block truncate text-xs font-medium text-slate-500 dark:text-neutral-400">
+                                                                {tecnico.activo
+                                                                    ? tecnico.cargo ||
+                                                                      "Cuenta con rol Técnico"
+                                                                    : "Ya no disponible · debes reemplazarlo"}
+                                                            </span>
                                                         </span>
                                                     </label>
                                                 );
@@ -703,7 +705,29 @@ export default function TareaFormDialog({
                                         </div>
                                     ) : (
                                         <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
-                                            Todavía no hay técnicos en el catálogo.
+                                            No hay cuentas activas con rol Técnico.
+                                            Invita al usuario o asígnale ese rol
+                                            desde la sección Usuarios.
+                                        </p>
+                                    )}
+                                    {(tarea?.asignaciones_tecnicos ?? []).some(
+                                        (asignacion) => !asignacion.id,
+                                    ) && (
+                                        <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-300">
+                                            Esta tarea conserva una asignación
+                                            antigua sin cuenta asociada: {" "}
+                                            {(tarea.asignaciones_tecnicos ?? [])
+                                                .filter(
+                                                    (asignacion) =>
+                                                        !asignacion.id,
+                                                )
+                                                .map(
+                                                    (asignacion) =>
+                                                        asignacion.nombre,
+                                                )
+                                                .join(", ")}
+                                            . Selecciona un usuario registrado
+                                            para reemplazarla.
                                         </p>
                                     )}
                                     {errores.tecnicos && (
@@ -711,36 +735,6 @@ export default function TareaFormDialog({
                                             {errores.tecnicos}
                                         </p>
                                     )}
-                                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                                        <input
-                                            type="text"
-                                            value={nuevoTecnico}
-                                            onChange={(event) =>
-                                                setNuevoTecnico(event.target.value)
-                                            }
-                                            onKeyDown={(event) => {
-                                                if (event.key === "Enter") {
-                                                    event.preventDefault();
-                                                    agregarTecnico();
-                                                }
-                                            }}
-                                            placeholder="Nombre de un técnico nuevo"
-                                            className={`${INPUT_CLASES} mt-0 flex-1`}
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={agregarTecnico}
-                                            disabled={
-                                                !nuevoTecnico.trim() ||
-                                                creandoTecnico
-                                            }
-                                            className="min-h-[44px] rounded-xl border border-blue-200 bg-blue-50 px-4 text-sm font-bold text-blue-700 hover:bg-blue-100 disabled:opacity-50 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-300"
-                                        >
-                                            {creandoTecnico
-                                                ? "Agregando…"
-                                                : "+ Agregar técnico"}
-                                        </button>
-                                    </div>
 
                                     {conflictos.length > 0 && (
                                         <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3 dark:border-amber-500/30 dark:bg-amber-500/10">
@@ -754,11 +748,17 @@ export default function TareaFormDialog({
                                                 {conflictos.map((conflicto) => (
                                                     <li key={conflicto.id}>
                                                         • {conflicto.titulo} —{" "}
-                                                        {conflicto.tecnicos
-                                                            .filter((nombre) =>
-                                                                form.tecnicos.includes(
-                                                                    nombre,
-                                                                ),
+                                                        {(conflicto.asignaciones_tecnicos ?? [])
+                                                            .filter(
+                                                                (asignacion) =>
+                                                                    asignacion.id &&
+                                                                    form.tecnico_ids.includes(
+                                                                        asignacion.id,
+                                                                    ),
+                                                            )
+                                                            .map(
+                                                                (asignacion) =>
+                                                                    asignacion.nombre,
                                                             )
                                                             .join(", ")}
                                                     </li>

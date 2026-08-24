@@ -16,32 +16,25 @@ export default function CargaTecnicos({
     onNueva,
 }) {
     const hoy = fechaLocalISO();
-    const nombres = useMemo(() => {
-        const todos = new Set(
-            tecnicos
-                .filter((tecnico) => tecnico.activo)
-                .map((tecnico) => tecnico.nombre),
-        );
-        for (const tarea of tareas) {
-            for (const nombre of tarea.tecnicos ?? []) todos.add(nombre);
-        }
-        return [...todos]
+    const personas = useMemo(() => {
+        return tecnicos
+            .filter((tecnico) => tecnico.activo)
             .filter(
-                (nombre) =>
+                (tecnico) =>
                     !tecnicoFiltro ||
                     tecnicoFiltro === "todos" ||
                     (tecnicoFiltro !== "sin_asignar" &&
-                        nombre === tecnicoFiltro),
+                        tecnico.id === tecnicoFiltro),
             )
-            .sort((a, b) => a.localeCompare(b, "es"));
-    }, [tareas, tecnicos, tecnicoFiltro]);
+            .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+    }, [tecnicos, tecnicoFiltro]);
 
     const activas = tareas.filter(estaTareaActiva);
     const sinAsignar = activas
-        .filter((tarea) => !tarea.tecnicos?.length)
+        .filter((tarea) => !tarea.tecnico_ids?.length)
         .sort(compararTareas);
 
-    if (nombres.length === 0 && sinAsignar.length === 0) {
+    if (personas.length === 0 && sinAsignar.length === 0) {
         return (
             <EmptyState
                 icon="👷"
@@ -62,9 +55,11 @@ export default function CargaTecnicos({
 
     return (
         <div className="grid items-start gap-4 lg:grid-cols-2">
-            {nombres.map((nombre) => {
+            {personas.map((tecnico) => {
                 const asignadas = activas
-                    .filter((tarea) => tarea.tecnicos?.includes(nombre))
+                    .filter((tarea) =>
+                        tarea.tecnico_ids?.includes(tecnico.id),
+                    )
                     .sort((a, b) => {
                         if (a.estado !== b.estado) {
                             if (a.estado === "En proceso") return -1;
@@ -106,20 +101,26 @@ export default function CargaTecnicos({
 
                 return (
                     <section
-                        key={nombre}
+                        key={tecnico.id}
                         className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/60 dark:border-white/10 dark:bg-white/[0.025]"
                     >
                         <header className="border-b border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-carbon-900">
                             <div className="flex flex-wrap items-center justify-between gap-2">
                                 <div className="flex min-w-0 items-center gap-3">
                                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-900 text-lg font-black text-white dark:bg-white dark:text-carbon-900">
-                                        {nombre.trim().charAt(0).toUpperCase()}
+                                        {tecnico.nombre
+                                            .trim()
+                                            .charAt(0)
+                                            .toUpperCase()}
                                     </div>
                                     <div className="min-w-0">
                                         <h2 className="truncate text-base font-extrabold text-slate-900 dark:text-slate-100">
-                                            {nombre}
+                                            {tecnico.nombre}
                                         </h2>
                                         <p className="text-xs text-slate-500 dark:text-neutral-400">
+                                            {tecnico.cargo
+                                                ? `${tecnico.cargo} · `
+                                                : ""}
                                             {asignadas.length} tarea
                                             {asignadas.length === 1 ? "" : "s"} activa
                                             {asignadas.length === 1 ? "" : "s"}

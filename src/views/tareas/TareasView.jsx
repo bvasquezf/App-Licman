@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import PageHeader from "../../components/ui/PageHeader";
 import StatCard from "../../components/ui/StatCard";
 import EmptyState from "../../components/ui/EmptyState";
@@ -12,25 +13,22 @@ import TareaEstadoDialog from "../../components/tareas/TareaEstadoDialog";
 import AgendaHoy from "../../components/tareas/AgendaHoy";
 import PorProgramar from "../../components/tareas/PorProgramar";
 import MisTareas from "../../components/tareas/MisTareas";
-import GestionTecnicos from "../../components/tareas/GestionTecnicos";
 import TareasEliminadas from "../../components/tareas/TareasEliminadas";
 import { useToast } from "../../context/ToastContext";
 import { useAuth } from "../../context/AuthContext";
 import { useAsync } from "../../hooks/useAsync";
 import { useUrlFilters } from "../../hooks/useUrlFilters";
+import { PERMISOS } from "../../lib/authPermissions";
 import {
     PRIORIDADES_TAREA,
-    cambiarEstadoTecnicoTareas,
     cambiarEstadoTarea,
     cargarModuloTareas,
     compararTareas,
-    crearTecnicoTareas,
     estaTareaActiva,
     eliminarTarea,
     fechaLocalISO,
     guardarTarea,
     restaurarTarea,
-    vincularMiTecnicoTareas,
 } from "../../lib/tareasData";
 
 const VISTAS = {
@@ -78,7 +76,7 @@ const VISTAS = {
 
 export default function TareasView({ vista = "agenda" }) {
     const toast = useToast();
-    const { profile } = useAuth();
+    const { profile, puede } = useAuth();
     const [filtrosUrl, setFiltroUrl, limpiarFiltrosUrl] = useUrlFilters({
         q: "",
         prioridad: "todas",
@@ -93,7 +91,6 @@ export default function TareasView({ vista = "agenda" }) {
     const [tareaEditar, setTareaEditar] = useState(null);
     const [cambiandoId, setCambiandoId] = useState(null);
     const [cambioPendiente, setCambioPendiente] = useState(null);
-    const [tecnicosNuevos, setTecnicosNuevos] = useState([]);
 
     const cargar = useCallback(() => cargarModuloTareas(), []);
     const {
@@ -112,15 +109,7 @@ export default function TareasView({ vista = "agenda" }) {
         onError: (err) => toast.error(err.message),
     });
 
-    const tecnicos = useMemo(() => {
-        const porNombre = new Map();
-        for (const tecnico of [...data.tecnicos, ...tecnicosNuevos]) {
-            porNombre.set(tecnico.nombre, tecnico);
-        }
-        return [...porNombre.values()].sort((a, b) =>
-            a.nombre.localeCompare(b.nombre, "es"),
-        );
-    }, [data.tecnicos, tecnicosNuevos]);
+    const tecnicos = data.tecnicos;
 
     const hoy = fechaLocalISO();
     const activas = data.tareas.filter(estaTareaActiva);
@@ -131,7 +120,8 @@ export default function TareasView({ vista = "agenda" }) {
         enProceso: activas.filter((tarea) => tarea.estado === "En proceso")
             .length,
         hoy: activas.filter((tarea) => tarea.fecha_programada === hoy).length,
-        sinAsignar: activas.filter((tarea) => !tarea.tecnicos?.length).length,
+        sinAsignar: activas.filter((tarea) => !tarea.tecnico_ids?.length)
+            .length,
     };
 
     const tareasFiltradas = useMemo(() => {
@@ -160,8 +150,8 @@ export default function TareasView({ vista = "agenda" }) {
             if (
                 filtroTecnico !== "todos" &&
                 (filtroTecnico === "sin_asignar"
-                    ? tarea.tecnicos?.length > 0
-                    : !tarea.tecnicos?.includes(filtroTecnico))
+                    ? tarea.tecnico_ids?.length > 0
+                    : !tarea.tecnico_ids?.includes(filtroTecnico))
             ) {
                 return false;
             }
@@ -270,58 +260,6 @@ export default function TareasView({ vista = "agenda" }) {
             return;
         }
         void ejecutarCambioEstado(tarea, estado);
-    };
-
-    const handleCrearTecnico = async (nombre) => {
-        try {
-            const creado = await crearTecnicoTareas(nombre);
-            setTecnicosNuevos((prev) => [
-                ...prev.filter((tecnico) => tecnico.nombre !== creado.nombre),
-                creado,
-            ]);
-            toast.success("Técnico agregado");
-            return creado.nombre;
-        } catch (err) {
-            toast.error(err?.message ?? "No se pudo agregar el técnico");
-            return null;
-        }
-    };
-
-    const handleVincularTecnico = async (nombre) => {
-        try {
-            await vincularMiTecnicoTareas(nombre);
-            toast.success("Tu cuenta quedó vinculada al técnico seleccionado");
-            await refetch();
-            return true;
-        } catch (err) {
-            toast.error(err?.message ?? "No se pudo vincular tu cuenta");
-            return false;
-        }
-    };
-
-    const handleCambiarActivoTecnico = async (nombre, activo) => {
-        try {
-            const actualizado = await cambiarEstadoTecnicoTareas(
-                nombre,
-                activo,
-            );
-            setTecnicosNuevos((prev) => [
-                ...prev.filter(
-                    (tecnico) => tecnico.nombre !== actualizado.nombre,
-                ),
-                actualizado,
-            ]);
-            toast.success(
-                activo
-                    ? "Técnico reactivado"
-                    : "Técnico eliminado del equipo activo",
-            );
-            await refetch();
-            return true;
-        } catch (err) {
-            toast.error(err?.message ?? "No se pudo actualizar el técnico");
-            return false;
-        }
     };
 
     const handleEliminarTarea = async (tarea) => {
@@ -444,7 +382,7 @@ export default function TareasView({ vista = "agenda" }) {
                         {tecnicos
                             .filter((tecnico) => tecnico.activo)
                             .map((tecnico) => (
-                                <option key={tecnico.nombre} value={tecnico.nombre}>
+                                <option key={tecnico.id} value={tecnico.id}>
                                     {tecnico.nombre}
                                 </option>
                             ))}
@@ -535,13 +473,27 @@ export default function TareasView({ vista = "agenda" }) {
                     onNuevaFecha={abrirNueva}
                 />
             ) : vista === "tecnicos" ? (
-                <>
-                    <GestionTecnicos
-                        tareas={data.tareas}
-                        tecnicos={tecnicos}
-                        onCrear={handleCrearTecnico}
-                        onCambiarActivo={handleCambiarActivoTecnico}
-                    />
+                <div className="space-y-4">
+                    <section className="flex flex-col gap-3 rounded-2xl border border-blue-200 bg-blue-50/70 p-4 dark:border-blue-500/25 dark:bg-blue-500/5 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h2 className="text-sm font-extrabold text-blue-950 dark:text-blue-200">
+                                Los técnicos se administran desde Usuarios
+                            </h2>
+                            <p className="mt-1 text-sm text-blue-800 dark:text-blue-300">
+                                Invita una cuenta o asígnale el rol Técnico. Al
+                                activarla aparecerá automáticamente en esta
+                                carga y en el formulario de tareas.
+                            </p>
+                        </div>
+                        {puede(PERMISOS.USUARIOS) && (
+                            <Link
+                                to="/usuarios"
+                                className="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-extrabold text-white hover:bg-blue-700"
+                            >
+                                Administrar usuarios
+                            </Link>
+                        )}
+                    </section>
                     <CargaTecnicos
                         tareas={tareasFiltradas}
                         tecnicos={tecnicos}
@@ -550,15 +502,13 @@ export default function TareasView({ vista = "agenda" }) {
                         onCambiarEstado={handleCambiarEstado}
                         onNueva={() => abrirNueva()}
                     />
-                </>
+                </div>
             ) : vista === "mis_tareas" ? (
                 <MisTareas
                     tareas={tareasFiltradas}
-                    tecnicos={tecnicos}
                     perfil={profile}
                     onEditar={abrirEditar}
                     onCambiarEstado={handleCambiarEstado}
-                    onVincular={handleVincularTecnico}
                 />
             ) : vista === "eliminadas" ? (
                 <TareasEliminadas
@@ -608,7 +558,6 @@ export default function TareasView({ vista = "agenda" }) {
                 equipos={data.equipos}
                 onClose={cerrarModal}
                 onGuardar={handleGuardar}
-                onCrearTecnico={handleCrearTecnico}
                 onEliminar={handleEliminarTarea}
             />
 
