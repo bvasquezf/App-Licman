@@ -177,6 +177,11 @@ function EquipoFilaMobile({
                 <span className="inline-flex max-w-full items-center truncate rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-bold text-sky-800 dark:bg-sky-500/10 dark:text-sky-400">
                     {equipo.cliente_id ? "🏢" : "📍"} {ubicacion}
                 </span>
+                {equipo.vendido && (
+                    <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800 dark:bg-amber-500/10 dark:text-amber-400">
+                        💰 Vendido
+                    </span>
+                )}
                 <RetornoClientePendiente
                     equipo={equipo}
                     clientesById={clientesById}
@@ -216,7 +221,9 @@ function EquipoFilaMobile({
                 >
                     {equipo.cliente_retorno_id
                         ? "↩️ Resolver"
-                        : "🔄 Mover"}
+                        : equipo.vendido
+                          ? "🧰 Atender"
+                          : "🔄 Mover"}
                 </button>
                 <button
                     type="button"
@@ -453,6 +460,11 @@ export function TablaEquipos({
                                     <EstadoBadge
                                         estado={e.estado_operacional}
                                     />
+                                    {e.vendido && (
+                                        <span className="ml-1 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800 dark:bg-amber-500/10 dark:text-amber-400">
+                                            💰 Vendido
+                                        </span>
+                                    )}
                                     {e.cliente_id ? (
                                         <span
                                             className="mt-1 block max-w-full truncate rounded-full bg-sky-100 px-2 py-0.5 text-xs font-bold text-sky-800 dark:bg-sky-500/10 dark:text-sky-400"
@@ -531,11 +543,13 @@ export function TablaEquipos({
                                             title={
                                                 e.cliente_retorno_id
                                                     ? "Resolver el retorno pendiente de esta reparación"
-                                                    : "Registrar un traslado o cambio de ubicación"
+                                                    : e.vendido
+                                                      ? "Registrar atención o ingreso a taller"
+                                                      : "Registrar un traslado o cambio de ubicación"
                                             }
-                                            aria-label={`Mover ${e.marca} ${e.modelo}`}
+                                            aria-label={`${e.vendido ? "Atender" : "Mover"} ${e.marca} ${e.modelo}`}
                                         >
-                                            🔄
+                                            {e.vendido ? "🧰" : "🔄"}
                                         </button>
                                         <button
                                             type="button"
@@ -1276,7 +1290,9 @@ function EquipoDetallePanel({
                     >
                         {equipo.cliente_retorno_id
                             ? "↩️ Resolver reparación"
-                            : "🔄 Mover equipo"}
+                            : equipo.vendido
+                              ? "🧰 Atender equipo"
+                              : "🔄 Mover equipo"}
                     </button>
                     <button
                         type="button"
@@ -1307,15 +1323,17 @@ function EquipoDetallePanel({
                             🔋 Batería
                         </button>
                     )}
-                    <button
-                        type="button"
-                        onClick={() =>
-                            solicitarCierre(() => onEliminar(equipo))
-                        }
-                        className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 text-sm font-bold text-red-700 transition hover:bg-red-100 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"
-                    >
-                        🗑 Eliminar
-                    </button>
+                    {!equipo.vendido && (
+                        <button
+                            type="button"
+                            onClick={() =>
+                                solicitarCierre(() => onEliminar(equipo))
+                            }
+                            className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 text-sm font-bold text-red-700 transition hover:bg-red-100 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"
+                        >
+                            🗑 Eliminar
+                        </button>
+                    )}
                 </footer>}
             </aside>
         </div>

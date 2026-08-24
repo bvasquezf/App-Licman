@@ -43,6 +43,7 @@ export const MOTIVOS_MOVIMIENTO = [
     "Venta a cliente",
     "Devuelto de arriendo",
     "Mantención interna",
+    "Atención técnica equipo vendido",
     "Retorno a cliente",
     "Cierre de mantención en bodega",
     "Devolución definitiva",
@@ -150,6 +151,12 @@ export const MOTIVOS_TILES = [
     { motivo: "Devuelto de arriendo", icono: "📥", label: "Devolución" },
     { motivo: "Mantención interna", icono: "🛠️", label: "Mantención interna" },
     {
+        motivo: "Atención técnica equipo vendido",
+        icono: "🧰",
+        label: "Registrar trabajo",
+        esAtencionVendido: true,
+    },
+    {
         motivo: "Retorno a cliente",
         icono: "↩️",
         label: "Devolver al cliente",
@@ -187,6 +194,9 @@ export const MOTIVOS_TILES = [
  * como keys del estado `form`.
  */
 export function camposPorMotivo(motivo) {
+    if (motivo === "Atención técnica equipo vendido") {
+        return { tipo: "libre", requiere: ["notas"] };
+    }
     if (motivo === "Cambio de bodega") {
         return { tipo: "bodega", requiere: ["bodega_destino"] };
     }
@@ -262,6 +272,7 @@ export const ICONO_POR_MOTIVO = {
     "Venta a cliente": "💰",
     "Devuelto de arriendo": "📥",
     "Mantención interna": "🛠️",
+    "Atención técnica equipo vendido": "🧰",
     "Retorno a cliente": "↩️",
     "Cierre de mantención en bodega": "📦",
     "Devolución definitiva": "↩️",

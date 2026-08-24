@@ -158,6 +158,7 @@ export default function MovimientoDialog({
     const origenCliente = Boolean(equipo?.cliente_id && !equipo?.bodega);
     const equipoEnCliente = origenCliente;
     const equipoEnMantencion = Boolean(equipo?.cliente_retorno_id);
+    const equipoVendido = Boolean(equipo?.vendido);
     const [form, setForm] = useState(estadoInicial);
     const [errores, setErrores] = useState({});
     const [guardando, setGuardando] = useState(false);
@@ -261,6 +262,7 @@ export default function MovimientoDialog({
         // Si cambia motivo o cliente_id, limpiar campos derivados
         if (name === "motivo") {
             const swapDesdeCliente = equipoEnCliente && esSwap(value);
+            const ventaAlClienteActual = equipoEnCliente && esVenta(value);
             const retornoAlCliente =
                 equipoEnMantencion && value === "Retorno a cliente";
             setForm((prev) => ({
@@ -268,7 +270,7 @@ export default function MovimientoDialog({
                 bodega_destino: "",
                 cliente_id: retornoAlCliente
                     ? String(equipo.cliente_retorno_id)
-                    : swapDesdeCliente
+                    : swapDesdeCliente || ventaAlClienteActual
                       ? String(equipo.cliente_id)
                       : "",
                 categoria: "",
@@ -277,7 +279,7 @@ export default function MovimientoDialog({
                 destino_externo: "",
                 ubicacion_destino: retornoAlCliente
                     ? equipo.ubicacion_retorno_cliente || ""
-                    : swapDesdeCliente
+                    : swapDesdeCliente || ventaAlClienteActual
                       ? equipo.ubicacion_actual || ""
                       : "",
                 ubicacion_retorno: "",
@@ -331,15 +333,43 @@ export default function MovimientoDialog({
         if (!form.motivo) errs.motivo = "Selecciona un motivo";
         if (!MOTIVOS_MOVIMIENTO.includes(form.motivo))
             errs.motivo = "Motivo no válido";
+        const motivosMantencionPermitidos = equipoVendido
+            ? [
+                  "Atención técnica equipo vendido",
+                  "Retorno a cliente",
+                  "Cierre de mantención en bodega",
+              ]
+            : ["Retorno a cliente", "Cierre de mantención en bodega"];
         if (
             equipoEnMantencion &&
-            ![
-                "Retorno a cliente",
-                "Cierre de mantención en bodega",
-            ].includes(form.motivo)
+            !motivosMantencionPermitidos.includes(form.motivo)
         ) {
             errs.motivo =
-                "Selecciona si el equipo vuelve al cliente o queda en una bodega";
+                "Selecciona cómo registrar el trabajo o cerrar esta reparación";
+        }
+        if (
+            equipoVendido &&
+            !equipoEnMantencion &&
+            !(
+                equipoEnCliente
+                    ? [
+                          "Atención técnica equipo vendido",
+                          "Mantención interna",
+                          "Devolución definitiva",
+                      ].includes(form.motivo)
+                    : form.motivo === "Atención técnica equipo vendido"
+            )
+        ) {
+            errs.motivo =
+                "Un equipo vendido solo permite registrar trabajo técnico o ingreso a taller";
+        }
+        if (
+            equipoEnCliente &&
+            esVenta(form.motivo) &&
+            String(form.cliente_id) !== String(equipo.cliente_id)
+        ) {
+            errs.cliente_id =
+                "El equipo solo puede venderse al cliente donde está actualmente";
         }
         if (
             form.motivo === "Retorno a cliente" &&
@@ -369,8 +399,23 @@ export default function MovimientoDialog({
             !form.destino_externo.trim()
         )
             errs.destino_externo = "Indica el destino externo";
-        if (requiere.includes("notas") && !form.notas.trim())
-            errs.notas = "Cuéntanos el motivo";
+        const requiereDetalleTecnico =
+            equipoVendido &&
+            [
+                "Atención técnica equipo vendido",
+                "Mantención interna",
+                "Retorno a cliente",
+                "Cierre de mantención en bodega",
+                "Devolución definitiva",
+            ].includes(form.motivo);
+        if (
+            (requiere.includes("notas") || requiereDetalleTecnico) &&
+            !form.notas.trim()
+        ) {
+            errs.notas = requiereDetalleTecnico
+                ? "Describe el diagnóstico y el trabajo realizado"
+                : "Cuéntanos el motivo";
+        }
         if (requiereDocumentosMovimiento(form.motivo)) {
             const validarDocumentos = (campoActa, campoGuia, contexto = "") => {
                 const tieneActa = documentoEsValido(form[campoActa]);
@@ -506,21 +551,45 @@ export default function MovimientoDialog({
         }
     };
 
-    const motivosVisibles = equipoEnMantencion
-        ? MOTIVOS_TILES.filter((tile) => tile.esCierreMantencion)
-        : equipoEnCliente
-          ? MOTIVOS_TILES.filter(
-                (tile) =>
-                    tile.motivo === "Mantención interna" ||
-                    tile.motivo === "Devolución definitiva" ||
-                    tile.esSwapTile,
-            )
-          : MOTIVOS_TILES.filter(
-                (tile) =>
-                    tile.motivo !== "Mantención interna" &&
-                    tile.motivo !== "Devolución definitiva" &&
-                    !tile.esCierreMantencion,
-            );
+    const motivosVisibles = equipoVendido
+        ? equipoEnMantencion
+            ? MOTIVOS_TILES.filter(
+                  (tile) => tile.esCierreMantencion || tile.esAtencionVendido,
+              )
+            : equipoEnCliente
+              ? MOTIVOS_TILES.filter(
+                    (tile) =>
+                        tile.esAtencionVendido ||
+                        tile.motivo === "Mantención interna" ||
+                        tile.motivo === "Devolución definitiva",
+                )
+              : MOTIVOS_TILES.filter((tile) => tile.esAtencionVendido)
+        : equipoEnMantencion
+          ? MOTIVOS_TILES.filter((tile) => tile.esCierreMantencion)
+          : equipoEnCliente
+            ? MOTIVOS_TILES.filter(
+                  (tile) =>
+                      tile.motivo === "Mantención interna" ||
+                      tile.motivo === "Devolución definitiva" ||
+                      tile.motivo === "Venta a cliente" ||
+                      tile.esSwapTile,
+              )
+            : MOTIVOS_TILES.filter(
+                  (tile) =>
+                      tile.motivo !== "Mantención interna" &&
+                      tile.motivo !== "Devolución definitiva" &&
+                      !tile.esCierreMantencion &&
+                      !tile.esAtencionVendido,
+              );
+    const requiereDetalleTecnico =
+        equipoVendido &&
+        [
+            "Atención técnica equipo vendido",
+            "Mantención interna",
+            "Retorno a cliente",
+            "Cierre de mantención en bodega",
+            "Devolución definitiva",
+        ].includes(form.motivo);
     const swapRequiereRed = esSwap(form.motivo) && !online;
     const equipoRecibeSeleccionado = equiposParaSwap.find(
         (item) => String(item.id) === String(form.equipo_recibe_id),
@@ -578,7 +647,9 @@ export default function MovimientoDialog({
                             id="movimiento-titulo"
                             className="text-lg font-black text-slate-950 dark:text-white"
                         >
-                            Registrar movimiento
+                            {equipoVendido
+                                ? "Gestionar equipo vendido"
+                                : "Registrar movimiento"}
                         </h2>
                         <p className="mt-1 truncate text-sm text-slate-600 dark:text-neutral-400">
                             {equipo.marca} {equipo.modelo} ·{" "}
@@ -624,16 +695,16 @@ export default function MovimientoDialog({
                 >
                     <div className="dialog-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 sm:px-6 sm:py-5">
 
-                {/* Aviso de equipo vendido: los movimientos siguen
-                    permitidos (ej. mantención), solo es informativo */}
+                {/* Un equipo vendido conserva su historial técnico, pero ya no
+                    vuelve a los flujos comerciales de arriendo o intercambio. */}
                 {equipo.vendido && (
                     <div className="mb-4 rounded-[10px] border-l-4 border-amber-500 bg-amber-50 px-3 py-2 text-[0.8rem] text-amber-900 dark:bg-amber-500/10 dark:text-amber-300">
                         💰 <strong>Equipo vendido</strong>
                         {nombreClienteVendido
                             ? ` a ${nombreClienteVendido}`
                             : ""}
-                        . Los movimientos siguen permitidos (ej. mantención);
-                        deja el detalle en las notas.
+                        . Solo puedes registrar el trabajo técnico o su ingreso
+                        y retorno desde taller. El detalle del técnico es obligatorio.
                     </div>
                 )}
 
@@ -659,7 +730,10 @@ export default function MovimientoDialog({
                             🔋 Batería asociada: {equipo.bateria_asociada.numero_interno}
                         </p>
                         <p className="mt-0.5 text-xs text-cyan-800 dark:text-cyan-200">
-                            Serie {equipo.bateria_asociada.numero_serie}. Al guardar, este traslado quedará registrado automáticamente en el historial del equipo y de la batería.
+                            Serie {equipo.bateria_asociada.numero_serie}.{" "}
+                            {form.motivo === "Atención técnica equipo vendido"
+                                ? "Este registro técnico no cambiará la ubicación de la batería."
+                                : "Al guardar, el traslado quedará registrado automáticamente en el historial del equipo y de la batería."}
                         </p>
                     </div>
                 )}
@@ -693,18 +767,24 @@ export default function MovimientoDialog({
                         <p className="text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                             Motivo
                         </p>
-                        {equipoEnCliente && (
+                        {equipoEnCliente && !equipoVendido && (
                             <p className="mt-1 text-xs text-slate-600 dark:text-neutral-400">
                                 Este equipo está en cliente. Puedes cambiarlo
                                 por otro equipo disponible, ingresarlo a una
-                                bodega para mantención interna o registrar su
-                                devolución definitiva.
+                                bodega para mantención, marcarlo como vendido
+                                al mismo cliente o registrar su devolución.
+                            </p>
+                        )}
+                        {equipoEnCliente && equipoVendido && (
+                            <p className="mt-1 text-xs text-slate-600 dark:text-neutral-400">
+                                Registra una atención sin traslado o el ingreso
+                                del equipo vendido a taller.
                             </p>
                         )}
                         {equipoEnMantencion && (
                             <p className="mt-1 text-xs text-slate-600 dark:text-neutral-400">
-                                La reparación tiene un cliente de retorno
-                                asociado. Elige cómo cerrar este ciclo.
+                                La reparación tiene un cliente de retorno asociado.
+                                Puedes registrar el trabajo realizado antes de cerrar el ciclo.
                             </p>
                         )}
                         <div
@@ -766,6 +846,7 @@ export default function MovimientoDialog({
                         onCrearCliente={onCrearCliente}
                         equipoEnCliente={equipoEnCliente}
                         equipoEnMantencion={equipoEnMantencion}
+                        equipoVendido={equipoVendido}
                         bodegaOrigen={equipo.bodega}
                         clienteActual={clientes.find(
                             (cliente) =>
@@ -910,7 +991,10 @@ export default function MovimientoDialog({
                     {esVenta(form.motivo) && (
                         <div className="rounded-[10px] border border-amber-300 bg-amber-50 px-3 py-2 text-[0.8rem] text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
                             Al registrar, este equipo quedará marcado como{" "}
-                            <strong>💰 VENDIDO</strong>.
+                            <strong>💰 VENDIDO</strong>
+                            {equipoEnCliente
+                                ? " al cliente donde se encuentra actualmente."
+                                : "."}
                         </div>
                     )}
 
@@ -953,10 +1037,12 @@ export default function MovimientoDialog({
                         )}
                     </label>
 
-                    {/* Notas — opcional general, requerido si motivo es "Otro" */}
+                    {/* Notas — obligatorias para detallar trabajos en vendidos */}
                     <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
-                        Notas{" "}
-                        {form.motivo === "Otro" ? (
+                        {requiereDetalleTecnico
+                            ? "Trabajo realizado / diagnóstico"
+                            : "Notas"}{" "}
+                        {form.motivo === "Otro" || requiereDetalleTecnico ? (
                             <span className="font-normal text-rose-600">*</span>
                         ) : (
                             <span className="font-normal text-slate-500 dark:text-neutral-400">
@@ -971,7 +1057,11 @@ export default function MovimientoDialog({
                             ref={(el) => {
                                 refs.current.notas = el;
                             }}
-                            placeholder="Cliente, condiciones, detalles relevantes..."
+                            placeholder={
+                                requiereDetalleTecnico
+                                    ? "Describe qué revisó o reparó el técnico y cómo quedó el equipo..."
+                                    : "Cliente, condiciones, detalles relevantes..."
+                            }
                             className={`${clasesInput} resize-y`}
                         />
                         {errores.notas && (
@@ -1000,7 +1090,11 @@ export default function MovimientoDialog({
                             disabled={guardando}
                             className="order-2 min-h-[48px] rounded-xl bg-blue-600 px-4 text-sm font-extrabold text-white shadow-[0_4px_12px_rgba(37,99,235,0.24)] transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                            {guardando ? "Guardando…" : "Registrar movimiento"}
+                            {guardando
+                                ? "Guardando…"
+                                : form.motivo === "Atención técnica equipo vendido"
+                                  ? "Registrar trabajo"
+                                  : "Registrar movimiento"}
                         </button>
                         <button
                             type="button"
@@ -1282,6 +1376,7 @@ function CamposPorMotivo({
     onCrearCliente,
     equipoEnCliente,
     equipoEnMantencion,
+    equipoVendido,
     bodegaOrigen,
     clienteActual,
     clienteRetorno,
@@ -1373,16 +1468,37 @@ function CamposPorMotivo({
             {/* Cliente destino (arriendo / venta) */}
             {tipo === "cliente" && (
                 <>
-                    <ClienteSelect
-                        name="cliente_id"
-                        form={form}
-                        errores={errores}
-                        refs={refs}
-                        clasesInput={clasesInput}
-                        onChange={onChange}
-                        clientes={clientes}
-                        onCrearCliente={onCrearCliente}
-                    />
+                    {equipoEnCliente && esVenta(form.motivo) ? (
+                        <div className="rounded-[10px] border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-950 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-200">
+                            <span className="block text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                                Cliente comprador
+                            </span>
+                            <strong>
+                                {clienteActual?.razon_social ??
+                                    `Cliente #${form.cliente_id}`}
+                            </strong>
+                            <p className="mt-1 text-xs">
+                                La venta quedará asociada al cliente donde está
+                                actualmente el equipo y no se puede cambiar.
+                            </p>
+                            {errores.cliente_id && (
+                                <p className="mt-1 text-xs font-medium text-rose-600">
+                                    {errores.cliente_id}
+                                </p>
+                            )}
+                        </div>
+                    ) : (
+                        <ClienteSelect
+                            name="cliente_id"
+                            form={form}
+                            errores={errores}
+                            refs={refs}
+                            clasesInput={clasesInput}
+                            onChange={onChange}
+                            clientes={clientes}
+                            onCrearCliente={onCrearCliente}
+                        />
+                    )}
                     <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Ubicación{" "}
                         <span className="font-normal text-slate-500 dark:text-neutral-400">
@@ -1401,6 +1517,16 @@ function CamposPorMotivo({
                         />
                     </label>
                 </>
+            )}
+
+            {tipo === "libre" && equipoVendido && (
+                <div className="rounded-[10px] border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm text-blue-950 dark:border-blue-500/25 dark:bg-blue-500/10 dark:text-blue-200">
+                    <strong>🧰 Registro sin traslado</strong>
+                    <p className="mt-1 text-xs">
+                        El equipo seguirá perteneciendo al cliente. Registra el
+                        detalle del técnico y el horómetro para dejar trazabilidad.
+                    </p>
+                </div>
             )}
 
             {/* Retorno fijo al cliente que originó la mantención interna */}

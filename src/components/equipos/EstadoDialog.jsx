@@ -84,6 +84,7 @@ export default function EstadoDialog({
     });
 
     if (!transicion.renderizar || !equipo) return null;
+    const equipoVendido = Boolean(equipo.vendido);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -104,6 +105,9 @@ export default function EstadoDialog({
             errs.horometro = `Debe ser igual o mayor al actual (${equipo.horometro} h)`;
         }
         if (!responsable.trim()) errs.responsable = "Indica quién registra";
+        if (equipoVendido && !notas.trim()) {
+            errs.notas = "Describe el diagnóstico y el trabajo realizado";
+        }
         if (Object.keys(errs).length > 0) {
             setErrores(errs);
             return;
@@ -145,7 +149,9 @@ export default function EstadoDialog({
                             id="estado-titulo"
                             className="text-[1.15rem] font-bold text-slate-900 dark:text-slate-100"
                         >
-                            🛠️ Cambiar estado
+                            {equipoVendido
+                                ? "🧰 Estado y trabajo técnico"
+                                : "🛠️ Cambiar estado"}
                         </h2>
                     <p className="mt-1 text-sm text-slate-600 dark:text-neutral-400">
                         {equipo.marca} {equipo.modelo} ·{" "}
@@ -171,6 +177,15 @@ export default function EstadoDialog({
                 </header>
 
                 <form onSubmit={handleSubmit} className="space-y-3" noValidate>
+                    {equipoVendido && (
+                        <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-200">
+                            <strong>💰 Equipo vendido</strong>
+                            <p className="mt-1 text-xs">
+                                El cambio de estado quedará respaldado con el
+                                detalle obligatorio del trabajo técnico.
+                            </p>
+                        </div>
+                    )}
                     {/* Picker de estado: tiles grandes */}
                     <div>
                         <p className="text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
@@ -267,19 +282,39 @@ export default function EstadoDialog({
                         )}
                     </label>
 
-                    {/* Notas */}
+                    {/* Detalle técnico obligatorio para equipos vendidos */}
                     <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
-                        Notas{" "}
-                        <span className="font-normal text-slate-500 dark:text-neutral-400">
-                            (opcional)
-                        </span>
+                        {equipoVendido ? "Trabajo realizado / diagnóstico" : "Notas"}{" "}
+                        {equipoVendido ? (
+                            <span className="font-normal text-rose-600">*</span>
+                        ) : (
+                            <span className="font-normal text-slate-500 dark:text-neutral-400">
+                                (opcional)
+                            </span>
+                        )}
                         <textarea
                             rows={2}
                             value={notas}
-                            onChange={(e) => setNotas(e.target.value)}
-                            placeholder="Ej. se reparó el motor hidráulico, quedó probado"
+                            onChange={(e) => {
+                                setNotas(e.target.value);
+                                setErrores((prev) => {
+                                    const next = { ...prev };
+                                    delete next.notas;
+                                    return next;
+                                });
+                            }}
+                            placeholder={
+                                equipoVendido
+                                    ? "Describe qué revisó o reparó el técnico y cómo quedó..."
+                                    : "Ej. se reparó el motor hidráulico, quedó probado"
+                            }
                             className={`${clasesInput} resize-y`}
                         />
+                        {errores.notas && (
+                            <p className="mt-1 text-xs font-medium text-rose-600">
+                                {errores.notas}
+                            </p>
+                        )}
                     </label>
 
                     <div
@@ -291,7 +326,11 @@ export default function EstadoDialog({
                             disabled={guardando}
                             className="flex-1 rounded-[10px] bg-blue-600 px-4 py-3 text-base font-bold text-white shadow-[0_4px_12px_rgba(37,99,235,0.3)] transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                            {guardando ? "Guardando…" : "Guardar estado"}
+                            {guardando
+                                ? "Guardando…"
+                                : equipoVendido
+                                  ? "Guardar estado y trabajo"
+                                  : "Guardar estado"}
                         </button>
                         <button
                             type="button"

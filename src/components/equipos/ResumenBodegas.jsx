@@ -20,6 +20,8 @@ export default function ResumenBodegas({ equipos, activa, onSelect }) {
                 total: 0,
                 operativos: 0,
                 inoperativos: 0,
+                enArriendo: 0,
+                vendidos: 0,
             });
         }
         porUbicacion.set(BODEGA_EN_CLIENTE, {
@@ -28,6 +30,8 @@ export default function ResumenBodegas({ equipos, activa, onSelect }) {
             total: 0,
             operativos: 0,
             inoperativos: 0,
+            enArriendo: 0,
+            vendidos: 0,
         });
         for (const e of equipos) {
             // Misma lógica del filtro de InventarioView: si tiene cliente,
@@ -38,6 +42,10 @@ export default function ResumenBodegas({ equipos, activa, onSelect }) {
             r.total += 1;
             if (e.estado_operacional === "Operativo") r.operativos += 1;
             if (e.estado_operacional === "Inoperativo") r.inoperativos += 1;
+            if (clave === BODEGA_EN_CLIENTE) {
+                if (e.vendido) r.vendidos += 1;
+                else r.enArriendo += 1;
+            }
         }
         return [...porUbicacion.values()];
     }, [equipos]);
@@ -60,18 +68,34 @@ export default function ResumenBodegas({ equipos, activa, onSelect }) {
                         <p className="mt-1 text-[1.4rem] font-extrabold tabular-nums text-slate-900 dark:text-slate-100">
                             {r.total}
                         </p>
-                        <p className="mt-1 flex flex-wrap gap-x-2 text-[0.75rem] font-semibold">
-                            <span className="text-green-700 dark:text-green-400">
-                                {r.operativos === 1
-                                    ? "1 operativo"
-                                    : `${r.operativos} operativos`}
-                            </span>
-                            <span className="text-red-700 dark:text-red-400">
-                                {r.inoperativos === 1
-                                    ? "1 inoperativo"
-                                    : `${r.inoperativos} inoperativos`}
-                            </span>
-                        </p>
+                        {r.valor === BODEGA_EN_CLIENTE ? (
+                            <>
+                                <p className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-xs font-semibold">
+                                    <span className="text-sky-700 dark:text-sky-400">
+                                        🔑 {r.enArriendo} en arriendo
+                                    </span>
+                                    <span className="text-amber-700 dark:text-amber-400">
+                                        💰 {r.vendidos} vendidos
+                                    </span>
+                                </p>
+                                <p className="mt-1 text-xs font-medium text-slate-500 dark:text-neutral-400">
+                                    {r.operativos} operativos · {r.inoperativos} inoperativos
+                                </p>
+                            </>
+                        ) : (
+                            <p className="mt-1 flex flex-wrap gap-x-2 text-xs font-semibold">
+                                <span className="text-green-700 dark:text-green-400">
+                                    {r.operativos === 1
+                                        ? "1 operativo"
+                                        : `${r.operativos} operativos`}
+                                </span>
+                                <span className="text-red-700 dark:text-red-400">
+                                    {r.inoperativos === 1
+                                        ? "1 inoperativo"
+                                        : `${r.inoperativos} inoperativos`}
+                                </span>
+                            </p>
+                        )}
                     </>
                 );
 

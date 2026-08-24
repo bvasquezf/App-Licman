@@ -51,6 +51,7 @@ const CAMPOS_ORDEN_VALIDOS = new Set([
 const FILTROS_INVENTARIO = [
     { id: "todos", icono: "", label: "Todos", color: "slate" },
     { id: "disponibles", icono: "✅", label: "Disponibles", color: "green" },
+    { id: "vendidos", icono: "💰", label: "Vendidos", color: "amber" },
     { id: "reparacion", icono: "🛠️", label: "En reparación", color: "red" },
     { id: "con_faltantes", icono: "🧩", label: "Con faltantes", color: "amber" },
     { id: "sin_bateria", icono: "🔋", label: "Sin batería", color: "cyan" },
@@ -215,6 +216,8 @@ function cumpleVistaRapida(equipo, vista, filtroBodega = "todas") {
                 equipo.cliente_retorno_id ||
                     equipo.estado_operacional === "Inoperativo",
             );
+        case "vendidos":
+            return Boolean(equipo.vendido);
         case "retorno":
             return Boolean(equipo.cliente_retorno_id);
         case "con_faltantes":
@@ -1035,7 +1038,7 @@ export default function InventarioView() {
                             Resumen por ubicación
                         </h2>
                         <p className="mt-0.5 text-xs text-slate-500 dark:text-neutral-400">
-                            Total de equipos operativos e inoperativos en cada bodega.
+                            Bodegas por estado; en clientes, separados entre arriendo y venta.
                         </p>
                     </div>
                 </div>
