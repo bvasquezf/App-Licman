@@ -41,6 +41,9 @@ function revisarRespuesta(respuesta) {
     return respuesta.data;
 }
 
+const SELECT_TAREA =
+    "*, tareas_tecnicos(tecnico_id, tecnico_nombre, tecnico:perfiles!tareas_tecnicos_tecnico_id_fkey(id, nombre_completo, cargo, activo, rol:roles_app!perfiles_rol_id_fkey(codigo))), autor:perfiles!tareas_creado_por_fkey(nombre_completo)";
+
 function normalizarTarea(tarea) {
     const asignacionesTecnicos = (tarea.tareas_tecnicos ?? [])
         .map((asignacion) => {
@@ -74,45 +77,69 @@ function normalizarTarea(tarea) {
     };
 }
 
-export async function cargarModuloTareas() {
+function datosVaciosTareas() {
+    return {
+        tareas: [],
+        eliminadas: [],
+        tecnicos: [],
+        clientes: [],
+        equipos: [],
+    };
+}
+
+export async function cargarTareasOperativas() {
     if (!supabase) {
-        return {
-            tareas: [],
-            eliminadas: [],
-            tecnicos: [],
-            clientes: [],
-            equipos: [],
-        };
+        return { tareas: [] };
     }
 
-    const [
-        tareasRespuesta,
-        eliminadasRespuesta,
-        tecnicosRespuesta,
-        clientesRespuesta,
-        equiposRespuesta,
-    ] =
+    const [activasRespuesta, finalizadasHoyRespuesta] = await Promise.all([
+        withRetry(() =>
+            supabase
+                .from("tareas")
+                .select(SELECT_TAREA)
+                .is("eliminada_at", null)
+                .in("estado", ESTADOS_TAREA_ACTIVA)
+                .order("updated_at", { ascending: false })
+                .limit(2000),
+        ),
+        withRetry(() =>
+            supabase
+                .from("tareas")
+                .select(SELECT_TAREA)
+                .is("eliminada_at", null)
+                .eq("estado", "Finalizada")
+                .eq("fecha_programada", fechaLocalISO())
+                .order("updated_at", { ascending: false })
+                .limit(200),
+        ),
+    ]);
+
+    const tareas = [
+        ...(revisarRespuesta(activasRespuesta) ?? []),
+        ...(revisarRespuesta(finalizadasHoyRespuesta) ?? []),
+    ].map(normalizarTarea);
+    return { tareas };
+}
+
+export async function cargarArchivoTareas() {
+    if (!supabase) return [];
+    const respuesta = await withRetry(() =>
+        supabase
+            .from("tareas")
+            .select(SELECT_TAREA)
+            .is("eliminada_at", null)
+            .in("estado", ["Finalizada", "Cancelada"])
+            .order("fecha_finalizada", { ascending: false, nullsFirst: false })
+            .order("updated_at", { ascending: false })
+            .limit(1000),
+    );
+    return (revisarRespuesta(respuesta) ?? []).map(normalizarTarea);
+}
+
+export async function cargarCatalogosTareas() {
+    if (!supabase) return { tecnicos: [], clientes: [], equipos: [] };
+    const [tecnicosRespuesta, clientesRespuesta, equiposRespuesta] =
         await Promise.all([
-            withRetry(() =>
-                supabase
-                    .from("tareas")
-                    .select(
-                        "*, tareas_tecnicos(tecnico_id, tecnico_nombre, tecnico:perfiles!tareas_tecnicos_tecnico_id_fkey(id, nombre_completo, cargo, activo, rol:roles_app!perfiles_rol_id_fkey(codigo))), autor:perfiles!tareas_creado_por_fkey(nombre_completo)",
-                    )
-                    .is("eliminada_at", null)
-                    .order("updated_at", { ascending: false })
-                    .limit(2000),
-            ),
-            withRetry(() =>
-                supabase
-                    .from("tareas")
-                    .select(
-                        "*, tareas_tecnicos(tecnico_id, tecnico_nombre, tecnico:perfiles!tareas_tecnicos_tecnico_id_fkey(id, nombre_completo, cargo, activo, rol:roles_app!perfiles_rol_id_fkey(codigo))), autor:perfiles!tareas_creado_por_fkey(nombre_completo), eliminador:perfiles!tareas_eliminada_por_fkey(nombre_completo)",
-                    )
-                    .not("eliminada_at", "is", null)
-                    .order("eliminada_at", { ascending: false })
-                    .limit(500),
-            ),
             withRetry(() => supabase.rpc("listar_tecnicos_tareas")),
             withRetry(() =>
                 supabase
@@ -125,20 +152,45 @@ export async function cargarModuloTareas() {
             ),
             withRetry(() => supabase.rpc("listar_equipos_para_tareas")),
         ]);
-
-    const tareas = (revisarRespuesta(tareasRespuesta) ?? []).map(
-        normalizarTarea,
-    );
-    const eliminadas = (revisarRespuesta(eliminadasRespuesta) ?? []).map(
-        normalizarTarea,
-    );
-
     return {
-        tareas,
-        eliminadas,
         tecnicos: revisarRespuesta(tecnicosRespuesta) ?? [],
         clientes: revisarRespuesta(clientesRespuesta) ?? [],
         equipos: revisarRespuesta(equiposRespuesta) ?? [],
+    };
+}
+
+export async function cargarPapeleraTareas() {
+    if (!supabase) return [];
+    const respuesta = await withRetry(() =>
+        supabase
+            .from("tareas")
+            .select(
+                `${SELECT_TAREA}, eliminador:perfiles!tareas_eliminada_por_fkey(nombre_completo)`,
+            )
+            .not("eliminada_at", "is", null)
+            .order("eliminada_at", { ascending: false })
+            .limit(500),
+    );
+    return (revisarRespuesta(respuesta) ?? []).map(normalizarTarea);
+}
+
+export async function cargarModuloTareas({ incluirEliminadas = true } = {}) {
+    const vacios = datosVaciosTareas();
+    const [operativas, catalogos, archivo, eliminadas] = await Promise.all([
+        cargarTareasOperativas(),
+        cargarCatalogosTareas(),
+        cargarArchivoTareas(),
+        incluirEliminadas ? cargarPapeleraTareas() : Promise.resolve([]),
+    ]);
+    const porId = new Map(
+        [...operativas.tareas, ...archivo].map((tarea) => [tarea.id, tarea]),
+    );
+    return {
+        ...vacios,
+        ...operativas,
+        ...catalogos,
+        tareas: [...porId.values()],
+        eliminadas,
     };
 }
 
@@ -239,6 +291,45 @@ export function formatearFechaTarea(fecha, opciones = {}) {
         year: opciones.sinAnio ? undefined : "numeric",
         ...opciones,
     }).format(valor);
+}
+
+export function duracionTareaMinutos(tarea) {
+    if (!tarea?.hora_inicio || !tarea?.hora_fin) return null;
+    const [horaInicio, minutoInicio] = String(tarea.hora_inicio)
+        .slice(0, 5)
+        .split(":")
+        .map(Number);
+    const [horaFin, minutoFin] = String(tarea.hora_fin)
+        .slice(0, 5)
+        .split(":")
+        .map(Number);
+    if (
+        !Number.isFinite(horaInicio) ||
+        !Number.isFinite(minutoInicio) ||
+        !Number.isFinite(horaFin) ||
+        !Number.isFinite(minutoFin) ||
+        horaInicio < 0 ||
+        horaInicio > 23 ||
+        horaFin < 0 ||
+        horaFin > 23 ||
+        minutoInicio < 0 ||
+        minutoInicio > 59 ||
+        minutoFin < 0 ||
+        minutoFin > 59
+    ) {
+        return null;
+    }
+    const minutos = horaFin * 60 + minutoFin - (horaInicio * 60 + minutoInicio);
+    return minutos > 0 ? minutos : null;
+}
+
+export function formatearDuracionMinutos(minutos) {
+    if (!Number.isFinite(minutos) || minutos <= 0) return "Sin horario";
+    const horas = Math.floor(minutos / 60);
+    const restantes = minutos % 60;
+    if (horas === 0) return `${restantes} min`;
+    if (restantes === 0) return `${horas} h`;
+    return `${horas} h ${restantes} min`;
 }
 
 export function compararTareas(a, b) {

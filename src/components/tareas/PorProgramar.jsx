@@ -1,5 +1,5 @@
 import EmptyState from "../ui/EmptyState";
-import TareaCard from "./TareaCard";
+import TareasListaPaginada from "./TareasListaPaginada";
 import {
     compararTareas,
     estaTareaActiva,
@@ -29,16 +29,11 @@ function Grupo({ titulo, descripcion, tono, tareas, onEditar, onCambiarEstado })
                     {tareas.length}
                 </span>
             </div>
-            <div className="grid items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
-                {tareas.map((tarea) => (
-                    <TareaCard
-                        key={tarea.id}
-                        tarea={tarea}
-                        onEditar={onEditar}
-                        onCambiarEstado={onCambiarEstado}
-                    />
-                ))}
-            </div>
+            <TareasListaPaginada
+                tareas={tareas}
+                onEditar={onEditar}
+                onCambiarEstado={onCambiarEstado}
+            />
         </section>
     );
 }
@@ -71,7 +66,7 @@ export default function PorProgramar({
                 icon="🎯"
                 title="Todo está programado"
                 description="No quedan solicitudes sin fecha o sin técnico asignado."
-                action={
+                action={onNueva ? (
                     <button
                         type="button"
                         onClick={onNueva}
@@ -79,7 +74,7 @@ export default function PorProgramar({
                     >
                         + Registrar solicitud
                     </button>
-                }
+                ) : null}
             />
         );
     }
@@ -98,13 +93,15 @@ export default function PorProgramar({
                             y quedará automáticamente como Programada.
                         </p>
                     </div>
-                    <button
-                        type="button"
-                        onClick={onNueva}
-                        className="min-h-[48px] shrink-0 rounded-xl bg-blue-600 px-4 text-sm font-extrabold text-white hover:bg-blue-700"
-                    >
-                        + Nueva solicitud
-                    </button>
+                    {onNueva && (
+                        <button
+                            type="button"
+                            onClick={onNueva}
+                            className="min-h-[48px] shrink-0 rounded-xl bg-blue-600 px-4 text-sm font-extrabold text-white hover:bg-blue-700"
+                        >
+                            + Nueva solicitud
+                        </button>
+                    )}
                 </div>
             </section>
 

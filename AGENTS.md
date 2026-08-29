@@ -102,6 +102,11 @@ de alta no los edita, pero sí se pueden corregir desde la ficha del inventario)
   usuario que ingresó realmente el movimiento o cambio.
 - Mi perfil (`/perfil`) muestra actividad propia; administración (`/usuarios`) requiere
   `usuarios.gestionar`.
+- Sub-nav y rutas de `/tareas` gateadas por permiso granular (subNavConfig +
+  `RequirePermission` anidado en App.jsx): vistas de planificación (Hoy, Por programar,
+  Calendario, Semana, Por técnico, Tablero, Finalizadas, Pantalla TV) requieren
+  `tareas.planificar`; `Mis tareas` requiere `tareas.ejecutar_propias`; Papelera requiere
+  `tareas.eliminar`. Resultado: el rol Técnico solo ve "Mis tareas".
 - Face ID/Touch ID mediante passkeys queda para después de desplegar un dominio estable.
 
 ## Offline (sección Equipos)
@@ -112,6 +117,13 @@ de alta no los edita, pero sí se pueden corregir desde la ficha del inventario)
   FIFO al volver la red (lo gatilla NetworkContext). Cada entrada guarda `userId` y no
   se sincroniza bajo una cuenta distinta.
 - Fotos y swaps **nunca** se encolan (se bloquean en UI con toast).
+
+## Cache local (sección Tareas)
+
+- `lib/tareasCache.js` (DB `licman-tareas`, store `cache`): cache SWR de las tareas
+  operativas. TareasContext muestra el cache altiro al entrar y lo reemplaza cuando
+  llega la data fresca; cada carga exitosa lo re-escribe. Amarrado a `userId`
+  (no se muestra data de otra cuenta).
 
 ## Patrones del proyecto (respetar)
 
@@ -172,6 +184,14 @@ useUnsavedChanges(formData, {
 
 ### Breakpoints de Tailwind
 - `sm:` 640px · `md:` 768px · `lg:` 1024px · `xl:` 1280px · `2xl:` 1536px (casi nunca)
+
+### Marco de layout (todas las secciones)
+- El encuadre es único e igual para bodega, equipos, mantenimiento y tareas:
+  `<main>` de AppShell y el contenedor interno de SubNavBar usan la MISMA
+  receta: `mx-auto w-full max-w-screen-xl px-4 sm:px-6 md:pl-16 md:pr-16 lg:pl-20 lg:pr-20`.
+- **NO** agregar contenedores con `max-w-*` ni padding horizontal propio en las
+  vistas: heredan el marco del shell. Excepción intencional: `/tareas/pantalla`
+  (overlay kiosk `fixed inset-0` vía portal, cubre todo el shell).
 
 ### Grids
 - Cards: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`

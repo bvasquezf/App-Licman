@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import EmptyState from "../ui/EmptyState";
-import TareaCard from "./TareaCard";
+import TareasListaPaginada from "./TareasListaPaginada";
 import { compararTareas, fechaLocalISO } from "../../lib/tareasData";
 
 const DIAS_SEMANA = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
@@ -134,7 +134,7 @@ export default function TareasCalendario({
             {/* Calendario compacto para iPhone: se elige un día y abajo
                 aparecen sus trabajos con acciones grandes. */}
             <div className="p-3 xl:hidden">
-                <div className="grid grid-cols-7 gap-1">
+                <div className="hidden grid-cols-7 gap-1 min-[430px]:grid">
                     {DIAS_SEMANA.map((dia) => (
                         <div
                             key={dia}
@@ -143,6 +143,8 @@ export default function TareasCalendario({
                             {dia.slice(0, 1)}
                         </div>
                     ))}
+                </div>
+                <div className="grid grid-cols-5 gap-1 min-[430px]:grid-cols-7">
                     {dias.map((fecha) => {
                         const iso = fechaLocalISO(fecha);
                         const cantidad = tareasPorFecha.get(iso)?.length ?? 0;
@@ -154,7 +156,7 @@ export default function TareasCalendario({
                                 key={iso}
                                 type="button"
                                 onClick={() => setFechaSeleccionada(iso)}
-                                className={`relative min-h-[44px] rounded-xl text-sm font-bold transition ${
+                                className={`relative min-h-[48px] rounded-xl text-sm font-bold transition ${
                                     seleccionada
                                         ? "bg-blue-600 text-white"
                                         : iso === hoy
@@ -165,7 +167,10 @@ export default function TareasCalendario({
                                 }`}
                                 aria-label={`${iso}, ${cantidad} tareas`}
                             >
-                                {fecha.getDate()}
+                                <span className="block text-xs capitalize min-[430px]:hidden">
+                                    {DIAS_SEMANA[(fecha.getDay() + 6) % 7]}
+                                </span>
+                                <span>{fecha.getDate()}</span>
                                 {cantidad > 0 && (
                                     <span
                                         className={`absolute bottom-1 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full ${
@@ -189,24 +194,26 @@ export default function TareasCalendario({
                                 new Date(`${fechaSeleccionada}T12:00:00`),
                             )}
                         </p>
-                        <button
-                            type="button"
-                            onClick={() => onNuevaFecha(fechaSeleccionada)}
-                            className="min-h-[44px] shrink-0 rounded-xl bg-blue-600 px-3 text-xs font-bold text-white"
-                        >
-                            + Agendar
-                        </button>
+                        {onNuevaFecha && (
+                            <button
+                                type="button"
+                                onClick={() => onNuevaFecha(fechaSeleccionada)}
+                                className="min-h-[44px] shrink-0 rounded-xl bg-blue-600 px-3 text-xs font-bold text-white"
+                            >
+                                + Agendar
+                            </button>
+                        )}
                     </div>
-                    <div className="space-y-3">
-                        {tareasSeleccionadas.map((tarea) => (
-                            <TareaCard
-                                key={tarea.id}
-                                tarea={tarea}
-                                onEditar={onEditar}
-                                onCambiarEstado={onCambiarEstado}
-                                compacta
-                            />
-                        ))}
+                    <div>
+                        <TareasListaPaginada
+                            tareas={tareasSeleccionadas}
+                            onEditar={onEditar}
+                            onCambiarEstado={onCambiarEstado}
+                            compacta
+                            limiteInicial={8}
+                            incremento={8}
+                            className="space-y-3"
+                        />
                         {tareasSeleccionadas.length === 0 && (
                             <EmptyState
                                 icon="🗓️"
@@ -250,21 +257,35 @@ export default function TareasCalendario({
                                             : "bg-slate-50/70 dark:bg-black/10"
                                     }`}
                                 >
-                                    <button
-                                        type="button"
-                                        onClick={() => onNuevaFecha(iso)}
-                                        className={`flex h-11 w-11 items-center justify-center rounded-xl text-sm font-extrabold transition hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-500/10 dark:hover:text-blue-300 ${
-                                            iso === hoy
-                                                ? "bg-blue-600 text-white"
-                                                : delMes
-                                                  ? "text-slate-700 dark:text-neutral-300"
-                                                  : "text-slate-300 dark:text-neutral-600"
-                                        }`}
-                                        title="Agendar tarea en esta fecha"
-                                        aria-label={`Agendar tarea el ${iso}`}
-                                    >
-                                        {fecha.getDate()}
-                                    </button>
+                                    {onNuevaFecha ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => onNuevaFecha(iso)}
+                                            className={`flex h-11 w-11 items-center justify-center rounded-xl text-sm font-extrabold transition hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-500/10 dark:hover:text-blue-300 ${
+                                                iso === hoy
+                                                    ? "bg-blue-600 text-white"
+                                                    : delMes
+                                                      ? "text-slate-700 dark:text-neutral-300"
+                                                      : "text-slate-300 dark:text-neutral-600"
+                                            }`}
+                                            title="Agendar tarea en esta fecha"
+                                            aria-label={`Agendar tarea el ${iso}`}
+                                        >
+                                            {fecha.getDate()}
+                                        </button>
+                                    ) : (
+                                        <span
+                                            className={`flex h-11 w-11 items-center justify-center rounded-xl text-sm font-extrabold ${
+                                                iso === hoy
+                                                    ? "bg-blue-600 text-white"
+                                                    : delMes
+                                                      ? "text-slate-700 dark:text-neutral-300"
+                                                      : "text-slate-300 dark:text-neutral-600"
+                                            }`}
+                                        >
+                                            {fecha.getDate()}
+                                        </span>
+                                    )}
                                     <div className="mt-1 space-y-1.5">
                                         {tareasVisibles.map((tarea) => (
                                             <button

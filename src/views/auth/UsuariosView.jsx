@@ -605,11 +605,34 @@ function RolEditor({ rol, permisos, onClose, onGuardar }) {
     });
 
     const alternarPermiso = (codigo) => {
+        const permisosOperativosTareas = [
+            "tareas.planificar",
+            "tareas.ejecutar_propias",
+            "tareas.eliminar",
+        ];
+        if (
+            codigo === PERMISOS.TAREAS &&
+            form.permisos.some((permiso) =>
+                permisosOperativosTareas.includes(permiso),
+            )
+        ) {
+            setErrorForm(
+                "Mantén Ver Tareas mientras el rol tenga capacidades operativas de Tareas",
+            );
+            return;
+        }
         setForm((prev) => ({
             ...prev,
             permisos: prev.permisos.includes(codigo)
                 ? prev.permisos.filter((permiso) => permiso !== codigo)
-                : [...prev.permisos, codigo],
+                : [
+                      ...prev.permisos,
+                      ...(permisosOperativosTareas.includes(codigo) &&
+                      !prev.permisos.includes(PERMISOS.TAREAS)
+                          ? [PERMISOS.TAREAS]
+                          : []),
+                      codigo,
+                  ],
         }));
         setErrorForm("");
     };

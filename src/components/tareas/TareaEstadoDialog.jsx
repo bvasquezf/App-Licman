@@ -110,6 +110,7 @@ export default function TareaEstadoDialog({
             role="dialog"
             aria-modal="true"
             aria-labelledby="tarea-estado-titulo"
+            aria-describedby="tarea-estado-descripcion"
             tabIndex={-1}
             className={`fixed inset-0 z-[60] flex items-end justify-center bg-slate-900/65 sm:items-center sm:p-4 ${transicion.claseFondo}`}
             onClick={(event) => {
@@ -117,7 +118,7 @@ export default function TareaEstadoDialog({
             }}
         >
             <div
-                className={`w-full max-w-lg overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl sm:rounded-3xl dark:border-white/10 dark:bg-carbon-900 ${transicion.clasePanel}`}
+                className={`flex max-h-[calc(100dvh-0.5rem)] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl sm:rounded-3xl dark:border-white/10 dark:bg-carbon-900 ${transicion.clasePanel}`}
             >
                 <header
                     className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 pb-4 pt-5 sm:px-6 dark:border-white/10"
@@ -151,9 +152,16 @@ export default function TareaEstadoDialog({
                     </button>
                 </header>
 
-                <form onSubmit={enviar} noValidate>
-                    <div className="space-y-4 px-5 py-5 sm:px-6">
-                        <p className="text-sm leading-relaxed text-slate-600 dark:text-neutral-300">
+                <form
+                    onSubmit={enviar}
+                    noValidate
+                    className="flex min-h-0 flex-1 flex-col"
+                >
+                    <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5 sm:px-6">
+                        <p
+                            id="tarea-estado-descripcion"
+                            className="text-sm leading-relaxed text-slate-600 dark:text-neutral-300"
+                        >
                             {configuracion.descripcion}
                         </p>
                         <label className="block text-sm font-bold text-slate-800 dark:text-slate-100">
@@ -168,14 +176,25 @@ export default function TareaEstadoDialog({
                                 }}
                                 rows={4}
                                 placeholder={configuracion.placeholder}
-                                className={`mt-1 block w-full rounded-xl border-[1.5px] bg-white px-3 py-3 text-base text-slate-900 outline-none focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15 dark:bg-carbon-800 dark:text-slate-100 ${
+                                aria-label={configuracion.etiqueta}
+                                aria-invalid={Boolean(error)}
+                                aria-describedby={
+                                    error
+                                        ? "tarea-estado-error"
+                                        : "tarea-estado-descripcion"
+                                }
+                                className={`mt-1 block min-h-[44px] w-full rounded-xl border-[1.5px] bg-white px-3 py-3 text-base text-slate-900 outline-none focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15 dark:bg-carbon-800 dark:text-slate-100 ${
                                     error
                                         ? "border-rose-500"
                                         : "border-slate-300 dark:border-white/15"
                                 }`}
                             />
                             {error && (
-                                <span className="mt-1 block text-xs text-rose-600">
+                                <span
+                                    id="tarea-estado-error"
+                                    role="alert"
+                                    className="mt-1 block text-xs text-rose-600"
+                                >
                                     {error}
                                 </span>
                             )}

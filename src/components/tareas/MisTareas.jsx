@@ -1,23 +1,20 @@
 import EmptyState from "../ui/EmptyState";
-import TareaCard from "./TareaCard";
+import TareasListaPaginada from "./TareasListaPaginada";
 import {
     compararTareas,
     estaTareaActiva,
     fechaLocalISO,
 } from "../../lib/tareasData";
+import { useAuth } from "../../context/AuthContext";
+import { PERMISOS } from "../../lib/authPermissions";
 
 function Lista({ tareas, onEditar, onCambiarEstado }) {
     return (
-        <div className="grid items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {tareas.map((tarea) => (
-                <TareaCard
-                    key={tarea.id}
-                    tarea={tarea}
-                    onEditar={onEditar}
-                    onCambiarEstado={onCambiarEstado}
-                />
-            ))}
-        </div>
+        <TareasListaPaginada
+            tareas={tareas}
+            onEditar={onEditar}
+            onCambiarEstado={onCambiarEstado}
+        />
     );
 }
 
@@ -27,15 +24,16 @@ export default function MisTareas({
     onEditar,
     onCambiarEstado,
 }) {
+    const { puede } = useAuth();
     const hoy = fechaLocalISO();
 
-    if (perfil?.rol_codigo !== "tecnico") {
+    if (!puede(PERMISOS.TAREAS_EJECUTAR_PROPIAS)) {
         return (
             <div className="mx-auto max-w-2xl">
                 <EmptyState
                     icon="🪪"
                     title="Esta es la vista personal de los técnicos"
-                    description={`Tu cuenta “${perfil?.nombre_completo ?? "Sin nombre"}” tiene el rol ${perfil?.rol_nombre ?? "actual"}. Las asignaciones personales aparecen automáticamente para las cuentas con rol Técnico.`}
+                    description={`Tu cuenta “${perfil?.nombre_completo ?? "Sin nombre"}” tiene el rol ${perfil?.rol_nombre ?? "actual"}. Esta vista se habilita para quienes tienen permiso de ejecutar sus tareas asignadas.`}
                 />
             </div>
         );

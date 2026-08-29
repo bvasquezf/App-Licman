@@ -1,10 +1,12 @@
 import { useMemo } from "react";
 import EmptyState from "../ui/EmptyState";
-import TareaCard from "./TareaCard";
+import TareasListaPaginada from "./TareasListaPaginada";
 import {
     compararTareas,
+    duracionTareaMinutos,
     estaTareaActiva,
     fechaLocalISO,
+    formatearDuracionMinutos,
 } from "../../lib/tareasData";
 
 export default function CargaTecnicos({
@@ -30,6 +32,21 @@ export default function CargaTecnicos({
     }, [tecnicos, tecnicoFiltro]);
 
     const activas = tareas.filter(estaTareaActiva);
+    const tareasResumen =
+        tecnicoFiltro && tecnicoFiltro !== "todos"
+            ? tecnicoFiltro === "sin_asignar"
+                ? activas.filter((tarea) => !tarea.tecnico_ids?.length)
+                : activas.filter((tarea) =>
+                      tarea.tecnico_ids?.includes(tecnicoFiltro),
+                  )
+            : activas;
+    const minutosAgendados = tareasResumen.reduce(
+        (total, tarea) => total + (duracionTareaMinutos(tarea) ?? 0),
+        0,
+    );
+    const sinHorario = tareasResumen.filter(
+        (tarea) => duracionTareaMinutos(tarea) === null,
+    ).length;
     const sinAsignar = activas
         .filter((tarea) => !tarea.tecnico_ids?.length)
         .sort(compararTareas);
@@ -40,7 +57,7 @@ export default function CargaTecnicos({
                 icon="👷"
                 title="Todavía no hay carga asignada"
                 description="Crea una tarea y selecciona uno o más técnicos para comenzar a organizar el trabajo."
-                action={
+                action={onNueva ? (
                     <button
                         type="button"
                         onClick={onNueva}
@@ -48,13 +65,64 @@ export default function CargaTecnicos({
                     >
                         + Nueva tarea
                     </button>
-                }
+                ) : null}
             />
         );
     }
 
     return (
-        <div className="grid items-start gap-4 lg:grid-cols-2">
+        <>
+            <section className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-4 dark:border-blue-500/25 dark:bg-blue-500/5">
+                    <p className="text-xs font-extrabold uppercase tracking-wide text-blue-700 dark:text-blue-300">
+                        ⏱ Duración de trabajos únicos
+                    </p>
+                    <p className="mt-1 text-2xl font-black text-blue-950 dark:text-blue-100">
+                        {formatearDuracionMinutos(minutosAgendados)}
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-blue-800 dark:text-blue-300">
+                        Cada tarea cuenta una vez, aunque tenga más de un técnico.
+                    </p>
+                </div>
+                <div
+                    className={`rounded-2xl border p-4 ${
+                        sinHorario > 0
+                            ? "border-amber-200 bg-amber-50/70 dark:border-amber-500/25 dark:bg-amber-500/5"
+                            : "border-emerald-200 bg-emerald-50/70 dark:border-emerald-500/25 dark:bg-emerald-500/5"
+                    }`}
+                >
+                    <p
+                        className={`text-xs font-extrabold uppercase tracking-wide ${
+                            sinHorario > 0
+                                ? "text-amber-700 dark:text-amber-300"
+                                : "text-emerald-700 dark:text-emerald-300"
+                        }`}
+                    >
+                        {sinHorario > 0
+                            ? "⚠ Pendientes de horario"
+                            : "✓ Horarios completos"}
+                    </p>
+                    <p
+                        className={`mt-1 text-2xl font-black ${
+                            sinHorario > 0
+                                ? "text-amber-950 dark:text-amber-100"
+                                : "text-emerald-950 dark:text-emerald-100"
+                        }`}
+                    >
+                        {sinHorario}
+                    </p>
+                    <p
+                        className={`mt-1 text-xs font-semibold ${
+                            sinHorario > 0
+                                ? "text-amber-800 dark:text-amber-300"
+                                : "text-emerald-800 dark:text-emerald-300"
+                        }`}
+                    >
+                        tareas activas sin bloque horario completo.
+                    </p>
+                </div>
+            </section>
+            <div className="grid items-start gap-4 lg:grid-cols-2">
             {personas.map((tecnico) => {
                 const asignadas = activas
                     .filter((tarea) =>
@@ -77,6 +145,14 @@ export default function CargaTecnicos({
                 ).length;
                 const enEspera = asignadas.filter(
                     (tarea) => tarea.estado === "En espera",
+                ).length;
+                const minutosTecnico = asignadas.reduce(
+                    (total, tarea) =>
+                        total + (duracionTareaMinutos(tarea) ?? 0),
+                    0,
+                );
+                const sinHorarioTecnico = asignadas.filter(
+                    (tarea) => duracionTareaMinutos(tarea) === null,
                 ).length;
                 const estado =
                     enProceso > 0
@@ -125,6 +201,12 @@ export default function CargaTecnicos({
                                             {asignadas.length === 1 ? "" : "s"} activa
                                             {asignadas.length === 1 ? "" : "s"}
                                         </p>
+                                        <p className="text-xs font-semibold text-slate-500 dark:text-neutral-400">
+                                            ⏱ Carga asignada: {formatearDuracionMinutos(minutosTecnico)}
+                                            {sinHorarioTecnico > 0
+                                                ? ` · ${sinHorarioTecnico} sin horario`
+                                                : ""}
+                                        </p>
                                     </div>
                                 </div>
                                 <span
@@ -135,27 +217,29 @@ export default function CargaTecnicos({
                             </div>
                         </header>
                         <div className="space-y-3 p-3">
-                            {asignadas.map((tarea) => (
-                                <TareaCard
-                                    key={tarea.id}
-                                    tarea={tarea}
-                                    onEditar={onEditar}
-                                    onCambiarEstado={onCambiarEstado}
-                                    compacta
-                                />
-                            ))}
+                            <TareasListaPaginada
+                                tareas={asignadas}
+                                onEditar={onEditar}
+                                onCambiarEstado={onCambiarEstado}
+                                compacta
+                                limiteInicial={6}
+                                incremento={6}
+                                className="space-y-3"
+                            />
                             {asignadas.length === 0 && (
                                 <div className="rounded-xl border border-dashed border-emerald-300 bg-emerald-50/60 p-5 text-center dark:border-emerald-500/30 dark:bg-emerald-500/5">
                                     <p className="text-sm font-bold text-emerald-800 dark:text-emerald-300">
                                         Sin trabajos pendientes
                                     </p>
-                                    <button
-                                        type="button"
-                                        onClick={onNueva}
-                                        className="mt-2 min-h-[44px] rounded-xl px-3 text-xs font-bold text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-500/10"
-                                    >
-                                        + Asignar tarea
-                                    </button>
+                                    {onNueva && (
+                                        <button
+                                            type="button"
+                                            onClick={onNueva}
+                                            className="mt-2 min-h-[44px] rounded-xl px-3 text-xs font-bold text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-500/10"
+                                        >
+                                            + Asignar tarea
+                                        </button>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -177,18 +261,19 @@ export default function CargaTecnicos({
                             </p>
                         </header>
                         <div className="space-y-3 p-3">
-                            {sinAsignar.map((tarea) => (
-                                <TareaCard
-                                    key={tarea.id}
-                                    tarea={tarea}
-                                    onEditar={onEditar}
-                                    onCambiarEstado={onCambiarEstado}
-                                    compacta
-                                />
-                            ))}
+                            <TareasListaPaginada
+                                tareas={sinAsignar}
+                                onEditar={onEditar}
+                                onCambiarEstado={onCambiarEstado}
+                                compacta
+                                limiteInicial={6}
+                                incremento={6}
+                                className="space-y-3"
+                            />
                         </div>
                     </section>
                 )}
-        </div>
+            </div>
+        </>
     );
 }

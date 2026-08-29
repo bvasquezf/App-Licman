@@ -1,5 +1,5 @@
 import EmptyState from "../ui/EmptyState";
-import TareaCard from "./TareaCard";
+import TareasListaPaginada from "./TareasListaPaginada";
 import {
     compararTareas,
     estaTareaActiva,
@@ -9,16 +9,11 @@ import {
 
 function ListaAgenda({ tareas, onEditar, onCambiarEstado }) {
     return (
-        <div className="grid items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {tareas.map((tarea) => (
-                <TareaCard
-                    key={tarea.id}
-                    tarea={tarea}
-                    onEditar={onEditar}
-                    onCambiarEstado={onCambiarEstado}
-                />
-            ))}
-        </div>
+        <TareasListaPaginada
+            tareas={tareas}
+            onEditar={onEditar}
+            onCambiarEstado={onCambiarEstado}
+        />
     );
 }
 
@@ -93,36 +88,38 @@ export default function AgendaHoy({
                                 cada trabajo con un responsable claro.
                             </p>
                         </div>
-                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    onNueva({ fecha_programada: hoy })
-                                }
-                                className="min-h-[48px] rounded-xl bg-white px-4 text-sm font-extrabold text-slate-950 hover:bg-blue-50"
-                            >
-                                + Trabajo hoy
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    onNueva({
-                                        fecha_programada: hoy,
-                                        tipo: "Terreno",
-                                    })
-                                }
-                                className="min-h-[48px] rounded-xl border border-white/20 bg-white/10 px-4 text-sm font-extrabold text-white hover:bg-white/15"
-                            >
-                                🚐 Nueva visita
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => onNueva()}
-                                className="col-span-2 min-h-[48px] rounded-xl border border-white/20 px-4 text-sm font-bold text-slate-200 hover:bg-white/10 sm:col-span-1"
-                            >
-                                + Por programar
-                            </button>
-                        </div>
+                        {onNueva && (
+                            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        onNueva({ fecha_programada: hoy })
+                                    }
+                                    className="min-h-[48px] rounded-xl bg-white px-4 text-sm font-extrabold text-slate-950 hover:bg-blue-50"
+                                >
+                                    + Trabajo hoy
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        onNueva({
+                                            fecha_programada: hoy,
+                                            tipo: "Terreno",
+                                        })
+                                    }
+                                    className="min-h-[48px] rounded-xl border border-white/20 bg-white/10 px-4 text-sm font-extrabold text-white hover:bg-white/15"
+                                >
+                                    🚐 Nueva visita
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => onNueva()}
+                                    className="col-span-2 min-h-[48px] rounded-xl border border-white/20 px-4 text-sm font-bold text-slate-200 hover:bg-white/10 sm:col-span-1"
+                                >
+                                    + Por programar
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -193,7 +190,7 @@ export default function AgendaHoy({
                         icon="☀️"
                         title="No hay trabajos agendados para hoy"
                         description="Puedes registrar una visita para hoy o dejar una solicitud en la bandeja por programar."
-                        action={
+                        action={onNueva ? (
                             <button
                                 type="button"
                                 onClick={() =>
@@ -203,7 +200,7 @@ export default function AgendaHoy({
                             >
                                 + Agendar trabajo hoy
                             </button>
-                        }
+                        ) : null}
                     />
                 )}
             </section>

@@ -47,6 +47,7 @@ function etiquetaEquipo(equipo) {
     return [
         equipo.numero_serie ? `Serie ${equipo.numero_serie}` : null,
         [equipo.marca, equipo.modelo].filter(Boolean).join(" "),
+        equipo.estado_operacional || null,
     ]
         .filter(Boolean)
         .join(" · ");
@@ -62,6 +63,7 @@ export default function TareaFormDialog({
     onClose,
     onGuardar,
     onEliminar,
+    puedeEliminar = true,
 }) {
     const transicion = useModalTransition(open);
     const dialogRef = useRef(null);
@@ -183,47 +185,102 @@ export default function TareaFormDialog({
         }
     };
 
-    const cambiarCliente = (valor) => {
-        const encontrado = clientes.find(
+    const limpiarErrores = (...campos) => {
+        setErrores((prev) => {
+            const next = { ...prev };
+            let cambio = false;
+            for (const campo of campos) {
+                if (next[campo]) {
+                    delete next[campo];
+                    cambio = true;
+                }
+            }
+            return cambio ? next : prev;
+        });
+    };
+
+    const buscarCliente = (valor) =>
+        clientes.find(
             (cliente) =>
                 cliente.razon_social.toLocaleLowerCase("es") ===
                 valor.trim().toLocaleLowerCase("es"),
         );
-        setForm((prev) => {
-            const equipoActual = equipos.find(
-                (equipo) => equipo.id === Number(prev.equipo_id),
+
+    const confirmarCliente = (valor) => {
+        const encontrado = buscarCliente(valor);
+        const equipoActual = equipos.find(
+            (equipo) => equipo.id === Number(form.equipo_id),
+        );
+        const cambiaCliente =
+            (form.cliente_id ?? null) !== (encontrado?.id ?? null) &&
+            Boolean(form.cliente_id || encontrado);
+        const direccionCliente = encontrado
+            ? [encontrado.direccion, encontrado.comuna]
+                  .filter(Boolean)
+                  .join(", ")
+            : "";
+        const contactoCliente = encontrado
+            ? [encontrado.contacto, encontrado.celular]
+                  .filter(Boolean)
+                  .join(" · ")
+            : "";
+        const equipoCompatible =
+            !cambiaCliente ||
+            !equipoActual ||
+            Boolean(
+                encontrado && equipoActual.cliente_id === encontrado.id,
             );
-            const equipoCompatible =
-                !encontrado ||
-                !equipoActual ||
-                equipoActual.cliente_id === encontrado.id;
+        setForm((prev) => {
             return {
                 ...prev,
                 cliente_nombre: valor,
                 cliente_id: encontrado?.id ?? null,
-                ubicacion:
-                    encontrado && !prev.ubicacion
-                        ? [encontrado.direccion, encontrado.comuna]
-                              .filter(Boolean)
-                              .join(", ")
-                        : prev.ubicacion,
-                contacto:
-                    encontrado && !prev.contacto
-                        ? [encontrado.contacto, encontrado.celular]
-                              .filter(Boolean)
-                              .join(" · ")
-                        : prev.contacto,
+                ubicacion: cambiaCliente ? direccionCliente : prev.ubicacion,
+                contacto: cambiaCliente ? contactoCliente : prev.contacto,
                 equipo_id: equipoCompatible ? prev.equipo_id : null,
                 equipo_referencia: equipoCompatible
                     ? prev.equipo_referencia
                     : "",
             };
         });
+        limpiarErrores("cliente_nombre");
+        if (direccionCliente) limpiarErrores("ubicacion");
+        if (contactoCliente) limpiarErrores("contacto");
+        if (!equipoCompatible) limpiarErrores("equipo_id");
+    };
+
+    const cambiarCliente = (valor) => {
+        if (!valor.trim() || buscarCliente(valor)) {
+            confirmarCliente(valor);
+            return;
+        }
+        setForm((prev) => ({ ...prev, cliente_nombre: valor }));
+        limpiarErrores("cliente_nombre");
     };
 
     const cambiarEquipo = (valor) => {
         const equipoId = valor ? Number(valor) : null;
         const encontrado = equipos.find((equipo) => equipo.id === equipoId);
+        const clienteEquipo = encontrado?.cliente_id
+            ? clientes.find(
+                  (cliente) => cliente.id === encontrado.cliente_id,
+              )
+            : null;
+
+        if (
+            encontrado?.cliente_id &&
+            form.cliente_id &&
+            encontrado.cliente_id !== Number(form.cliente_id)
+        ) {
+            setErrores((prev) => ({
+                ...prev,
+                equipo_id:
+                    "Este equipo pertenece a otro cliente. Selecciona uno compatible.",
+            }));
+            refs.current.equipo_id?.focus();
+            return;
+        }
+
         setForm((prev) => ({
             ...prev,
             equipo_id: equipoId,
@@ -232,11 +289,35 @@ export default function TareaFormDialog({
                 : prev.equipo_id
                   ? ""
                   : prev.equipo_referencia,
+            cliente_id:
+                !prev.cliente_id && clienteEquipo
+                    ? clienteEquipo.id
+                    : prev.cliente_id,
+            cliente_nombre:
+                !prev.cliente_id && clienteEquipo
+                    ? clienteEquipo.razon_social
+                    : prev.cliente_nombre,
             ubicacion:
-                encontrado?.ubicacion_actual && !prev.ubicacion
-                    ? encontrado.ubicacion_actual
-                    : prev.ubicacion,
+                !prev.cliente_id && clienteEquipo
+                    ? [clienteEquipo.direccion, clienteEquipo.comuna]
+                          .filter(Boolean)
+                          .join(", ") || encontrado?.ubicacion_actual
+                    : encontrado?.ubicacion_actual && !prev.ubicacion
+                      ? encontrado.ubicacion_actual
+                      : prev.ubicacion,
+            contacto:
+                !prev.cliente_id && clienteEquipo
+                    ? [clienteEquipo.contacto, clienteEquipo.celular]
+                          .filter(Boolean)
+                          .join(" · ")
+                    : prev.contacto,
         }));
+        limpiarErrores(
+            "cliente_nombre",
+            "ubicacion",
+            "contacto",
+            "equipo_id",
+        );
     };
 
     const alternarTecnico = (tecnicoId) => {
@@ -308,6 +389,41 @@ export default function TareaFormDialog({
             nextErrores.resultado =
                 "Registra el resultado antes de finalizar";
         }
+        const terrenoEnOperacion =
+            form.tipo === "Terreno" &&
+            ["Programada", "En proceso", "En espera"].includes(estado);
+        if (terrenoEnOperacion && !form.cliente_nombre.trim()) {
+            nextErrores.cliente_nombre =
+                "Indica a qué cliente corresponde la visita";
+        }
+        if (terrenoEnOperacion && !form.contacto.trim()) {
+            nextErrores.contacto =
+                "Agrega un contacto para coordinar la visita";
+        }
+        if (terrenoEnOperacion && !form.ubicacion.trim()) {
+            nextErrores.ubicacion =
+                "Indica la dirección o ubicación de la visita";
+        }
+        const exigeEquipoVigente = [
+            "Programada",
+            "En proceso",
+            "En espera",
+        ].includes(estado);
+        if (form.equipo_id && exigeEquipoVigente) {
+            const equipoSeleccionado = equipos.find(
+                (equipo) => equipo.id === Number(form.equipo_id),
+            );
+            if (!equipoSeleccionado) {
+                nextErrores.equipo_id =
+                    "El equipo ya no está disponible en el inventario";
+            } else if (
+                equipoSeleccionado.cliente_id &&
+                equipoSeleccionado.cliente_id !== Number(form.cliente_id)
+            ) {
+                nextErrores.equipo_id =
+                    "El equipo vinculado pertenece a otro cliente";
+            }
+        }
         if (Object.keys(nextErrores).length > 0) {
             setErrores(nextErrores);
             setPlanificacionAbierta(true);
@@ -359,6 +475,9 @@ export default function TareaFormDialog({
         ["Por programar", "Programada"].includes(form.estado)
             ? estadoSegunPlanificacion(form)
             : form.estado;
+    const requiereDatosTerreno =
+        form.tipo === "Terreno" &&
+        ["Programada", "En proceso", "En espera"].includes(estadoCalculado);
 
     return (
         <div
@@ -437,6 +556,12 @@ export default function TareaFormDialog({
                                             cambiar("titulo", event.target.value)
                                         }
                                         placeholder="Ej. Revisar fuga hidráulica del equipo"
+                                        aria-invalid={Boolean(errores.titulo)}
+                                        aria-describedby={
+                                            errores.titulo
+                                                ? "tarea-error-titulo"
+                                                : undefined
+                                        }
                                         className={`${INPUT_CLASES} ${
                                             errores.titulo
                                                 ? "border-rose-500"
@@ -444,7 +569,11 @@ export default function TareaFormDialog({
                                         }`}
                                     />
                                     {errores.titulo && (
-                                        <span className="mt-1 block text-xs text-rose-600">
+                                        <span
+                                            id="tarea-error-titulo"
+                                            role="alert"
+                                            className="mt-1 block text-xs text-rose-600"
+                                        >
                                             {errores.titulo}
                                         </span>
                                     )}
@@ -516,15 +645,38 @@ export default function TareaFormDialog({
                             <div className="mt-3 grid gap-3 md:grid-cols-2">
                                 <label className="block text-sm font-bold text-slate-800 dark:text-slate-100 md:col-span-2">
                                     Cliente
+                                    {requiereDatosTerreno && (
+                                        <span className="text-rose-600"> *</span>
+                                    )}
                                     <input
+                                        ref={(el) => {
+                                            refs.current.cliente_nombre = el;
+                                        }}
                                         type="text"
                                         list="clientes-tareas"
                                         value={form.cliente_nombre}
                                         onChange={(event) =>
                                             cambiarCliente(event.target.value)
                                         }
+                                        onBlur={(event) =>
+                                            confirmarCliente(
+                                                event.currentTarget.value,
+                                            )
+                                        }
                                         placeholder="Escribe parte del nombre o ingresa uno nuevo"
-                                        className={INPUT_CLASES}
+                                        aria-invalid={Boolean(
+                                            errores.cliente_nombre,
+                                        )}
+                                        aria-describedby={
+                                            errores.cliente_nombre
+                                                ? "tarea-error-cliente"
+                                                : undefined
+                                        }
+                                        className={`${INPUT_CLASES} ${
+                                            errores.cliente_nombre
+                                                ? "border-rose-500"
+                                                : ""
+                                        }`}
                                         autoComplete="off"
                                     />
                                     <datalist id="clientes-tareas">
@@ -535,18 +687,52 @@ export default function TareaFormDialog({
                                             />
                                         ))}
                                     </datalist>
+                                    {errores.cliente_nombre && (
+                                        <span
+                                            id="tarea-error-cliente"
+                                            role="alert"
+                                            className="mt-1 block text-xs text-rose-600"
+                                        >
+                                            {errores.cliente_nombre}
+                                        </span>
+                                    )}
                                 </label>
                                 <label className="block text-sm font-bold text-slate-800 dark:text-slate-100 md:col-span-2">
                                     Contacto
+                                    {requiereDatosTerreno && (
+                                        <span className="text-rose-600"> *</span>
+                                    )}
                                     <input
+                                        ref={(el) => {
+                                            refs.current.contacto = el;
+                                        }}
                                         type="text"
                                         value={form.contacto}
                                         onChange={(event) =>
                                             cambiar("contacto", event.target.value)
                                         }
                                         placeholder="Nombre y teléfono"
-                                        className={INPUT_CLASES}
+                                        aria-invalid={Boolean(errores.contacto)}
+                                        aria-describedby={
+                                            errores.contacto
+                                                ? "tarea-error-contacto"
+                                                : undefined
+                                        }
+                                        className={`${INPUT_CLASES} ${
+                                            errores.contacto
+                                                ? "border-rose-500"
+                                                : ""
+                                        }`}
                                     />
+                                    {errores.contacto && (
+                                        <span
+                                            id="tarea-error-contacto"
+                                            role="alert"
+                                            className="mt-1 block text-xs text-rose-600"
+                                        >
+                                            {errores.contacto}
+                                        </span>
+                                    )}
                                 </label>
                             </div>
                         </section>
@@ -779,7 +965,15 @@ export default function TareaFormDialog({
                                     <div className="mt-3 grid gap-3 md:grid-cols-2">
                                         <label className="block text-sm font-bold text-slate-800 dark:text-slate-100 md:col-span-2">
                                             Ubicación
+                                            {requiereDatosTerreno && (
+                                                <span className="text-rose-600">
+                                                    {" "}*
+                                                </span>
+                                            )}
                                             <input
+                                                ref={(el) => {
+                                                    refs.current.ubicacion = el;
+                                                }}
                                                 type="text"
                                                 value={form.ubicacion}
                                                 onChange={(event) =>
@@ -789,17 +983,53 @@ export default function TareaFormDialog({
                                                     )
                                                 }
                                                 placeholder="Dirección, sector o taller"
-                                                className={INPUT_CLASES}
+                                                aria-invalid={Boolean(
+                                                    errores.ubicacion,
+                                                )}
+                                                aria-describedby={
+                                                    errores.ubicacion
+                                                        ? "tarea-error-ubicacion"
+                                                        : undefined
+                                                }
+                                                className={`${INPUT_CLASES} ${
+                                                    errores.ubicacion
+                                                        ? "border-rose-500"
+                                                        : ""
+                                                }`}
                                             />
+                                            {errores.ubicacion && (
+                                                <span
+                                                    id="tarea-error-ubicacion"
+                                                    role="alert"
+                                                    className="mt-1 block text-xs text-rose-600"
+                                                >
+                                                    {errores.ubicacion}
+                                                </span>
+                                            )}
                                         </label>
                                         <label className="block text-sm font-bold text-slate-800 dark:text-slate-100 md:col-span-2">
                                             Equipo vinculado
                                             <select
+                                                ref={(el) => {
+                                                    refs.current.equipo_id = el;
+                                                }}
                                                 value={form.equipo_id ?? ""}
                                                 onChange={(event) =>
                                                     cambiarEquipo(event.target.value)
                                                 }
-                                                className={INPUT_CLASES}
+                                                aria-invalid={Boolean(
+                                                    errores.equipo_id,
+                                                )}
+                                                aria-describedby={
+                                                    errores.equipo_id
+                                                        ? "tarea-error-equipo"
+                                                        : undefined
+                                                }
+                                                className={`${INPUT_CLASES} ${
+                                                    errores.equipo_id
+                                                        ? "border-rose-500"
+                                                        : ""
+                                                }`}
                                             >
                                                 <option value="">
                                                     Sin equipo vinculado
@@ -808,6 +1038,14 @@ export default function TareaFormDialog({
                                                     <option
                                                         key={equipo.id}
                                                         value={equipo.id}
+                                                        disabled={Boolean(
+                                                            form.cliente_id &&
+                                                                equipo.cliente_id &&
+                                                                equipo.cliente_id !==
+                                                                    Number(
+                                                                        form.cliente_id,
+                                                                    ),
+                                                        )}
                                                     >
                                                         {etiquetaEquipo(equipo)}
                                                     </option>
@@ -820,6 +1058,15 @@ export default function TareaFormDialog({
                                                         asociados en inventario.
                                                     </span>
                                                 )}
+                                            {errores.equipo_id && (
+                                                <span
+                                                    id="tarea-error-equipo"
+                                                    role="alert"
+                                                    className="mt-1 block text-xs text-rose-600"
+                                                >
+                                                    {errores.equipo_id}
+                                                </span>
+                                            )}
                                         </label>
                                         <label className="block text-sm font-bold text-slate-800 dark:text-slate-100 md:col-span-2">
                                             Referencia libre
@@ -961,7 +1208,7 @@ export default function TareaFormDialog({
                             </>
                         )}
 
-                        {modoEdicion && (
+                        {modoEdicion && puedeEliminar && (
                             <section className="border-t border-slate-200 pt-5 dark:border-white/10">
                                 <div className="rounded-2xl border border-rose-200 bg-rose-50/60 p-4 dark:border-rose-500/25 dark:bg-rose-500/5">
                                     <h3 className="text-sm font-extrabold text-rose-900 dark:text-rose-200">

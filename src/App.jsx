@@ -19,6 +19,8 @@ import TecnicosViewMant from "./views/mantenimiento/TecnicosView";
 import ReincidenciaViewMant from "./views/mantenimiento/ReincidenciaView";
 import TiemposViewMant from "./views/mantenimiento/TiemposView";
 import TareasView from "./views/tareas/TareasView";
+import TareasPantallaView from "./views/tareas/TareasPantallaView";
+import { TareasProvider } from "./context/TareasContext";
 import LoginView from "./views/auth/LoginView";
 import RestablecerClaveView from "./views/auth/RestablecerClaveView";
 import PerfilView from "./views/auth/PerfilView";
@@ -124,38 +126,76 @@ function App() {
                     <Route
                         element={<RequirePermission permiso={PERMISOS.TAREAS} />}
                     >
-                        <Route
-                            path="/tareas"
-                            element={<TareasView vista="agenda" />}
-                        />
-                        <Route
-                            path="/tareas/por-programar"
-                            element={<TareasView vista="por_programar" />}
-                        />
-                        <Route
-                            path="/tareas/tablero"
-                            element={<TareasView vista="tablero" />}
-                        />
-                        <Route
-                            path="/tareas/calendario"
-                            element={<TareasView vista="calendario" />}
-                        />
-                        <Route
-                            path="/tareas/tecnicos"
-                            element={<TareasView vista="tecnicos" />}
-                        />
-                        <Route
-                            path="/tareas/mis-tareas"
-                            element={<TareasView vista="mis_tareas" />}
-                        />
-                        <Route
-                            path="/tareas/finalizadas"
-                            element={<TareasView vista="finalizadas" />}
-                        />
-                        <Route
-                            path="/tareas/eliminadas"
-                            element={<TareasView vista="eliminadas" />}
-                        />
+                        <Route element={<TareasProvider />}>
+                            {/* Vista personal: solo quienes ejecutan tareas
+                                propias (rol Técnico). */}
+                            <Route
+                                element={
+                                    <RequirePermission
+                                        permiso={PERMISOS.TAREAS_EJECUTAR_PROPIAS}
+                                    />
+                                }
+                            >
+                                <Route
+                                    path="/tareas/mis-tareas"
+                                    element={<TareasView vista="mis_tareas" />}
+                                />
+                            </Route>
+                            {/* Vistas de planificación y pantalla TV: solo
+                                roles con tareas.planificar. */}
+                            <Route
+                                element={
+                                    <RequirePermission
+                                        permiso={PERMISOS.TAREAS_PLANIFICAR}
+                                    />
+                                }
+                            >
+                                <Route
+                                    path="/tareas"
+                                    element={<TareasView vista="agenda" />}
+                                />
+                                <Route
+                                    path="/tareas/por-programar"
+                                    element={<TareasView vista="por_programar" />}
+                                />
+                                <Route
+                                    path="/tareas/tablero"
+                                    element={<TareasView vista="tablero" />}
+                                />
+                                <Route
+                                    path="/tareas/calendario"
+                                    element={<TareasView vista="calendario" />}
+                                />
+                                <Route
+                                    path="/tareas/semana"
+                                    element={<TareasView vista="semana" />}
+                                />
+                                <Route
+                                    path="/tareas/tecnicos"
+                                    element={<TareasView vista="tecnicos" />}
+                                />
+                                <Route
+                                    path="/tareas/finalizadas"
+                                    element={<TareasView vista="finalizadas" />}
+                                />
+                                <Route
+                                    path="/tareas/pantalla"
+                                    element={<TareasPantallaView />}
+                                />
+                            </Route>
+                            <Route
+                                element={
+                                    <RequirePermission
+                                        permiso={PERMISOS.TAREAS_ELIMINAR}
+                                    />
+                                }
+                            >
+                                <Route
+                                    path="/tareas/eliminadas"
+                                    element={<TareasView vista="eliminadas" />}
+                                />
+                            </Route>
+                        </Route>
                     </Route>
 
                     <Route path="*" element={<Navigate to="/bodega" replace />} />

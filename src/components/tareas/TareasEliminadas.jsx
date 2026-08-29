@@ -1,3 +1,4 @@
+import { useState } from "react";
 import EmptyState from "../ui/EmptyState";
 import { formatearFechaTarea } from "../../lib/tareasData";
 
@@ -10,6 +11,10 @@ function formatearMomento(valor) {
 }
 
 export default function TareasEliminadas({ tareas, onRestaurar }) {
+    const [limite, setLimite] = useState(18);
+    const visibles = tareas.slice(0, limite);
+    const restantes = Math.max(0, tareas.length - visibles.length);
+
     if (tareas.length === 0) {
         return (
             <EmptyState
@@ -33,7 +38,7 @@ export default function TareasEliminadas({ tareas, onRestaurar }) {
             </section>
 
             <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {tareas.map((tarea) => (
+                {visibles.map((tarea) => (
                     <article
                         key={tarea.id}
                         className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_6px_20px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-carbon-900"
@@ -94,6 +99,17 @@ export default function TareasEliminadas({ tareas, onRestaurar }) {
                     </article>
                 ))}
             </div>
+            {restantes > 0 && (
+                <div className="flex justify-center">
+                    <button
+                        type="button"
+                        onClick={() => setLimite((actual) => actual + 18)}
+                        className="min-h-[44px] rounded-xl border border-slate-300 bg-white px-4 text-sm font-extrabold text-blue-700 hover:bg-blue-50 dark:border-white/15 dark:bg-carbon-900 dark:text-blue-300 dark:hover:bg-white/5"
+                    >
+                        Mostrar {Math.min(18, restantes)} más ({restantes} pendientes)
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

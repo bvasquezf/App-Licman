@@ -81,6 +81,32 @@ body {
     overflow-x: clip;
 }
 
+/* Carriles horizontales táctiles (subnavegación y selector semanal).
+   Conservan el gesto en pantallas angostas sin mostrar una barra que parezca
+   parte del contenido. */
+.scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+/* Mantiene la subnavegación bajo el topbar móvil, incluyendo el safe-area
+   superior de iPhone. En escritorio el topbar desaparece. */
+.app-subnav-sticky {
+    top: calc(3.5rem + max(0.75rem, env(safe-area-inset-top)));
+}
+
+@media (min-width: 768px) {
+    .app-subnav-sticky {
+        top: 0;
+    }
+}
+
 /* La clase vive solo durante el clic del selector de tema. Así los fondos,
    bordes, textos e iconos cambian en conjunto sin volver lentas las demás
    interacciones de la aplicación. */

@@ -3,6 +3,9 @@ export const PERMISOS = {
     EQUIPOS: "equipos.usar",
     MANTENIMIENTO: "mantenimiento.usar",
     TAREAS: "tareas.usar",
+    TAREAS_PLANIFICAR: "tareas.planificar",
+    TAREAS_EJECUTAR_PROPIAS: "tareas.ejecutar_propias",
+    TAREAS_ELIMINAR: "tareas.eliminar",
     USUARIOS: "usuarios.gestionar",
     SUPERADMIN: "usuarios.superadmin",
 };
@@ -20,8 +23,25 @@ export const MODULOS_ACCESO = [
 
 export function rutaInicialParaPermisos(permisos = []) {
     const disponibles = permisos instanceof Set ? permisos : new Set(permisos);
+    if (
+        disponibles.has(PERMISOS.TAREAS) &&
+        disponibles.has(PERMISOS.TAREAS_EJECUTAR_PROPIAS) &&
+        !disponibles.has(PERMISOS.TAREAS_PLANIFICAR)
+    ) {
+        return "/tareas/mis-tareas";
+    }
+    // Las rutas de /tareas exigen tareas.planificar o tareas.ejecutar_propias.
+    // Un rol con solo tareas.usar (lectura legada) no tiene ninguna vista
+    // disponible ahí: si /tareas fuera su ruta inicial, RequirePermission
+    // rebotaría en bucle a la misma ruta.
+    const modulos = MODULOS_ACCESO.filter(
+        ({ permiso }) =>
+            permiso !== PERMISOS.TAREAS ||
+            disponibles.has(PERMISOS.TAREAS_PLANIFICAR) ||
+            disponibles.has(PERMISOS.TAREAS_EJECUTAR_PROPIAS),
+    );
     return (
-        MODULOS_ACCESO.find(({ permiso }) => disponibles.has(permiso))?.ruta ??
+        modulos.find(({ permiso }) => disponibles.has(permiso))?.ruta ??
         "/sin-acceso"
     );
 }

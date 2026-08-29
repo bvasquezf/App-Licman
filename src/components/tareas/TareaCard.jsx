@@ -2,6 +2,8 @@ import {
     fechaLocalISO,
     formatearFechaTarea,
 } from "../../lib/tareasData";
+import { useAuth } from "../../context/AuthContext";
+import { PERMISOS } from "../../lib/authPermissions";
 
 const ESTADO_CLASES = {
     "Por programar":
@@ -33,6 +35,14 @@ export default function TareaCard({
     onCambiarEstado,
     compacta = false,
 }) {
+    const { profile, puede } = useAuth();
+    const puedePlanificar = puede(PERMISOS.TAREAS_PLANIFICAR);
+    const esPropia = Boolean(
+        profile?.id && tarea.tecnico_ids?.includes(profile.id),
+    );
+    const puedeEjecutarPropia = Boolean(
+        puede(PERMISOS.TAREAS_EJECUTAR_PROPIAS) && esPropia,
+    );
     const activa = [
         "Por programar",
         "Programada",
@@ -77,7 +87,22 @@ export default function TareaCard({
                           label: "Reactivar",
                           icon: "↩",
                       };
-    const puedePausar = tarea.estado === "En proceso";
+    const puedePausar =
+        tarea.estado === "En proceso" &&
+        (puedePlanificar || puedeEjecutarPropia);
+    const transicionTecnicoPermitida =
+        (tarea.estado === "Programada" &&
+            accionEstado.estado === "En proceso") ||
+        (tarea.estado === "En proceso" &&
+            accionEstado.estado === "Finalizada") ||
+        (tarea.estado === "En espera" &&
+            accionEstado.estado === "En proceso");
+    const puedeAccionPrincipal = accionEstado.editar
+        ? puedePlanificar
+        : puedePlanificar ||
+          (puedeEjecutarPropia && transicionTecnicoPermitida);
+    const cantidadAcciones =
+        1 + Number(puedePausar) + Number(puedeAccionPrincipal);
 
     return (
         <article
@@ -93,7 +118,7 @@ export default function TareaCard({
                 className={`block min-h-[44px] w-full text-left transition hover:bg-slate-50 dark:hover:bg-white/5 ${
                     compacta ? "p-3" : "p-4"
                 }`}
-                aria-label={`Editar tarea ${tarea.titulo}`}
+                aria-label={`${puedePlanificar ? "Editar" : "Abrir detalle de"} la tarea ${tarea.titulo}, estado ${tarea.estado}, prioridad ${tarea.prioridad}`}
             >
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
@@ -177,7 +202,11 @@ export default function TareaCard({
 
             <div
                 className={`grid gap-2 border-t border-slate-100 p-2.5 dark:border-white/5 ${
-                    puedePausar ? "grid-cols-3" : "grid-cols-2"
+                    cantidadAcciones === 3
+                        ? "grid-cols-3"
+                        : cantidadAcciones === 2
+                          ? "grid-cols-2"
+                          : "grid-cols-1"
                 }`}
             >
                 <button
@@ -185,7 +214,7 @@ export default function TareaCard({
                     onClick={() => onEditar(tarea)}
                     className="min-h-[44px] rounded-xl bg-slate-100 px-3 text-xs font-bold text-slate-700 transition hover:bg-slate-200 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10"
                 >
-                    ✏️ Editar
+                    {puedePlanificar ? "✏️ Editar" : "👁️ Ver detalle"}
                 </button>
                 {puedePausar && (
                     <button
@@ -196,21 +225,23 @@ export default function TareaCard({
                         ⏸ Espera
                     </button>
                 )}
-                <button
-                    type="button"
-                    onClick={() =>
-                        accionEstado.editar
-                            ? onEditar(tarea)
-                            : onCambiarEstado(tarea, accionEstado.estado)
-                    }
-                    className={`min-h-[44px] rounded-xl px-3 text-xs font-bold text-white transition ${
-                        accionEstado.estado === "Finalizada"
-                            ? "bg-emerald-600 hover:bg-emerald-700"
-                            : "bg-blue-600 hover:bg-blue-700"
-                    }`}
-                >
-                    {accionEstado.icon} {accionEstado.label}
-                </button>
+                {puedeAccionPrincipal && (
+                    <button
+                        type="button"
+                        onClick={() =>
+                            accionEstado.editar
+                                ? onEditar(tarea)
+                                : onCambiarEstado(tarea, accionEstado.estado)
+                        }
+                        className={`min-h-[44px] rounded-xl px-3 text-xs font-bold text-white transition ${
+                            accionEstado.estado === "Finalizada"
+                                ? "bg-emerald-600 hover:bg-emerald-700"
+                                : "bg-blue-600 hover:bg-blue-700"
+                        }`}
+                    >
+                        {accionEstado.icon} {accionEstado.label}
+                    </button>
+                )}
             </div>
         </article>
     );

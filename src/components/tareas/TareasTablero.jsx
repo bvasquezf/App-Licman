@@ -1,5 +1,5 @@
 import EmptyState from "../ui/EmptyState";
-import TareaCard from "./TareaCard";
+import TareasListaPaginada from "./TareasListaPaginada";
 
 const COLUMNAS = [
     {
@@ -63,14 +63,14 @@ export default function TareasTablero({
                         </header>
 
                         <div className="space-y-3">
-                            {tareasColumna.map((tarea) => (
-                                <TareaCard
-                                    key={tarea.id}
-                                    tarea={tarea}
-                                    onEditar={onEditar}
-                                    onCambiarEstado={onCambiarEstado}
-                                />
-                            ))}
+                            <TareasListaPaginada
+                                tareas={tareasColumna}
+                                onEditar={onEditar}
+                                onCambiarEstado={onCambiarEstado}
+                                limiteInicial={8}
+                                incremento={8}
+                                className="space-y-3"
+                            />
                             {tareasColumna.length === 0 && (
                                 <EmptyState
                                     icon={columna.icono}
@@ -81,7 +81,8 @@ export default function TareasTablero({
                                             : "No hay trabajos en este estado con los filtros actuales."
                                     }
                                     action={
-                                        columna.estado === "Por programar" ? (
+                                        columna.estado === "Por programar" &&
+                                        onNueva ? (
                                             <button
                                                 type="button"
                                                 onClick={onNueva}

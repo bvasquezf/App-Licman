@@ -91,13 +91,15 @@ export function NetworkProvider({ children }) {
     useEffect(() => {
         const handleOnline = async () => {
             setOnline(true);
-            toast.info("Conexión recuperada — sincronizando cambios…");
+            toast.success("Conexión recuperada");
             await flush();
         };
         const handleOffline = () => {
             setOnline(false);
-            toast.info(
-                "Sin conexión — los cambios se guardarán localmente.",
+            toast.warning(
+                puede(PERMISOS.EQUIPOS)
+                    ? "Sin conexión — solo algunos cambios de Equipos se guardan para sincronizar. Los demás necesitan internet."
+                    : "Sin conexión — necesitas internet para guardar cambios.",
             );
         };
 

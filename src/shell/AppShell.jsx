@@ -103,22 +103,25 @@ export function AppShell() {
                 del topbar mobile (<md). Es el reemplazo del antiguo
                 sidebar con sub-items colapsables.
 
-                Padding:
-                  - Mobile: `px-4` (16px), sm: `px-6` (24px).
-                  - Desktop: padding izquierdo = ancho del sidebar (64px).
-                    Padding derecho igual (64px) para que el contenido
-                    quede VISUALMENTE centrado en el viewport (el sidebar
-                    es `position: fixed`, no ocupa flujo). */}
-            <div className="sticky top-0 z-10 md:pl-16 md:pr-16">
+                El wrapper solo fija la posición sticky; el ancho y el
+                padding viven en el contenedor interno de SubNavBar, que
+                usa EXACTAMENTE la misma receta que <main> para que la
+                barra y el contenido queden alineados en todo breakpoint. */}
+            <div className="app-subnav-sticky sticky z-10">
                 <SubNavBar />
             </div>
 
             {/* Contenido principal.
-                Mismo principio que SubNavBar: padding simétrico para
-                que el cuerpo se vea centrado. El sidebar es `fixed`,
-                así que el padding-left solo evita que el texto choque
-                con los iconos; el padding-right balancea el layout
-                en pantallas anchas. */}
+                Marco único para TODAS las secciones (bodega, equipos,
+                mantenimiento y tareas): mismo ancho máximo y mismo
+                padding simétrico, así al cambiar de módulo el encuadre
+                no se mueve. El sidebar es `position: fixed` (no ocupa
+                flujo): el padding izquierdo solo evita que el contenido
+                choque con los iconos y el derecho balancea el layout,
+                dejando el cuerpo visualmente centrado en el viewport.
+
+                Si se cambia esta receta, actualizar también el contenedor
+                interno de SubNavBar para que sigan alineados. */}
             <main
                 className="mx-auto w-full max-w-screen-xl animate-fade-in px-4 py-6 sm:px-6 md:pl-16 md:pr-16 lg:pl-20 lg:pr-20"
                 style={{
