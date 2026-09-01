@@ -292,7 +292,17 @@ export function iconoPorMotivo(motivo) {
 // Mapeo de campos de la base de datos a headers en español para Excel.
 export const EXCEL_HEADERS = {
     correlativo: "Correlativo",
+    ubicacion_logistica: "Ubicación logística",
     bodega: "Bodega",
+    cliente_id: "ID Cliente",
+    cliente_nombre: "Cliente",
+    cliente_rut: "RUT Cliente",
+    cliente_mail: "Correo Cliente",
+    cliente_contacto: "Contacto Cliente",
+    cliente_celular: "Celular Cliente",
+    cliente_direccion: "Dirección Cliente",
+    cliente_comuna: "Comuna Cliente",
+    cliente_activo: "Cliente activo",
     tipo_equipo: "Tipo de Equipo",
     numero_interno: "N° Interno",
     numero_serie: "N° Serie",
@@ -306,13 +316,25 @@ export const EXCEL_HEADERS = {
     responsable: "Responsable",
     foto_enviada: "Foto Enviada",
     vendido: "Vendido",
+    vendido_at: "Fecha Venta",
+    cliente_retorno_nombre: "Retorno pendiente a",
     created_at: "Fecha Registro",
 };
 
 // Orden de columnas en el Excel (correlativo primero).
 export const EXCEL_COLUMN_ORDER = [
     "correlativo",
+    "ubicacion_logistica",
     "bodega",
+    "cliente_id",
+    "cliente_nombre",
+    "cliente_rut",
+    "cliente_mail",
+    "cliente_contacto",
+    "cliente_celular",
+    "cliente_direccion",
+    "cliente_comuna",
+    "cliente_activo",
     "tipo_equipo",
     "numero_interno",
     "numero_serie",
@@ -326,5 +348,7 @@ export const EXCEL_COLUMN_ORDER = [
     "responsable",
     "foto_enviada",
     "vendido",
+    "vendido_at",
+    "cliente_retorno_nombre",
     "created_at",
 ];

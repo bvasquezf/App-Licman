@@ -17,6 +17,8 @@
  *   - showCorrelativo (boolean, default true): si false, NO renderiza
  *     la card de "Correlativo asignado" (ni hace el RPC). Útil en
  *     vistas donde solo importa el conteo (papelera, exportar, etc.).
+ *   - refreshKey (number): cambia este valor después de una mutación confirmada
+ *     para refrescar los conteos sin recargar la página.
  *
  * El componente se autocarga: hace su propio fetch del conteo y del
  * próximo correlativo. Refresca al recibir focus en la ventana (cubre
@@ -30,21 +32,25 @@ import { BODEGAS, BODEGA_EN_CLIENTE } from "../../lib/equiposConstants";
 import { useAsync } from "../../hooks/useAsync";
 import { useNetwork } from "../../context/NetworkContext";
 import { supabase } from "../../services/supabase";
+import { withRetry } from "../../utils/withRetry";
 
 export default function EquiposHeader({
     activeFilter = "todas",
     onFilterBodega = null,
     showCorrelativo = true,
+    refreshKey = 0,
 }) {
     const { online, pending, sincronizando, flush } = useNetwork();
     const [recargando, setRecargando] = useState(false);
 
     const fetchEquipos = useCallback(async () => {
         if (!supabase) return [];
-        const { data, error } = await supabase
-            .from("equipos")
-            .select("bodega, cliente_id")
-            .is("deleted_at", null);
+        const { data, error } = await withRetry(() =>
+            supabase
+                .from("equipos")
+                .select("bodega, cliente_id")
+                .is("deleted_at", null),
+        );
         if (error) throw error;
         return data ?? [];
     }, []);
@@ -105,6 +111,15 @@ export default function EquiposHeader({
         window.addEventListener("focus", onFocus);
         return () => window.removeEventListener("focus", onFocus);
     }, [showCorrelativo, recargarEquipos, recargarCorrelativo]);
+
+    // El inventario puede registrar un movimiento sin desmontar esta vista.
+    // El padre incrementa refreshKey después de confirmar el RPC para que los
+    // chips de bodegas y clientes reflejen el cambio inmediatamente.
+    useEffect(() => {
+        if (!refreshKey) return;
+        void recargarEquipos();
+        if (showCorrelativo) void recargarCorrelativo();
+    }, [refreshKey, showCorrelativo, recargarEquipos, recargarCorrelativo]);
 
     const conteoPorBodega = useMemo(() => {
         const map = { todas: equipos.length };

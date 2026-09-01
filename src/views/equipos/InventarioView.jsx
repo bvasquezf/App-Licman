@@ -302,6 +302,7 @@ export default function InventarioView() {
     const [estadoEquipo, setEstadoEquipo] = useState(null);
     const [bateriaEquipo, setBateriaEquipo] = useState(null);
     const [fotoModalPath, setFotoModalPath] = useState(null);
+    const [actualizacionEquipos, setActualizacionEquipos] = useState(0);
     // Modal hermano para crear cliente desde el dialog de movimiento.
     const [crearClienteAbierto, setCrearClienteAbierto] = useState(false);
 
@@ -770,7 +771,10 @@ export default function InventarioView() {
                 );
             }
             setMovimientoEquipo(null);
-            cargar();
+            if (movimientoConfirmado) {
+                setActualizacionEquipos((valor) => valor + 1);
+            }
+            await cargar();
         } catch (err) {
             if (nuevaFotoUrl && !movimientoConfirmado) {
                 await borrarFotoNueva(nuevaFotoUrl);
@@ -852,6 +856,7 @@ export default function InventarioView() {
             toast.success("Cambio de equipo registrado");
 
             setMovimientoEquipo(null);
+            setActualizacionEquipos((valor) => valor + 1);
             await cargar();
         } catch (err) {
             if (nuevaFotoUrl && !cambioConfirmado) {
@@ -1026,6 +1031,7 @@ export default function InventarioView() {
                 activeFilter={filtroBodega}
                 onFilterBodega={cambiarBodega}
                 showCorrelativo={false}
+                refreshKey={actualizacionEquipos}
             />
 
             <section aria-labelledby="resumen-bodegas-titulo">

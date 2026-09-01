@@ -1,11 +1,17 @@
 import { useCallback, useMemo, useState } from "react";
-import { BODEGAS, PHOTO_EMAIL } from "../../lib/equiposConstants";
+import {
+    BODEGAS,
+    BODEGA_EN_CLIENTE,
+    PHOTO_EMAIL,
+} from "../../lib/equiposConstants";
 import { exportarAExcel } from "../../lib/equiposExport";
 import EquiposHeader from "../../components/equipos/EquiposHeader";
 import { useToast } from "../../context/ToastContext";
 import { useAsync } from "../../hooks/useAsync";
 import { withRetry } from "../../utils/withRetry";
 import { supabase } from "../../services/supabase";
+
+const DATOS_VACIOS = { equipos: [], clientes: [] };
 
 /**
  * Vista de Exportar inventario (Equipos).
@@ -17,29 +23,61 @@ export default function ExportarView() {
 
     const cargarEquipos = useCallback(async () => {
         if (!supabase) return [];
-        const { data, error } = await withRetry(() =>
-            supabase
-                .from("equipos")
-                .select("*")
-                .is("deleted_at", null)
-                .order("correlativo", { ascending: true }),
-        );
-        if (error) throw error;
-        return data ?? [];
+        const [equiposResponse, clientesResponse] = await Promise.all([
+            withRetry(() =>
+                supabase
+                    .from("equipos")
+                    .select("*")
+                    .is("deleted_at", null)
+                    .order("correlativo", { ascending: true }),
+            ),
+            withRetry(() =>
+                supabase
+                    .from("clientes")
+                    .select(
+                        "id, razon_social, rut, mail, contacto, celular, direccion, comuna, activo",
+                    )
+                    .order("razon_social", { ascending: true }),
+            ),
+        ]);
+        if (equiposResponse.error) throw equiposResponse.error;
+        if (clientesResponse.error) throw clientesResponse.error;
+        return {
+            equipos: equiposResponse.data ?? [],
+            clientes: clientesResponse.data ?? [],
+        };
     }, []);
 
-    const { data: equipos = [], loading: cargando } = useAsync(
+    const {
+        data = DATOS_VACIOS,
+        loading: cargando,
+    } = useAsync(
         cargarEquipos,
         {
             errorContexto: "cargar equipos para exportar",
             onError: (err) => toast.error(err.message),
         },
     );
+    const equipos = data.equipos ?? DATOS_VACIOS.equipos;
+    const clientes = data.clientes ?? DATOS_VACIOS.clientes;
 
     const equiposAExportar = useMemo(() => {
         if (bodega === "todas") return equipos;
+        if (bodega === BODEGA_EN_CLIENTE) {
+            return equipos.filter((e) => Boolean(e.cliente_id));
+        }
         return equipos.filter((e) => e.bodega === bodega);
     }, [equipos, bodega]);
+
+    const clientesAExportar = useMemo(
+        () =>
+            new Set(
+                equiposAExportar
+                    .map((equipo) => equipo.cliente_id)
+                    .filter(Boolean),
+            ).size,
+        [equiposAExportar],
+    );
 
     const handleExportar = () => {
         if (equiposAExportar.length === 0) {
@@ -49,6 +87,7 @@ export default function ExportarView() {
         try {
             const nombre = exportarAExcel(equiposAExportar, {
                 bodega: bodega === "todas" ? null : bodega,
+                clientes,
             });
             toast.success(`Exportado: ${nombre}`);
         } catch (err) {
@@ -70,18 +109,20 @@ export default function ExportarView() {
             </h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-neutral-400">
                 Descarga la planilla completa en Excel (.xlsx). Puedes filtrar
-                por bodega antes de exportar.
+                por bodega o descargar únicamente los equipos que están
+                asignados a clientes.
             </p>
 
             <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-[220px_1fr] sm:items-center">
                 <label className="block text-[0.88rem] font-semibold text-slate-900 dark:text-slate-100">
-                    Filtrar por bodega
+                    Filtrar por ubicación
                     <select
                         value={bodega}
                         onChange={(e) => setBodega(e.target.value)}
                         className="mt-1.5 block w-full rounded-[10px] border-[1.5px] border-slate-300 bg-white px-3 py-2.5 text-base font-medium text-slate-900 outline-none focus:border-blue-600 focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100"
                     >
                         <option value="todas">Todas</option>
+                        <option value={BODEGA_EN_CLIENTE}>En cliente</option>
                         {BODEGAS.map((b) => (
                             <option key={b} value={b}>
                                 {b}
@@ -98,7 +139,15 @@ export default function ExportarView() {
                             <strong className="font-extrabold">
                                 {equiposAExportar.length}
                             </strong>{" "}
-                            registro{equiposAExportar.length === 1 ? "" : "s"}.
+                            registro{equiposAExportar.length === 1 ? "" : "s"}
+                            {bodega === BODEGA_EN_CLIENTE ? (
+                                <>
+                                    {" "}en {clientesAExportar} cliente
+                                    {clientesAExportar === 1 ? "" : "s"}.
+                                </>
+                            ) : (
+                                "."
+                            )}
                         </>
                     )}
                 </div>
