@@ -17,6 +17,7 @@ import Skeleton from "../../components/ui/Skeleton";
 import { useDialogA11y } from "../../hooks/useDialogA11y";
 import { useToast } from "../../context/ToastContext";
 import { useNetwork } from "../../context/NetworkContext";
+import { useAuth } from "../../context/AuthContext";
 import {
     useModalTransition,
     useRetainedValue,
@@ -33,6 +34,7 @@ import {
     enqueuePendingWrite,
     getCachedEquipos,
 } from "../../lib/offlineDb";
+import { PERMISOS } from "../../lib/authPermissions";
 
 // Cantidad de cards por página en el inventario. Mobile-first: 20
 // mantiene un scroll razonable sin saturar la pantalla.
@@ -289,8 +291,21 @@ function InventarioSkeleton() {
  */
 export default function InventarioView() {
     const toast = useToast();
+    const { puede } = useAuth();
     const { online, refrescarPending } = useNetwork();
     const [searchParams, setSearchParams] = useSearchParams();
+
+    const puedeEditar = puede(PERMISOS.EQUIPOS_EDITAR);
+    const puedeMover = puede(PERMISOS.EQUIPOS_MOVER);
+    const puedeVerHistorial = puede(PERMISOS.EQUIPOS_VER_HISTORIAL);
+    const puedeGestionarBaterias = puede(
+        PERMISOS.EQUIPOS_GESTIONAR_BATERIAS,
+    );
+    const puedeCambiarEstado = puede(PERMISOS.EQUIPOS_CAMBIAR_ESTADO);
+    const puedeEliminar = puede(PERMISOS.EQUIPOS_ELIMINAR);
+    const puedeGestionarClientes = puede(
+        PERMISOS.EQUIPOS_GESTIONAR_CLIENTES,
+    );
 
     const [equipos, setEquipos] = useState([]);
     const [clientes, setClientes] = useState([]);
@@ -634,6 +649,10 @@ export default function InventarioView() {
     const equipoAEliminar = equipos.find((e) => e.id === confirmId);
 
     const handleConfirmarEliminar = async () => {
+        if (!puedeEliminar) {
+            toast.error("No tienes permiso para eliminar equipos");
+            return;
+        }
         if (!confirmId) return;
         const id = confirmId;
         try {
@@ -665,6 +684,10 @@ export default function InventarioView() {
     };
 
     const handleActualizarDatos = async (payload) => {
+        if (!puedeEditar) {
+            toast.error("No tienes permiso para editar fichas de equipos");
+            return null;
+        }
         if (!online) {
             toast.warning(
                 "Sin conexión: la edición no se puede guardar. Espera a tener red.",
@@ -706,6 +729,10 @@ export default function InventarioView() {
      * Offline-capable (siempre que no haya foto nueva adjunta).
      */
     const handleRegistrarMovimientoSimple = async (payload) => {
+        if (!puedeMover) {
+            toast.error("No tienes permiso para trasladar equipos");
+            return;
+        }
         let nuevaFotoUrl = null;
         let movimientoConfirmado = false;
         try {
@@ -789,6 +816,10 @@ export default function InventarioView() {
      * desde el reemplazante en bodega como desde el equipo que está en cliente.
      */
     const handleRegistrarSwap = async (payload) => {
+        if (!puedeMover) {
+            toast.error("No tienes permiso para trasladar equipos");
+            return;
+        }
         if (!online) {
             toast.warning(
                 "Los cambios de equipo requieren conexión. Espera a tener red.",
@@ -867,6 +898,10 @@ export default function InventarioView() {
     };
 
     const handleCambiarBateria = async (payload) => {
+        if (!puedeGestionarBaterias) {
+            toast.error("No tienes permiso para gestionar baterías");
+            return false;
+        }
         if (!online) {
             toast.warning(
                 "Sin conexión: el cambio de batería requiere conexión para mantener el inventario sincronizado.",
@@ -975,6 +1010,10 @@ export default function InventarioView() {
         responsable,
         notas,
     }) => {
+        if (!puedeCambiarEstado) {
+            toast.error("No tienes permiso para cambiar el estado del equipo");
+            return;
+        }
         if (!online) {
             toast.warning(
                 "Sin conexión: el cambio de estado no se puede encolar. Espera a tener red.",
@@ -1004,6 +1043,10 @@ export default function InventarioView() {
      * de movimiento (que ya tiene el cliente cargado en su dropdown).
      */
     const handleCrearCliente = async (payload) => {
+        if (!puedeGestionarClientes) {
+            toast.error("No tienes permiso para crear clientes");
+            return false;
+        }
         try {
             const { data, error } = await supabase
                 .from("clientes")
@@ -1220,13 +1263,19 @@ export default function InventarioView() {
                         ordenCampo={ordenCampo}
                         ordenDireccion={ordenDireccion}
                         onOrdenar={ordenarPor}
-                        onMover={setMovimientoEquipo}
-                        onEstado={setEstadoEquipo}
-                        onHistorial={setHistorialEquipo}
-                        onBateria={setBateriaEquipo}
-                        onEliminar={setConfirmId}
+                        onMover={puedeMover ? setMovimientoEquipo : undefined}
+                        onEstado={puedeCambiarEstado ? setEstadoEquipo : undefined}
+                        onHistorial={
+                            puedeVerHistorial ? setHistorialEquipo : undefined
+                        }
+                        onBateria={
+                            puedeGestionarBaterias ? setBateriaEquipo : undefined
+                        }
+                        onEliminar={puedeEliminar ? setConfirmId : undefined}
                         onVerFoto={setFotoModalPath}
-                        onGuardarEdicion={handleActualizarDatos}
+                        onGuardarEdicion={
+                            puedeEditar ? handleActualizarDatos : undefined
+                        }
                     />
                 )}
 
@@ -1242,7 +1291,7 @@ export default function InventarioView() {
                 )}
             </div>
 
-            <ConfirmDialog
+            {puedeEliminar && <ConfirmDialog
                 open={Boolean(confirmId)}
                 title="Eliminar equipo"
                 message={
@@ -1254,37 +1303,41 @@ export default function InventarioView() {
                 onConfirm={handleConfirmarEliminar}
                 onCancel={() => setConfirmId(null)}
                 peligro
-            />
+            />}
 
-            <MovimientoDialog
+            {puedeMover && <MovimientoDialog
                 open={Boolean(movimientoEquipo)}
                 equipo={movimientoEquipo}
                 clientes={clientes}
                 onSubmit={handleRegistrarMovimientoSimple}
                 onSubmitSwap={handleRegistrarSwap}
-                onCrearCliente={() => setCrearClienteAbierto(true)}
+                onCrearCliente={
+                    puedeGestionarClientes
+                        ? () => setCrearClienteAbierto(true)
+                        : undefined
+                }
                 onCancel={() => setMovimientoEquipo(null)}
-            />
+            />}
 
-            <MovimientoHistorialModal
+            {puedeVerHistorial && <MovimientoHistorialModal
                 open={Boolean(historialEquipo)}
                 equipo={historialEquipo}
                 onClose={() => setHistorialEquipo(null)}
-            />
+            />}
 
-            <EstadoDialog
+            {puedeCambiarEstado && <EstadoDialog
                 open={Boolean(estadoEquipo)}
                 equipo={estadoEquipo}
                 onSubmit={handleActualizarEstado}
                 onCancel={() => setEstadoEquipo(null)}
-            />
+            />}
 
-            <BateriaDialog
+            {puedeGestionarBaterias && <BateriaDialog
                 open={Boolean(bateriaEquipo)}
                 equipo={bateriaEquipo}
                 onSubmit={handleCambiarBateria}
                 onCancel={() => setBateriaEquipo(null)}
-            />
+            />}
 
             {/* Modal: foto en grande al clickear el thumbnail */}
             <FotoModal
@@ -1294,11 +1347,11 @@ export default function InventarioView() {
 
             {/* Modal hermano: crear cliente desde el botón "+ Nuevo"
                 del dropdown de cliente en el MovimientoDialog. */}
-            <CrearClienteForm
+            {puedeGestionarClientes && <CrearClienteForm
                 open={crearClienteAbierto}
                 onSubmit={handleCrearCliente}
                 onCancel={() => setCrearClienteAbierto(false)}
-            />
+            />}
         </section>
     );
 }

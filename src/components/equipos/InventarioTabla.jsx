@@ -207,48 +207,50 @@ function EquipoFilaMobile({
                     )}
             </div>
 
-            <div
-                className={`grid gap-2 border-t border-slate-100 p-3 dark:border-white/5 ${
-                    usaBateriaElectrica(equipo)
-                        ? "grid-cols-2"
-                        : "grid-cols-3"
-                }`}
-            >
-                <button
-                    type="button"
-                    onClick={() => onMover(equipo)}
-                    className="flex min-h-[44px] items-center justify-center rounded-xl border border-blue-200 bg-blue-50 px-2 text-xs font-bold text-blue-700 active:bg-blue-100 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400 dark:active:bg-blue-500/20"
-                >
-                    {equipo.cliente_retorno_id
-                        ? "↩️ Resolver"
-                        : equipo.vendido
-                          ? "🧰 Atender"
-                          : "🔄 Mover"}
-                </button>
-                <button
-                    type="button"
-                    onClick={() => onEstado(equipo)}
-                    className="flex min-h-[44px] items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-2 text-xs font-bold text-emerald-700 active:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400 dark:active:bg-emerald-500/20"
-                >
-                    🛠 Estado
-                </button>
-                <button
-                    type="button"
-                    onClick={() => onHistorial(equipo)}
-                    className="flex min-h-[44px] items-center justify-center rounded-xl border border-violet-200 bg-violet-50 px-2 text-xs font-bold text-violet-700 active:bg-violet-100 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-400 dark:active:bg-violet-500/20"
-                >
-                    📜 Historial
-                </button>
-                {usaBateriaElectrica(equipo) && (
-                    <button
-                        type="button"
-                        onClick={() => onBateria(equipo)}
-                        className="flex min-h-[44px] items-center justify-center rounded-xl border border-cyan-200 bg-cyan-50 px-2 text-xs font-bold text-cyan-700 active:bg-cyan-100 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-400 dark:active:bg-cyan-500/20"
-                    >
-                        🔋 Batería
-                    </button>
-                )}
-            </div>
+            {(onMover || onEstado || onHistorial || onBateria) && (
+                <div className="grid grid-cols-2 gap-2 border-t border-slate-100 p-3 dark:border-white/5">
+                    {onMover && (
+                        <button
+                            type="button"
+                            onClick={() => onMover(equipo)}
+                            className="flex min-h-[44px] items-center justify-center rounded-xl border border-blue-200 bg-blue-50 px-2 text-xs font-bold text-blue-700 active:bg-blue-100 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400 dark:active:bg-blue-500/20"
+                        >
+                            {equipo.cliente_retorno_id
+                                ? "↩️ Resolver"
+                                : equipo.vendido
+                                  ? "🧰 Atender"
+                                  : "🔄 Mover"}
+                        </button>
+                    )}
+                    {onEstado && (
+                        <button
+                            type="button"
+                            onClick={() => onEstado(equipo)}
+                            className="flex min-h-[44px] items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-2 text-xs font-bold text-emerald-700 active:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400 dark:active:bg-emerald-500/20"
+                        >
+                            🛠 Estado
+                        </button>
+                    )}
+                    {onHistorial && (
+                        <button
+                            type="button"
+                            onClick={() => onHistorial(equipo)}
+                            className="flex min-h-[44px] items-center justify-center rounded-xl border border-violet-200 bg-violet-50 px-2 text-xs font-bold text-violet-700 active:bg-violet-100 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-400 dark:active:bg-violet-500/20"
+                        >
+                            📜 Historial
+                        </button>
+                    )}
+                    {usaBateriaElectrica(equipo) && onBateria && (
+                        <button
+                            type="button"
+                            onClick={() => onBateria(equipo)}
+                            className="flex min-h-[44px] items-center justify-center rounded-xl border border-cyan-200 bg-cyan-50 px-2 text-xs font-bold text-cyan-700 active:bg-cyan-100 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-400 dark:active:bg-cyan-500/20"
+                        >
+                            🔋 Batería
+                        </button>
+                    )}
+                </div>
+            )}
         </article>
     );
 }
@@ -533,7 +535,7 @@ export function TablaEquipos({
                                 </td>
                                 <td className="px-2 py-3 align-top">
                                     <div className="ml-auto grid w-[94px] grid-cols-2 justify-items-end gap-1.5">
-                                        <button
+                                        {onMover && <button
                                             type="button"
                                             onClick={(event) => {
                                                 event.stopPropagation();
@@ -550,8 +552,8 @@ export function TablaEquipos({
                                             aria-label={`${e.vendido ? "Atender" : "Mover"} ${e.marca} ${e.modelo}`}
                                         >
                                             {e.vendido ? "🧰" : "🔄"}
-                                        </button>
-                                        <button
+                                        </button>}
+                                        {onEstado && <button
                                             type="button"
                                             onClick={(event) => {
                                                 event.stopPropagation();
@@ -562,8 +564,8 @@ export function TablaEquipos({
                                             aria-label={`Cambiar estado de ${e.marca} ${e.modelo}`}
                                         >
                                             🛠️
-                                        </button>
-                                        <button
+                                        </button>}
+                                        {onHistorial && <button
                                             type="button"
                                             onClick={(event) => {
                                                 event.stopPropagation();
@@ -574,8 +576,8 @@ export function TablaEquipos({
                                             aria-label={`Ver historial de ${e.marca} ${e.modelo}`}
                                         >
                                             📜
-                                        </button>
-                                        {usaBateriaElectrica(e) && (
+                                        </button>}
+                                        {usaBateriaElectrica(e) && onBateria && (
                                             <button
                                                 type="button"
                                                 onClick={(event) => {
@@ -625,8 +627,11 @@ export function TablaEquipos({
                     onEstado={onEstado}
                     onHistorial={onHistorial}
                     onBateria={onBateria}
-                    onEliminar={(equipoSeleccionado) =>
-                        onEliminar(equipoSeleccionado.id)
+                    onEliminar={
+                        onEliminar
+                            ? (equipoSeleccionado) =>
+                                  onEliminar(equipoSeleccionado.id)
+                            : undefined
                     }
                     onVerFoto={onVerFoto}
                     onGuardarEdicion={onGuardarEdicion}
@@ -1074,16 +1079,17 @@ function EquipoDetallePanel({
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button
-                            type="button"
-                            onClick={() => setEditando(true)}
-                            disabled={!onGuardarEdicion}
-                            className="flex h-11 w-11 items-center justify-center rounded-full border border-blue-200 bg-blue-50 text-xl text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20"
-                            aria-label="Editar datos del equipo"
-                            title="Editar datos del equipo"
-                        >
-                            ✎
-                        </button>
+                        {onGuardarEdicion && (
+                            <button
+                                type="button"
+                                onClick={() => setEditando(true)}
+                                className="flex h-11 w-11 items-center justify-center rounded-full border border-blue-200 bg-blue-50 text-xl text-blue-700 transition hover:bg-blue-100 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20"
+                                aria-label="Editar datos del equipo"
+                                title="Editar datos del equipo"
+                            >
+                                ✎
+                            </button>
+                        )}
                         <button
                             type="button"
                             onClick={() => solicitarCierre()}
@@ -1180,15 +1186,19 @@ function EquipoDetallePanel({
                                 <h3 className="text-sm font-extrabold uppercase tracking-wide text-slate-500 dark:text-neutral-400">
                                     Batería actual
                                 </h3>
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        solicitarCierre(() => onBateria(equipo))
-                                    }
-                                    className="min-h-[44px] rounded-xl border border-cyan-200 bg-cyan-50 px-3 text-xs font-bold text-cyan-700 transition hover:bg-cyan-100 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-300 dark:hover:bg-cyan-500/20"
-                                >
-                                    🔋 Gestionar
-                                </button>
+                                {onBateria && (
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            solicitarCierre(() =>
+                                                onBateria(equipo),
+                                            )
+                                        }
+                                        className="min-h-[44px] rounded-xl border border-cyan-200 bg-cyan-50 px-3 text-xs font-bold text-cyan-700 transition hover:bg-cyan-100 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-300 dark:hover:bg-cyan-500/20"
+                                    >
+                                        🔋 Gestionar
+                                    </button>
+                                )}
                             </div>
                             {bateriaAsociada ? (
                                 <div className="mt-2 rounded-2xl border border-cyan-200 bg-cyan-50/70 p-4 dark:border-cyan-500/25 dark:bg-cyan-500/10">
@@ -1280,61 +1290,80 @@ function EquipoDetallePanel({
                     )}
                 </div>
 
-                {!editando && <footer className="sticky bottom-0 mt-auto grid grid-cols-2 gap-2 border-t border-slate-200 bg-white/95 p-4 backdrop-blur sm:flex dark:border-white/10 dark:bg-carbon-950/95">
-                    <button
-                        type="button"
-                        onClick={() =>
-                            solicitarCierre(() => onMover(equipo))
-                        }
-                        className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3 text-sm font-bold text-blue-700 transition hover:bg-blue-100 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20"
-                    >
-                        {equipo.cliente_retorno_id
-                            ? "↩️ Resolver reparación"
-                            : equipo.vendido
-                              ? "🧰 Atender equipo"
-                              : "🔄 Mover equipo"}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() =>
-                            solicitarCierre(() => onEstado(equipo))
-                        }
-                        className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20"
-                    >
-                        🛠 Estado
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() =>
-                            solicitarCierre(() => onHistorial(equipo))
-                        }
-                        className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-violet-200 bg-violet-50 px-3 text-sm font-bold text-violet-700 transition hover:bg-violet-100 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-400 dark:hover:bg-violet-500/20"
-                    >
-                        📜 Historial
-                    </button>
-                    {usaBateriaElectrica(equipo) && (
-                        <button
-                            type="button"
-                            onClick={() =>
-                                solicitarCierre(() => onBateria(equipo))
-                            }
-                            className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-cyan-200 bg-cyan-50 px-3 text-sm font-bold text-cyan-700 transition hover:bg-cyan-100 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-400 dark:hover:bg-cyan-500/20"
-                        >
-                            🔋 Batería
-                        </button>
+                {!editando &&
+                    (onMover ||
+                        onEstado ||
+                        onHistorial ||
+                        onBateria ||
+                        onEliminar) && (
+                        <footer className="sticky bottom-0 mt-auto grid grid-cols-2 gap-2 border-t border-slate-200 bg-white/95 p-4 backdrop-blur sm:flex dark:border-white/10 dark:bg-carbon-950/95">
+                            {onMover && (
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        solicitarCierre(() => onMover(equipo))
+                                    }
+                                    className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3 text-sm font-bold text-blue-700 transition hover:bg-blue-100 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20"
+                                >
+                                    {equipo.cliente_retorno_id
+                                        ? "↩️ Resolver reparación"
+                                        : equipo.vendido
+                                          ? "🧰 Atender equipo"
+                                          : "🔄 Mover equipo"}
+                                </button>
+                            )}
+                            {onEstado && (
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        solicitarCierre(() => onEstado(equipo))
+                                    }
+                                    className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20"
+                                >
+                                    🛠 Estado
+                                </button>
+                            )}
+                            {onHistorial && (
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        solicitarCierre(() =>
+                                            onHistorial(equipo),
+                                        )
+                                    }
+                                    className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-violet-200 bg-violet-50 px-3 text-sm font-bold text-violet-700 transition hover:bg-violet-100 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-400 dark:hover:bg-violet-500/20"
+                                >
+                                    📜 Historial
+                                </button>
+                            )}
+                            {usaBateriaElectrica(equipo) && onBateria && (
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        solicitarCierre(() =>
+                                            onBateria(equipo),
+                                        )
+                                    }
+                                    className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-cyan-200 bg-cyan-50 px-3 text-sm font-bold text-cyan-700 transition hover:bg-cyan-100 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-400 dark:hover:bg-cyan-500/20"
+                                >
+                                    🔋 Batería
+                                </button>
+                            )}
+                            {!equipo.vendido && onEliminar && (
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        solicitarCierre(() =>
+                                            onEliminar(equipo),
+                                        )
+                                    }
+                                    className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 text-sm font-bold text-red-700 transition hover:bg-red-100 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"
+                                >
+                                    🗑 Eliminar
+                                </button>
+                            )}
+                        </footer>
                     )}
-                    {!equipo.vendido && (
-                        <button
-                            type="button"
-                            onClick={() =>
-                                solicitarCierre(() => onEliminar(equipo))
-                            }
-                            className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 text-sm font-bold text-red-700 transition hover:bg-red-100 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"
-                        >
-                            🗑 Eliminar
-                        </button>
-                    )}
-                </footer>}
             </aside>
         </div>
     );

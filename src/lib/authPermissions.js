@@ -1,6 +1,15 @@
 export const PERMISOS = {
     BODEGA: "bodega.usar",
     EQUIPOS: "equipos.usar",
+    EQUIPOS_REGISTRAR: "equipos.registrar",
+    EQUIPOS_EDITAR: "equipos.editar",
+    EQUIPOS_MOVER: "equipos.mover",
+    EQUIPOS_VER_HISTORIAL: "equipos.ver_historial",
+    EQUIPOS_GESTIONAR_BATERIAS: "equipos.gestionar_baterias",
+    EQUIPOS_CAMBIAR_ESTADO: "equipos.cambiar_estado",
+    EQUIPOS_ELIMINAR: "equipos.eliminar",
+    EQUIPOS_GESTIONAR_CLIENTES: "equipos.gestionar_clientes",
+    EQUIPOS_EXPORTAR: "equipos.exportar",
     MANTENIMIENTO: "mantenimiento.usar",
     TAREAS: "tareas.usar",
     TAREAS_PLANIFICAR: "tareas.planificar",
@@ -23,7 +32,13 @@ export const MODULOS_ACCESO = [
 
 export function rutaInicialParaPermisos(permisos = []) {
     const disponibles = permisos instanceof Set ? permisos : new Set(permisos);
+    const tieneOtroModulo = [
+        PERMISOS.BODEGA,
+        PERMISOS.EQUIPOS,
+        PERMISOS.MANTENIMIENTO,
+    ].some((permiso) => disponibles.has(permiso));
     if (
+        !tieneOtroModulo &&
         disponibles.has(PERMISOS.TAREAS) &&
         disponibles.has(PERMISOS.TAREAS_EJECUTAR_PROPIAS) &&
         !disponibles.has(PERMISOS.TAREAS_PLANIFICAR)

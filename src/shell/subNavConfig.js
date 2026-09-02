@@ -96,31 +96,37 @@ export const SUB_NAV_POR_SECCION = {
             to: "/equipos/registrar",
             label: "Registrar",
             icon: "📝",
+            permiso: PERMISOS.EQUIPOS_REGISTRAR,
         },
         {
             to: "/equipos/movimientos",
             label: "Movimientos",
             icon: "🕓",
+            permiso: PERMISOS.EQUIPOS_VER_HISTORIAL,
         },
         {
             to: "/equipos/baterias",
             label: "Baterías",
             icon: "🔋",
+            permiso: PERMISOS.EQUIPOS_GESTIONAR_BATERIAS,
         },
         {
             to: "/equipos/papelera",
             label: "Papelera",
             icon: "🗑️",
+            permiso: PERMISOS.EQUIPOS_ELIMINAR,
         },
         {
             to: "/equipos/clientes",
             label: "Clientes",
             icon: "👥",
+            permiso: PERMISOS.EQUIPOS_GESTIONAR_CLIENTES,
         },
         {
             to: "/equipos/exportar",
             label: "Exportar",
             icon: "⬇️",
+            permiso: PERMISOS.EQUIPOS_EXPORTAR,
         },
     ],
     mantenimiento: [

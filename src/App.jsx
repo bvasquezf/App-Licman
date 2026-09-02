@@ -78,24 +78,81 @@ function App() {
                     >
                         <Route path="/equipos" element={<InventarioView />} />
                         <Route
-                            path="/equipos/registrar"
-                            element={<RegistrarEquipoView />}
-                        />
+                            element={
+                                <RequirePermission
+                                    permiso={PERMISOS.EQUIPOS_REGISTRAR}
+                                />
+                            }
+                        >
+                            <Route
+                                path="/equipos/registrar"
+                                element={<RegistrarEquipoView />}
+                            />
+                        </Route>
                         <Route
                             path="/equipos/inventario"
                             element={<Navigate to="/equipos" replace />}
                         />
                         <Route
-                            path="/equipos/clientes"
-                            element={<ClientesViewEquipos />}
-                        />
+                            element={
+                                <RequirePermission
+                                    permiso={PERMISOS.EQUIPOS_GESTIONAR_CLIENTES}
+                                />
+                            }
+                        >
+                            <Route
+                                path="/equipos/clientes"
+                                element={<ClientesViewEquipos />}
+                            />
+                        </Route>
                         <Route
-                            path="/equipos/movimientos"
-                            element={<MovimientosViewEquipos />}
-                        />
-                        <Route path="/equipos/baterias" element={<BateriasView />} />
-                        <Route path="/equipos/papelera" element={<PapeleraView />} />
-                        <Route path="/equipos/exportar" element={<ExportarView />} />
+                            element={
+                                <RequirePermission
+                                    permiso={PERMISOS.EQUIPOS_VER_HISTORIAL}
+                                />
+                            }
+                        >
+                            <Route
+                                path="/equipos/movimientos"
+                                element={<MovimientosViewEquipos />}
+                            />
+                        </Route>
+                        <Route
+                            element={
+                                <RequirePermission
+                                    permiso={PERMISOS.EQUIPOS_GESTIONAR_BATERIAS}
+                                />
+                            }
+                        >
+                            <Route
+                                path="/equipos/baterias"
+                                element={<BateriasView />}
+                            />
+                        </Route>
+                        <Route
+                            element={
+                                <RequirePermission
+                                    permiso={PERMISOS.EQUIPOS_ELIMINAR}
+                                />
+                            }
+                        >
+                            <Route
+                                path="/equipos/papelera"
+                                element={<PapeleraView />}
+                            />
+                        </Route>
+                        <Route
+                            element={
+                                <RequirePermission
+                                    permiso={PERMISOS.EQUIPOS_EXPORTAR}
+                                />
+                            }
+                        >
+                            <Route
+                                path="/equipos/exportar"
+                                element={<ExportarView />}
+                            />
+                        </Route>
                     </Route>
 
                     <Route

@@ -97,7 +97,8 @@ de alta no los edita, pero sí se pueden corregir desde la ficha del inventario)
 - RLS de tablas y Storage está cerrado para `anon`. Los permisos se comprueban también
   en triggers para cubrir los RPC `SECURITY DEFINER` antiguos.
 - Roles por defecto: Administrador, Supervisor, Bodega, Operador de equipos, Técnico,
-  Planificador y Sin acceso.
+  Técnico de logística de equipos, Planificador y Sin acceso. Equipos separa lectura,
+  alta, edición, traslado, historial, baterías, estado, papelera, clientes y exportación.
 - `responsable` sigue siendo el dato operativo; `creado_por = auth.uid()` registra al
   usuario que ingresó realmente el movimiento o cambio.
 - Mi perfil (`/perfil`) muestra actividad propia; administración (`/usuarios`) requiere

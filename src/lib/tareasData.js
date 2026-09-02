@@ -1,5 +1,6 @@
 import { supabase } from "../services/supabase";
 import { withRetry } from "../utils/withRetry";
+import { PERMISOS } from "./authPermissions";
 
 export const ESTADOS_TAREA = [
     "Por programar",
@@ -42,14 +43,18 @@ function revisarRespuesta(respuesta) {
 }
 
 const SELECT_TAREA =
-    "*, tareas_tecnicos(tecnico_id, tecnico_nombre, tecnico:perfiles!tareas_tecnicos_tecnico_id_fkey(id, nombre_completo, cargo, activo, rol:roles_app!perfiles_rol_id_fkey(codigo))), autor:perfiles!tareas_creado_por_fkey(nombre_completo)";
+    "*, tareas_tecnicos(tecnico_id, tecnico_nombre, tecnico:perfiles!tareas_tecnicos_tecnico_id_fkey(id, nombre_completo, cargo, activo, rol:roles_app!perfiles_rol_id_fkey(codigo, permisos:roles_permisos_app(permiso_codigo)))), autor:perfiles!tareas_creado_por_fkey(nombre_completo)";
 
 function normalizarTarea(tarea) {
     const asignacionesTecnicos = (tarea.tareas_tecnicos ?? [])
         .map((asignacion) => {
+            const puedeEjecutarTareas = asignacion.tecnico?.rol?.permisos?.some(
+                (permiso) =>
+                    permiso.permiso_codigo ===
+                    PERMISOS.TAREAS_EJECUTAR_PROPIAS,
+            );
             const activo = Boolean(
-                asignacion.tecnico?.activo &&
-                    asignacion.tecnico?.rol?.codigo === "tecnico",
+                asignacion.tecnico?.activo && puedeEjecutarTareas,
             );
             return {
                 id: asignacion.tecnico_id ?? null,

@@ -25,6 +25,33 @@ const ESTADO_INVITACION = {
     rol_codigo: "operador_equipos",
 };
 
+const GRUPOS_PERMISOS_DEPENDIENTES = [
+    {
+        base: PERMISOS.EQUIPOS,
+        nombre: "Equipos",
+        operativos: [
+            PERMISOS.EQUIPOS_REGISTRAR,
+            PERMISOS.EQUIPOS_EDITAR,
+            PERMISOS.EQUIPOS_MOVER,
+            PERMISOS.EQUIPOS_VER_HISTORIAL,
+            PERMISOS.EQUIPOS_GESTIONAR_BATERIAS,
+            PERMISOS.EQUIPOS_CAMBIAR_ESTADO,
+            PERMISOS.EQUIPOS_ELIMINAR,
+            PERMISOS.EQUIPOS_GESTIONAR_CLIENTES,
+            PERMISOS.EQUIPOS_EXPORTAR,
+        ],
+    },
+    {
+        base: PERMISOS.TAREAS,
+        nombre: "Tareas",
+        operativos: [
+            PERMISOS.TAREAS_PLANIFICAR,
+            PERMISOS.TAREAS_EJECUTAR_PROPIAS,
+            PERMISOS.TAREAS_ELIMINAR,
+        ],
+    },
+];
+
 async function mensajeErrorFuncion(error, respuesta, respaldo) {
     if (respuesta?.error) return respuesta.error;
     try {
@@ -605,35 +632,43 @@ function RolEditor({ rol, permisos, onClose, onGuardar }) {
     });
 
     const alternarPermiso = (codigo) => {
-        const permisosOperativosTareas = [
-            "tareas.planificar",
-            "tareas.ejecutar_propias",
-            "tareas.eliminar",
-        ];
+        const grupoBase = GRUPOS_PERMISOS_DEPENDIENTES.find(
+            (grupo) => grupo.base === codigo,
+        );
         if (
-            codigo === PERMISOS.TAREAS &&
+            grupoBase &&
+            form.permisos.includes(codigo) &&
             form.permisos.some((permiso) =>
-                permisosOperativosTareas.includes(permiso),
+                grupoBase.operativos.includes(permiso),
             )
         ) {
             setErrorForm(
-                "Mantén Ver Tareas mientras el rol tenga capacidades operativas de Tareas",
+                `Mantén Ver ${grupoBase.nombre} mientras el rol tenga capacidades operativas de ${grupoBase.nombre}`,
             );
             return;
         }
-        setForm((prev) => ({
-            ...prev,
-            permisos: prev.permisos.includes(codigo)
-                ? prev.permisos.filter((permiso) => permiso !== codigo)
-                : [
-                      ...prev.permisos,
-                      ...(permisosOperativosTareas.includes(codigo) &&
-                      !prev.permisos.includes(PERMISOS.TAREAS)
-                          ? [PERMISOS.TAREAS]
-                          : []),
-                      codigo,
-                  ],
-        }));
+        setForm((prev) => {
+            if (prev.permisos.includes(codigo)) {
+                return {
+                    ...prev,
+                    permisos: prev.permisos.filter(
+                        (permiso) => permiso !== codigo,
+                    ),
+                };
+            }
+            const grupoOperativo = GRUPOS_PERMISOS_DEPENDIENTES.find(
+                (grupo) => grupo.operativos.includes(codigo),
+            );
+            const permisosNuevos = [...prev.permisos];
+            if (
+                grupoOperativo &&
+                !permisosNuevos.includes(grupoOperativo.base)
+            ) {
+                permisosNuevos.push(grupoOperativo.base);
+            }
+            permisosNuevos.push(codigo);
+            return { ...prev, permisos: permisosNuevos };
+        });
         setErrorForm("");
     };
 
@@ -733,7 +768,7 @@ function RolEditor({ rol, permisos, onClose, onGuardar }) {
 
                 <fieldset className="mt-5">
                     <legend className="text-sm font-black text-slate-900 dark:text-white">
-                        Módulos permitidos
+                        Permisos del rol
                     </legend>
                     <div className="mt-2 grid gap-2 sm:grid-cols-2">
                         {permisos.map((permiso) => (
