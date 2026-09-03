@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { SubNavBar } from "./SubNavBar";
 import ThemeToggle from "../components/ui/ThemeToggle";
@@ -22,7 +22,6 @@ import { inicialesNombre } from "../lib/authPermissions";
  */
 export function AppShell() {
     const [menuAbierto, setMenuAbierto] = useState(false);
-    const location = useLocation();
     const { profile } = useAuth();
 
     return (
@@ -52,44 +51,55 @@ export function AppShell() {
 
             {/* Topbar mobile (solo <md) */}
             <header
-                className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200/60 bg-white/80 px-4 py-3 backdrop-blur dark:border-white/10 dark:bg-carbon-900/80 md:hidden"
+                className="sticky top-0 z-20 border-b border-slate-200/60 bg-white/90 px-3 pb-3 backdrop-blur-xl supports-[backdrop-filter]:bg-white/75 dark:border-white/10 dark:bg-carbon-900/90 dark:supports-[backdrop-filter]:bg-carbon-900/75 sm:px-4 md:hidden"
                 style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
             >
-                <div className="flex items-center gap-2">
+                <div className="relative flex min-h-11 items-center justify-between">
                     <button
                         type="button"
                         onClick={() => setMenuAbierto(true)}
-                        className="flex h-11 w-11 items-center justify-center rounded-[10px] border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-carbon-900 dark:text-neutral-200 dark:hover:bg-carbon-800"
+                        className="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-slate-700 transition-[background-color,color,transform] duration-200 hover:bg-slate-900/5 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 active:scale-95 dark:text-neutral-200 dark:hover:bg-white/10 dark:hover:text-white"
                         aria-label="Abrir menú"
                     >
-                        ☰
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.9"
+                            strokeLinecap="round"
+                            aria-hidden="true"
+                            className="h-6 w-6"
+                        >
+                            <path d="M4 7h16M4 12h16M4 17h16" />
+                        </svg>
                     </button>
-                    <div className="flex items-center gap-2">
+
+                    {/* El wordmark queda centrado en la pantalla, independiente
+                        del ancho de las acciones laterales. */}
+                    <div className="pointer-events-none absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center">
                         <img
                             src="/logo.png"
                             alt="Licman"
-                            className="h-6 w-auto animate-logo-reveal dark:hidden"
+                            className="h-5 w-auto animate-logo-reveal dark:hidden sm:h-6"
                         />
                         <img
                             src="/logo.png"
                             alt="Licman"
-                            className="hidden h-6 w-auto animate-logo-reveal dark:block"
+                            className="hidden h-5 w-auto animate-logo-reveal dark:block sm:h-6"
                             style={{ filter: "url(#licman-dark-wordmark)" }}
                         />
                     </div>
-                </div>
-                <div className="flex items-center gap-1">
-                    <p className="text-xs font-medium text-slate-500 dark:text-neutral-400">
-                        {tituloPorRuta(location.pathname)}
-                    </p>
-                    <ThemeToggle />
-                    <Link
-                        to="/perfil"
-                        className="ml-1 flex h-11 w-11 items-center justify-center rounded-full bg-brand-500 text-xs font-black text-white shadow-sm"
-                        aria-label="Abrir mi perfil"
-                    >
-                        {inicialesNombre(profile?.nombre_completo)}
-                    </Link>
+
+                    <div className="relative z-10 flex items-center">
+                        <ThemeToggle />
+                        <Link
+                            to="/perfil"
+                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-500 text-xs font-black text-white shadow-sm transition-[background-color,transform,box-shadow] duration-200 hover:bg-brand-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:ring-offset-2 active:scale-95 dark:focus-visible:ring-offset-carbon-900"
+                            aria-label="Abrir mi perfil"
+                        >
+                            {inicialesNombre(profile?.nombre_completo)}
+                        </Link>
+                    </div>
                 </div>
             </header>
 
@@ -135,18 +145,4 @@ export function AppShell() {
             {/* Toasts globales los renderiza <ToastProvider> en main.jsx */}
         </div>
     );
-}
-
-/**
- * Devuelve un título corto para el topbar mobile según la ruta actual.
- * Es solo orientativo — el header completo vive dentro de cada vista.
- */
-function tituloPorRuta(path) {
-    if (path.startsWith("/bodega")) return "Bodega";
-    if (path.startsWith("/equipos")) return "Equipos";
-    if (path.startsWith("/mantenimiento")) return "Mantenimiento";
-    if (path.startsWith("/tareas")) return "Tareas";
-    if (path.startsWith("/perfil")) return "Mi perfil";
-    if (path.startsWith("/usuarios")) return "Usuarios";
-    return "LICMAN";
 }
