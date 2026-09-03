@@ -56,10 +56,10 @@ export const MOTIVOS_MOVIMIENTO = [
     "Otro",
 ];
 
-// Movimientos que deben quedar respaldados con documentación física/digital.
-// Se exige al menos uno de los dos documentos: acta o guía de despacho.
+// Movimientos con terceros que deben quedar respaldados con documentación
+// física/digital. Los cambios entre bodegas Licman son internos: se registran
+// para mantener la ubicación e historial, pero no requieren acta ni guía.
 export const MOTIVOS_CON_DOCUMENTOS = [
-    "Cambio de bodega",
     "En arriendo a cliente",
     "En préstamo a cliente",
     "Devuelto de arriendo",
