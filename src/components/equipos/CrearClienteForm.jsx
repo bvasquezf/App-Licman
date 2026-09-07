@@ -143,19 +143,16 @@ export default function CrearClienteForm({
             aria-labelledby="cliente-titulo"
             aria-busy={guardando}
             tabIndex={-1}
-            className={`fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 p-0 sm:items-center sm:p-4 ${transicion.claseFondo}`}
+            className={`app-modal-backdrop z-50 ${transicion.claseFondo}`}
             onClick={(e) => {
                 if (e.target === e.currentTarget && !guardando) onCancel();
             }}
         >
             <div
-                className={`flex max-h-[calc(100dvh-0.5rem)] w-full max-w-xl flex-col overflow-hidden rounded-t-[24px] border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.28)] sm:max-h-[min(92dvh,780px)] sm:rounded-[24px] dark:border-white/10 dark:bg-carbon-900 ${transicion.clasePanel}`}
+                className={`app-modal-panel max-w-xl ${transicion.clasePanel}`}
             >
                 <header
-                    className="relative flex shrink-0 items-start justify-between gap-3 border-b border-slate-200 bg-white px-5 pb-4 pt-5 sm:px-6 dark:border-white/10 dark:bg-carbon-900"
-                    style={{
-                        paddingTop: "max(1.25rem, env(safe-area-inset-top))",
-                    }}
+                    className="app-modal-header relative"
                 >
                     <span
                         className="absolute left-1/2 top-2 h-1 w-10 -translate-x-1/2 rounded-full bg-slate-300 sm:hidden dark:bg-white/20"
@@ -179,7 +176,7 @@ export default function CrearClienteForm({
                         onClick={onCancel}
                         disabled={guardando}
                         data-dialog-autofocus
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-2xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50 dark:text-neutral-400 dark:hover:bg-white/10 dark:hover:text-white"
+                        className="app-modal-close"
                         aria-label="Cerrar formulario de cliente"
                     >
                         ×
@@ -191,7 +188,7 @@ export default function CrearClienteForm({
                     className="flex min-h-0 flex-1 flex-col"
                     noValidate
                 >
-                    <div className="dialog-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-4 sm:px-6 sm:py-5">
+                    <div className="app-modal-body dialog-scrollbar space-y-4">
                     <label className="block text-[0.85rem] font-semibold text-slate-900 dark:text-slate-100">
                         Razón social{" "}
                         <span className="font-normal text-rose-600">*</span>
@@ -334,13 +331,7 @@ export default function CrearClienteForm({
                     </label>
                     </div>
 
-                    <footer
-                        className="grid shrink-0 grid-cols-2 gap-2 border-t border-slate-200 bg-white px-5 pt-3 shadow-[0_-10px_30px_rgba(15,23,42,0.06)] sm:px-6 dark:border-white/10 dark:bg-carbon-900"
-                        style={{
-                            paddingBottom:
-                                "max(0.75rem, env(safe-area-inset-bottom))",
-                        }}
-                    >
+                    <footer className="app-modal-footer">
                         <button
                             type="submit"
                             disabled={guardando}

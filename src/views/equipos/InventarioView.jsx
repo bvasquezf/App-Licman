@@ -1522,7 +1522,7 @@ function FotoModal({ path, onClose }) {
             aria-modal="true"
             aria-label="Foto del equipo"
             tabIndex={-1}
-            className={`fixed inset-0 z-50 flex items-center justify-center bg-slate-900/85 p-4 ${transicion.claseFondo}`}
+            className={`app-modal-backdrop app-modal-backdrop--media z-50 ${transicion.claseFondo}`}
             onClick={onClose}
         >
             <div
@@ -1533,7 +1533,7 @@ function FotoModal({ path, onClose }) {
                     type="button"
                     onClick={onClose}
                     data-dialog-autofocus
-                    className="absolute -right-3 -top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg transition hover:bg-slate-100 dark:bg-carbon-800 dark:text-slate-200 dark:hover:bg-white/10"
+                    className="app-modal-close absolute -right-3 -top-3 z-10 shadow-lg"
                     aria-label="Cerrar"
                 >
                     ✕

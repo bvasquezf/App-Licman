@@ -65,20 +65,15 @@ export default function TareaDetalleDialog({ open, tarea, onClose }) {
             aria-modal="true"
             aria-labelledby="tarea-detalle-titulo"
             tabIndex={-1}
-            className={`fixed inset-0 z-[60] flex items-end justify-center bg-slate-900/65 p-0 sm:items-center sm:p-4 ${transicion.claseFondo}`}
+            className={`app-modal-backdrop z-[60] ${transicion.claseFondo}`}
             onClick={(event) => {
                 if (event.target === event.currentTarget) onClose();
             }}
         >
             <div
-                className={`flex max-h-[calc(100dvh-0.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl sm:max-h-[92dvh] sm:rounded-3xl dark:border-white/10 dark:bg-carbon-900 ${transicion.clasePanel}`}
+                className={`app-modal-panel max-w-3xl ${transicion.clasePanel}`}
             >
-                <header
-                    className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-200 px-5 pb-4 pt-5 sm:px-6 dark:border-white/10"
-                    style={{
-                        paddingTop: "max(1.25rem, env(safe-area-inset-top))",
-                    }}
-                >
+                <header className="app-modal-header">
                     <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                             <EstadoTareaBadge estado={tareaVisible.estado} />
@@ -104,14 +99,14 @@ export default function TareaDetalleDialog({ open, tarea, onClose }) {
                     <button
                         type="button"
                         onClick={onClose}
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-2xl text-slate-500 transition hover:bg-slate-100 dark:text-neutral-400 dark:hover:bg-white/10"
+                        className="app-modal-close"
                         aria-label="Cerrar detalle de la tarea"
                     >
                         ×
                     </button>
                 </header>
 
-                <div className="flex-1 space-y-5 overflow-y-auto px-5 py-5 sm:px-6">
+                <div className="app-modal-body dialog-scrollbar space-y-5">
                     {tareaVisible.descripcion && (
                         <section aria-labelledby="detalle-descripcion">
                             <h3
@@ -215,13 +210,7 @@ export default function TareaDetalleDialog({ open, tarea, onClose }) {
                     <TareaHistorial tareaId={tareaVisible.id} />
                 </div>
 
-                <footer
-                    className="shrink-0 border-t border-slate-200 bg-white px-5 pt-3 dark:border-white/10 dark:bg-carbon-900 sm:px-6"
-                    style={{
-                        paddingBottom:
-                            "max(0.75rem, env(safe-area-inset-bottom))",
-                    }}
-                >
+                <footer className="app-modal-footer app-modal-footer--single">
                     <button
                         type="button"
                         onClick={onClose}

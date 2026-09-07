@@ -42,7 +42,7 @@ export default function ConfirmDialog({
 
     return (
         <div
-            className={`fixed inset-0 z-40 flex items-end justify-center bg-slate-900/60 p-4 sm:items-center ${transicion.claseFondo}`}
+            className={`app-modal-backdrop z-50 ${transicion.claseFondo}`}
             onClick={contenido.loading ? undefined : onCancel}
             role="presentation"
         >
@@ -51,21 +51,26 @@ export default function ConfirmDialog({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="confirm-title"
+                aria-describedby="confirm-message"
                 aria-busy={contenido.loading}
                 tabIndex={-1}
                 onClick={(e) => e.stopPropagation()}
-                className={`w-full max-w-sm rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_20px_50px_rgba(15,23,42,0.25)] dark:border-white/10 dark:bg-carbon-900 ${transicion.clasePanel}`}
+                className={`app-modal-panel max-w-sm ${transicion.clasePanel}`}
             >
-                <h2
-                    id="confirm-title"
-                    className="text-base font-bold text-slate-900 dark:text-slate-100"
-                >
-                    {contenido.title}
-                </h2>
-                <p className="mt-2 text-sm text-slate-600 dark:text-neutral-400">
-                    {contenido.message}
-                </p>
-                <div className="mt-5 flex gap-2">
+                <header className="app-modal-header">
+                    <h2 id="confirm-title" className="app-modal-title text-lg">
+                        {contenido.title}
+                    </h2>
+                </header>
+                <div className="app-modal-body dialog-scrollbar">
+                    <p
+                        id="confirm-message"
+                        className="text-sm leading-relaxed text-slate-600 dark:text-neutral-400"
+                    >
+                        {contenido.message}
+                    </p>
+                </div>
+                <footer className="app-modal-footer">
                     <button
                         type="button"
                         onClick={onCancel}
@@ -89,7 +94,7 @@ export default function ConfirmDialog({
                             ? contenido.loadingLabel
                             : contenido.confirmLabel}
                     </button>
-                </div>
+                </footer>
             </div>
         </div>
     );

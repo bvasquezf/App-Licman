@@ -203,7 +203,7 @@ export default function BateriaDialog({ open, equipo, onSubmit, onCancel }) {
 
     return (
         <div
-            className={`fixed inset-0 z-40 flex items-end justify-center bg-slate-900/60 p-0 sm:items-center sm:p-4 ${transicion.claseFondo}`}
+            className={`app-modal-backdrop z-50 ${transicion.claseFondo}`}
             onClick={() => !guardando && onCancel?.()}
             role="presentation"
         >
@@ -216,11 +216,10 @@ export default function BateriaDialog({ open, equipo, onSubmit, onCancel }) {
                 tabIndex={-1}
                 onSubmit={enviar}
                 onClick={(event) => event.stopPropagation()}
-                className={`flex max-h-[calc(100dvh-1rem)] w-full max-w-xl flex-col overflow-hidden rounded-t-[18px] border border-slate-200 bg-white shadow-[0_20px_50px_rgba(15,23,42,0.25)] sm:max-h-[calc(100dvh-2rem)] sm:rounded-[18px] dark:border-white/10 dark:bg-carbon-900 ${transicion.clasePanel}`}
+                className={`app-modal-panel max-w-xl ${transicion.clasePanel}`}
             >
                 <header
-                    className="flex items-start justify-between border-b border-slate-200 px-5 pb-4 dark:border-white/10 sm:px-6"
-                    style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
+                    className="app-modal-header"
                 >
                     <div className="min-w-0">
                         <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-600 dark:text-blue-400">
@@ -241,14 +240,14 @@ export default function BateriaDialog({ open, equipo, onSubmit, onCancel }) {
                         onClick={onCancel}
                         disabled={guardando}
                         data-dialog-autofocus
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 text-xl text-slate-600 transition hover:bg-slate-100 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10"
+                        className="app-modal-close"
                         aria-label="Cerrar"
                     >
                         ×
                     </button>
                 </header>
 
-                <div className="overflow-y-auto px-5 py-5 sm:px-6">
+                <div className="app-modal-body dialog-scrollbar">
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.04]">
                         <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-neutral-400">
                             Batería actualmente asociada
@@ -423,7 +422,7 @@ export default function BateriaDialog({ open, equipo, onSubmit, onCancel }) {
                     </label>
                 </div>
 
-                <footer className="grid grid-cols-2 gap-2 border-t border-slate-200 bg-white/95 p-4 backdrop-blur dark:border-white/10 dark:bg-carbon-900/95">
+                <footer className="app-modal-footer">
                     <button
                         type="button"
                         onClick={onCancel}

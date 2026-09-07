@@ -698,7 +698,7 @@ function RolEditor({ rol, permisos, onClose, onGuardar }) {
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 p-3 sm:items-center"
+            className="app-modal-backdrop z-50"
             role="presentation"
             onClick={intentarCerrar}
         >
@@ -711,10 +711,9 @@ function RolEditor({ rol, permisos, onClose, onGuardar }) {
                 tabIndex={-1}
                 onSubmit={enviar}
                 onClick={(event) => event.stopPropagation()}
-                className="max-h-[92dvh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl sm:p-6 dark:bg-carbon-900"
-                style={{ paddingBottom: "max(1.25rem, env(safe-area-inset-bottom))" }}
+                className="app-modal-panel max-w-2xl"
             >
-                <div className="sticky top-0 z-10 -mx-5 -mt-5 flex items-start justify-between gap-3 border-b border-slate-200 bg-white/95 px-5 py-4 backdrop-blur sm:-mx-6 sm:-mt-6 sm:px-6 dark:border-white/10 dark:bg-carbon-900/95">
+                <header className="app-modal-header">
                     <div>
                         <p className="text-xs font-bold uppercase tracking-wide text-brand-600 dark:text-brand-400">
                             Permisos de acceso
@@ -727,14 +726,15 @@ function RolEditor({ rol, permisos, onClose, onGuardar }) {
                         type="button"
                         onClick={intentarCerrar}
                         data-dialog-autofocus
-                        className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 text-xl text-slate-600 dark:border-white/10 dark:text-slate-200"
+                        className="app-modal-close"
                         aria-label="Cerrar"
                     >
                         ×
                     </button>
-                </div>
+                </header>
 
-                <div className="mt-5 grid gap-3">
+                <div className="app-modal-body dialog-scrollbar">
+                <div className="grid gap-3">
                     <label className="text-sm font-bold text-slate-800 dark:text-slate-100">
                         Nombre del rol
                         <input
@@ -805,11 +805,9 @@ function RolEditor({ rol, permisos, onClose, onGuardar }) {
                         {errorForm}
                     </p>
                 )}
+                </div>
 
-                <div
-                    className="sticky bottom-0 z-10 -mx-5 mt-5 grid grid-cols-2 gap-2 border-t border-slate-200 bg-white/95 px-5 pt-4 backdrop-blur sm:-mx-6 sm:px-6 dark:border-white/10 dark:bg-carbon-900/95"
-                    style={{ paddingBottom: "max(0.25rem, env(safe-area-inset-bottom))" }}
-                >
+                <footer className="app-modal-footer">
                     <button
                         type="button"
                         onClick={intentarCerrar}
@@ -825,7 +823,7 @@ function RolEditor({ rol, permisos, onClose, onGuardar }) {
                     >
                         {guardando ? "Guardando…" : "Guardar rol"}
                     </button>
-                </div>
+                </footer>
             </form>
         </div>
     );

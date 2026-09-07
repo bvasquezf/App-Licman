@@ -102,18 +102,15 @@ export default function MovimientoHistorialModal({
             aria-modal="true"
             aria-labelledby="historial-mov-titulo"
             tabIndex={-1}
-            className={`fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 p-0 sm:items-center sm:p-4 ${transicion.claseFondo}`}
+            className={`app-modal-backdrop z-50 ${transicion.claseFondo}`}
             onClick={(e) => {
                 if (e.target === e.currentTarget) onClose();
             }}
         >
             <div
-                className={`max-h-[92dvh] w-full max-w-2xl overflow-y-auto rounded-t-2xl bg-white p-3 shadow-2xl sm:rounded-2xl sm:p-6 dark:bg-carbon-900 ${transicion.clasePanel}`}
-                style={{
-                    paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))",
-                }}
+                className={`app-modal-panel max-w-2xl ${transicion.clasePanel}`}
             >
-                <header className="sticky top-0 z-10 mb-4 flex items-start justify-between gap-3 border-b border-slate-100 bg-white/95 px-1 pb-3 pt-1 backdrop-blur dark:border-white/5 dark:bg-carbon-900/95 sm:static sm:border-0 sm:bg-transparent sm:pb-0 sm:pt-0 sm:backdrop-blur-none dark:sm:bg-transparent">
+                <header className="app-modal-header">
                     <div className="min-w-0">
                         <h2
                             id="historial-mov-titulo"
@@ -134,7 +131,7 @@ export default function MovimientoHistorialModal({
                         onClick={onClose}
                         data-dialog-autofocus
                         aria-label="Cerrar"
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-slate-200"
+                        className="app-modal-close"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -147,6 +144,7 @@ export default function MovimientoHistorialModal({
                     </button>
                 </header>
 
+                <div className="app-modal-body dialog-scrollbar">
                 {cargando && (
                     <div className="space-y-3" aria-busy="true" aria-label="Cargando movimientos">
                         {Array.from({ length: 4 }, (_, index) => (
@@ -379,6 +377,7 @@ export default function MovimientoHistorialModal({
                         Cargar 50 movimientos anteriores
                     </button>
                 )}
+                </div>
             </div>
         </div>
     );

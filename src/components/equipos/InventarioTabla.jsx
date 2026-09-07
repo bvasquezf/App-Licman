@@ -1151,7 +1151,7 @@ function EquipoDetallePanel({
 
     return (
         <div
-            className={`fixed inset-0 z-50 bg-slate-950/40 ${
+            className={`app-modal-backdrop app-modal-backdrop--sheet z-50 ${
                 cerrando
                     ? "pointer-events-none animate-equipo-detalle-fondo-out"
                     : "animate-equipo-detalle-fondo-in"
@@ -1161,7 +1161,7 @@ function EquipoDetallePanel({
         >
             <aside
                 ref={dialogRef}
-                className={`absolute right-0 top-0 flex h-full w-full max-w-xl flex-col overflow-y-auto bg-white shadow-2xl will-change-transform dark:bg-carbon-950 ${
+                className={`app-modal-sheet max-w-xl will-change-transform ${
                     cerrando
                         ? "animate-equipo-detalle-panel-out"
                         : "animate-equipo-detalle-panel-in"
@@ -1173,10 +1173,7 @@ function EquipoDetallePanel({
                 onClick={(event) => event.stopPropagation()}
                 onAnimationEnd={completarCierre}
             >
-                <header
-                    className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/95 px-4 pb-3 backdrop-blur sm:px-6 dark:border-white/10 dark:bg-carbon-950/95"
-                    style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
-                >
+                <header className="app-modal-header app-modal-header--center">
                     <div>
                         <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-600 dark:text-blue-400">
                             Ficha del equipo
@@ -1201,7 +1198,7 @@ function EquipoDetallePanel({
                             type="button"
                             onClick={() => solicitarCierre()}
                             data-dialog-autofocus
-                            className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 text-xl text-slate-600 transition hover:bg-slate-100 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10"
+                            className="app-modal-close"
                             aria-label="Cerrar ficha"
                         >
                             ×
@@ -1209,7 +1206,7 @@ function EquipoDetallePanel({
                     </div>
                 </header>
 
-                <div className="space-y-5 p-4 sm:p-6">
+                <div className="app-modal-body dialog-scrollbar space-y-5">
                     {editando ? (
                         <EquipoEdicionForm
                             equipo={equipo}

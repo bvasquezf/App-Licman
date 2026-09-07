@@ -198,28 +198,28 @@ export default function RegularizarUbicacionDialog({
             aria-labelledby="regularizar-ubicacion-titulo"
             aria-busy={guardando}
             tabIndex={-1}
-            className={`fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 p-0 sm:items-center sm:p-4 ${transicion.claseFondo}`}
+            className={`app-modal-backdrop z-50 ${transicion.claseFondo}`}
             onClick={(event) => {
                 if (event.target === event.currentTarget && !guardando) onCancel();
             }}
         >
             <div
-                className={`max-h-[94dvh] w-full max-w-xl overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl sm:rounded-2xl sm:p-6 dark:bg-carbon-900 ${transicion.clasePanel}`}
+                className={`app-modal-panel max-w-3xl ${transicion.clasePanel}`}
             >
-                <header className="sticky top-0 z-10 -mx-5 -mt-5 mb-4 flex items-start justify-between gap-3 border-b border-slate-200 bg-white/95 px-5 py-4 backdrop-blur sm:-mx-6 sm:-mt-6 sm:px-6 dark:border-white/10 dark:bg-carbon-900/95">
+                <header className="app-modal-header">
                     <div className="min-w-0">
                         <p className="text-xs font-black uppercase tracking-[0.14em] text-amber-700 dark:text-amber-400">
                             Control de ubicación
                         </p>
                         <h2
                             id="regularizar-ubicacion-titulo"
-                            className="mt-1 text-lg font-black text-slate-900 dark:text-slate-100"
+                            className="mt-1 text-xl font-black text-slate-900 sm:text-2xl dark:text-slate-100"
                         >
                             {esPendiente
                                 ? "Regularizar ubicación"
                                 : "Marcar por regularizar"}
                         </h2>
-                        <p className="mt-1 text-sm text-slate-600 dark:text-neutral-400">
+                        <p className="mt-1.5 text-sm text-slate-600 dark:text-neutral-400">
                             {equipo.marca} {equipo.modelo} ·{" "}
                             <span className="font-mono font-semibold">
                                 {equipo.numero_interno || "Sin N° interno"}
@@ -231,37 +231,57 @@ export default function RegularizarUbicacionDialog({
                         onClick={onCancel}
                         disabled={guardando}
                         data-dialog-autofocus
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-xl text-slate-600 transition hover:bg-slate-200 disabled:opacity-50 dark:bg-white/5 dark:text-neutral-300 dark:hover:bg-white/10"
+                        className="app-modal-close"
                         aria-label="Cerrar regularización de ubicación"
                     >
                         ×
                     </button>
                 </header>
 
-                <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-                    <section className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-100">
-                        <p className="font-extrabold">
-                            ⚠️ {esPendiente ? "Último registro conocido" : "Ubicación registrada actualmente"}
-                        </p>
-                        <p className="mt-1 font-semibold">{ubicacionRegistrada}</p>
-                        <p className="mt-1 text-xs text-amber-800 dark:text-amber-200">
-                            {esPendiente
-                                ? "La ubicación que confirmes reemplazará el estado pendiente, pero este antecedente seguirá en el historial."
-                                : "Al guardar, el equipo saldrá de los conteos de cliente, venta y bodega. El dato anterior quedará respaldado para investigarlo."}
-                        </p>
-                    </section>
+                <form
+                    onSubmit={handleSubmit}
+                    className="flex min-h-0 flex-1 flex-col"
+                    noValidate
+                >
+                    <div className="app-modal-body dialog-scrollbar space-y-6">
+                        <section className="grid gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-950 sm:grid-cols-[auto_minmax(0,1fr)] sm:p-5 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-100">
+                            <span
+                                className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-200/70 text-xl dark:bg-amber-500/20"
+                                aria-hidden="true"
+                            >
+                                ⚠️
+                            </span>
+                            <div>
+                                <p className="text-sm font-extrabold">
+                                    {esPendiente
+                                        ? "Último registro conocido"
+                                        : "Ubicación registrada actualmente"}
+                                </p>
+                                <p className="mt-1 text-base font-bold">
+                                    {ubicacionRegistrada}
+                                </p>
+                                <p className="mt-1.5 text-sm leading-relaxed text-amber-800 dark:text-amber-200">
+                                    {esPendiente
+                                        ? "La ubicación que confirmes reemplazará el estado pendiente, pero este antecedente seguirá disponible en el historial."
+                                        : "Al guardar, el equipo saldrá de los conteos de cliente, venta y bodega. El dato anterior quedará respaldado para investigarlo."}
+                                </p>
+                            </div>
+                        </section>
 
                     {esPendiente && (
-                        <div>
-                            <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                        <section>
+                            <p className="text-base font-extrabold text-slate-900 dark:text-slate-100">
                                 ¿Qué se confirmó?
+                            </p>
+                            <p className="mt-1 text-sm text-slate-500 dark:text-neutral-400">
+                                Selecciona el resultado real de la investigación.
                             </p>
                             <div
                                 ref={(el) => {
                                     refs.current.accion = el;
                                 }}
                                 tabIndex={-1}
-                                className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3"
+                                className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3"
                                 role="radiogroup"
                                 aria-label="Resultado de la regularización"
                             >
@@ -274,19 +294,19 @@ export default function RegularizarUbicacionDialog({
                                             role="radio"
                                             aria-checked={activa}
                                             onClick={() => seleccionarAccion(opcion.id)}
-                                            className={`min-h-[86px] rounded-xl border-[1.5px] p-3 text-left transition active:scale-[0.98] ${
+                                            className={`min-h-[112px] rounded-2xl border-[1.5px] p-4 text-left transition active:scale-[0.98] ${
                                                 activa
                                                     ? "border-blue-600 bg-blue-50 text-blue-900 ring-2 ring-blue-600/15 dark:bg-blue-500/15 dark:text-blue-200"
                                                     : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-200 dark:hover:bg-white/10"
                                             }`}
                                         >
-                                            <span className="text-xl" aria-hidden="true">
+                                            <span className="text-2xl" aria-hidden="true">
                                                 {opcion.icono}
                                             </span>
-                                            <span className="mt-1 block text-sm font-extrabold">
+                                            <span className="mt-2 block text-sm font-extrabold">
                                                 {opcion.titulo}
                                             </span>
-                                            <span className="mt-0.5 block text-xs font-medium opacity-80">
+                                            <span className="mt-1 block text-xs font-medium leading-relaxed opacity-80">
                                                 {opcion.detalle}
                                             </span>
                                         </button>
@@ -298,10 +318,12 @@ export default function RegularizarUbicacionDialog({
                                     {errores.accion}
                                 </p>
                             )}
-                        </div>
+                        </section>
                     )}
 
-                    {form.accion === "bodega" && (
+                    {["bodega", "cliente", "venta"].includes(form.accion) && (
+                        <div className="grid gap-4 md:grid-cols-2">
+                        {form.accion === "bodega" && (
                         <label className="block text-sm font-semibold text-slate-900 dark:text-slate-100">
                             Bodega confirmada
                             <select
@@ -327,9 +349,9 @@ export default function RegularizarUbicacionDialog({
                                 </p>
                             )}
                         </label>
-                    )}
+                        )}
 
-                    {["cliente", "venta"].includes(form.accion) && (
+                        {["cliente", "venta"].includes(form.accion) && (
                         <label className="block text-sm font-semibold text-slate-900 dark:text-slate-100">
                             Cliente confirmado
                             <select
@@ -361,9 +383,9 @@ export default function RegularizarUbicacionDialog({
                                 </p>
                             )}
                         </label>
-                    )}
+                        )}
 
-                    {["bodega", "cliente", "venta"].includes(form.accion) && (
+                        {["bodega", "cliente", "venta"].includes(form.accion) && (
                         <label className="block text-sm font-semibold text-slate-900 dark:text-slate-100">
                             Ubicación específica{" "}
                             <span className="font-normal text-slate-500 dark:text-neutral-400">
@@ -382,9 +404,9 @@ export default function RegularizarUbicacionDialog({
                                 className={clasesInput}
                             />
                         </label>
-                    )}
+                        )}
 
-                    {form.accion === "venta" && (
+                        {form.accion === "venta" && (
                         <label className="block text-sm font-semibold text-slate-900 dark:text-slate-100">
                             Fecha conocida de la venta{" "}
                             <span className="font-normal text-slate-500 dark:text-neutral-400">
@@ -403,60 +425,74 @@ export default function RegularizarUbicacionDialog({
                                 Esta vía es solo para regularizar antecedentes antiguos sin acta ni guía disponibles.
                             </span>
                         </label>
+                        )}
+                        </div>
                     )}
 
-                    <label className="block text-sm font-semibold text-slate-900 dark:text-slate-100">
-                        {esPendiente
-                            ? "Cómo se confirmó"
-                            : "Motivo de la revisión"}{" "}
-                        <span className="text-rose-600">*</span>
-                        <textarea
-                            rows={4}
-                            value={form.notas}
-                            onChange={(event) =>
-                                actualizar("notas", event.target.value)
-                            }
-                            ref={(el) => {
-                                refs.current.notas = el;
-                            }}
-                            placeholder={
-                                esPendiente
-                                    ? "Ej. se encontró físicamente en el inventario de Renca..."
-                                    : "Ej. no apareció en el inventario físico y el último registro es de 2022..."
-                            }
-                            className={`${clasesInput} resize-y`}
-                        />
-                        {errores.notas && (
-                            <p className="mt-1 text-xs font-semibold text-rose-600">
-                                {errores.notas}
-                            </p>
-                        )}
-                    </label>
+                    <div className="grid items-start gap-5 md:grid-cols-[minmax(0,1.45fr)_minmax(220px,0.55fr)]">
+                        <label className="block text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            {esPendiente
+                                ? "Cómo se confirmó"
+                                : "Motivo de la revisión"}{" "}
+                            <span className="text-rose-600">*</span>
+                            <textarea
+                                rows={5}
+                                value={form.notas}
+                                onChange={(event) =>
+                                    actualizar("notas", event.target.value)
+                                }
+                                ref={(el) => {
+                                    refs.current.notas = el;
+                                }}
+                                placeholder={
+                                    esPendiente
+                                        ? "Ej. se encontró físicamente en el inventario de Renca..."
+                                        : "Ej. no apareció en el inventario físico y el último registro es de 2022..."
+                                }
+                                className={`${clasesInput} resize-y leading-relaxed`}
+                            />
+                            {errores.notas && (
+                                <p className="mt-1 text-xs font-semibold text-rose-600">
+                                    {errores.notas}
+                                </p>
+                            )}
+                        </label>
 
-                    <label className="block text-sm font-semibold text-slate-900 dark:text-slate-100">
-                        Responsable
-                        <input
-                            type="text"
-                            value={responsable}
-                            readOnly
-                            aria-readonly="true"
-                            className={clasesInput}
-                        />
-                    </label>
+                        <div className="space-y-3">
+                            <label className="block text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                Responsable
+                                <input
+                                    type="text"
+                                    value={responsable}
+                                    readOnly
+                                    aria-readonly="true"
+                                    className={`${clasesInput} bg-slate-50 dark:bg-carbon-950`}
+                                />
+                            </label>
+                            <p className="rounded-xl bg-slate-100 px-3 py-2.5 text-xs leading-relaxed text-slate-600 dark:bg-white/5 dark:text-neutral-300">
+                                {esPendiente
+                                    ? "La confirmación quedará registrada con tu usuario y conservará el antecedente anterior."
+                                    : "La ubicación no se elimina: queda guardada como antecedente para continuar la investigación."}
+                            </p>
+                        </div>
+                    </div>
 
                     {!online && (
                         <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm font-semibold text-rose-700 dark:border-rose-500/25 dark:bg-rose-500/10 dark:text-rose-300">
                             Esta regularización requiere conexión para guardar la trazabilidad.
                         </p>
                     )}
+                    </div>
 
-                    <div
-                        className="sticky bottom-0 z-10 -mx-5 -mb-5 flex flex-col gap-2 border-t border-slate-200 bg-white/95 px-5 pt-4 backdrop-blur sm:-mx-6 sm:-mb-6 sm:flex-row-reverse sm:px-6 dark:border-white/10 dark:bg-carbon-900/95"
-                        style={{
-                            paddingBottom:
-                                "max(1rem, env(safe-area-inset-bottom))",
-                        }}
-                    >
+                    <div className="app-modal-footer">
+                        <button
+                            type="button"
+                            onClick={onCancel}
+                            disabled={guardando}
+                            className="min-h-[44px] flex-1 rounded-[10px] bg-slate-100 px-4 py-3 text-base font-bold text-slate-900 transition hover:bg-slate-200 disabled:opacity-50 dark:bg-carbon-800 dark:text-slate-200 dark:hover:bg-white/10"
+                        >
+                            Cancelar
+                        </button>
                         <button
                             type="submit"
                             disabled={guardando || !online}
@@ -467,14 +503,6 @@ export default function RegularizarUbicacionDialog({
                                 : esPendiente
                                   ? "Confirmar regularización"
                                   : "Marcar por regularizar"}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={onCancel}
-                            disabled={guardando}
-                            className="min-h-[44px] flex-1 rounded-[10px] bg-slate-100 px-4 py-3 text-base font-bold text-slate-900 transition hover:bg-slate-200 disabled:opacity-50 dark:bg-carbon-800 dark:text-slate-200 dark:hover:bg-white/10"
-                        >
-                            Cancelar
                         </button>
                     </div>
                 </form>

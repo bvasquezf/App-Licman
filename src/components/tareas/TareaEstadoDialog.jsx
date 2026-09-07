@@ -112,20 +112,15 @@ export default function TareaEstadoDialog({
             aria-labelledby="tarea-estado-titulo"
             aria-describedby="tarea-estado-descripcion"
             tabIndex={-1}
-            className={`fixed inset-0 z-[60] flex items-end justify-center bg-slate-900/65 sm:items-center sm:p-4 ${transicion.claseFondo}`}
+            className={`app-modal-backdrop z-[60] ${transicion.claseFondo}`}
             onClick={(event) => {
                 if (event.target === event.currentTarget) cerrar();
             }}
         >
             <div
-                className={`flex max-h-[calc(100dvh-0.5rem)] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl sm:rounded-3xl dark:border-white/10 dark:bg-carbon-900 ${transicion.clasePanel}`}
+                className={`app-modal-panel max-w-lg ${transicion.clasePanel}`}
             >
-                <header
-                    className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 pb-4 pt-5 sm:px-6 dark:border-white/10"
-                    style={{
-                        paddingTop: "max(1.25rem, env(safe-area-inset-top))",
-                    }}
-                >
+                <header className="app-modal-header">
                     <div className="min-w-0">
                         <p className="text-2xl" aria-hidden="true">
                             {configuracion.icono}
@@ -145,7 +140,7 @@ export default function TareaEstadoDialog({
                         type="button"
                         onClick={cerrar}
                         disabled={guardando}
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-2xl text-slate-500 hover:bg-slate-100 disabled:opacity-50 dark:text-neutral-400 dark:hover:bg-white/10"
+                        className="app-modal-close"
                         aria-label="Cerrar"
                     >
                         ×
@@ -157,7 +152,7 @@ export default function TareaEstadoDialog({
                     noValidate
                     className="flex min-h-0 flex-1 flex-col"
                 >
-                    <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5 sm:px-6">
+                    <div className="app-modal-body dialog-scrollbar space-y-4">
                         <p
                             id="tarea-estado-descripcion"
                             className="text-sm leading-relaxed text-slate-600 dark:text-neutral-300"
@@ -201,13 +196,7 @@ export default function TareaEstadoDialog({
                         </label>
                     </div>
 
-                    <footer
-                        className="grid grid-cols-2 gap-2 border-t border-slate-200 px-5 pt-3 sm:px-6 dark:border-white/10"
-                        style={{
-                            paddingBottom:
-                                "max(0.75rem, env(safe-area-inset-bottom))",
-                        }}
-                    >
+                    <footer className="app-modal-footer">
                         <button
                             type="button"
                             onClick={cerrar}

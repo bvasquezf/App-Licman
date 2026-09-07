@@ -135,15 +135,15 @@ export default function EstadoDialog({
             aria-labelledby="estado-titulo"
             aria-busy={guardando}
             tabIndex={-1}
-            className={`fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 p-0 sm:items-center sm:p-4 ${transicion.claseFondo}`}
+            className={`app-modal-backdrop z-50 ${transicion.claseFondo}`}
             onClick={(e) => {
                 if (e.target === e.currentTarget && !guardando) onCancel();
             }}
         >
             <div
-                className={`max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl sm:rounded-2xl sm:p-6 dark:bg-carbon-900 ${transicion.clasePanel}`}
+                className={`app-modal-panel max-w-lg ${transicion.clasePanel}`}
             >
-                <header className="sticky top-0 z-10 -mx-5 -mt-5 mb-4 flex items-start justify-between gap-3 border-b border-slate-200 bg-white/95 px-5 py-4 backdrop-blur sm:-mx-6 sm:-mt-6 sm:px-6 dark:border-white/10 dark:bg-carbon-900/95">
+                <header className="app-modal-header">
                     <div>
                         <h2
                             id="estado-titulo"
@@ -169,14 +169,19 @@ export default function EstadoDialog({
                         onClick={onCancel}
                         disabled={guardando}
                         data-dialog-autofocus
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-xl text-slate-600 transition hover:bg-slate-200 disabled:opacity-50 dark:bg-white/5 dark:text-neutral-300 dark:hover:bg-white/10"
+                        className="app-modal-close"
                         aria-label="Cerrar cambio de estado"
                     >
                         ×
                     </button>
                 </header>
 
-                <form onSubmit={handleSubmit} className="space-y-3" noValidate>
+                <form
+                    onSubmit={handleSubmit}
+                    className="flex min-h-0 flex-1 flex-col"
+                    noValidate
+                >
+                    <div className="app-modal-body dialog-scrollbar space-y-4">
                     {equipoVendido && (
                         <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-200">
                             <strong>💰 Equipo vendido</strong>
@@ -317,21 +322,9 @@ export default function EstadoDialog({
                         )}
                     </label>
 
-                    <div
-                        className="sticky bottom-0 z-10 -mx-5 -mb-5 flex flex-col gap-2 border-t border-slate-200 bg-white/95 px-5 pt-4 backdrop-blur sm:-mx-6 sm:-mb-6 sm:flex-row-reverse sm:px-6 dark:border-white/10 dark:bg-carbon-900/95"
-                        style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
-                    >
-                        <button
-                            type="submit"
-                            disabled={guardando}
-                            className="flex-1 rounded-[10px] bg-blue-600 px-4 py-3 text-base font-bold text-white shadow-[0_4px_12px_rgba(37,99,235,0.3)] transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            {guardando
-                                ? "Guardando…"
-                                : equipoVendido
-                                  ? "Guardar estado y trabajo"
-                                  : "Guardar estado"}
-                        </button>
+                    </div>
+
+                    <footer className="app-modal-footer">
                         <button
                             type="button"
                             onClick={onCancel}
@@ -340,7 +333,18 @@ export default function EstadoDialog({
                         >
                             Cancelar
                         </button>
-                    </div>
+                        <button
+                            type="submit"
+                            disabled={guardando}
+                            className="min-h-[44px] rounded-[10px] bg-blue-600 px-4 py-3 text-base font-bold text-white shadow-[0_4px_12px_rgba(37,99,235,0.3)] transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            {guardando
+                                ? "Guardando…"
+                                : equipoVendido
+                                  ? "Guardar estado y trabajo"
+                                  : "Guardar estado"}
+                        </button>
+                    </footer>
                 </form>
             </div>
         </div>

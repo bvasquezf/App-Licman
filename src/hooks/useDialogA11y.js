@@ -1,6 +1,34 @@
 import { useEffect, useRef } from "react";
 
 const dialogStack = [];
+let estilosScrollDocumento = null;
+
+function bloquearScrollDocumento() {
+    if (estilosScrollDocumento || typeof document === "undefined") return;
+
+    estilosScrollDocumento = {
+        htmlOverflow: document.documentElement.style.overflow,
+        bodyOverflow: document.body.style.overflow,
+        bodyPaddingRight: document.body.style.paddingRight,
+    };
+
+    const anchoScrollbar =
+        window.innerWidth - document.documentElement.clientWidth;
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    if (anchoScrollbar > 0) {
+        document.body.style.paddingRight = `${anchoScrollbar}px`;
+    }
+}
+
+function restaurarScrollDocumento() {
+    if (!estilosScrollDocumento || dialogStack.length > 0) return;
+
+    document.documentElement.style.overflow = estilosScrollDocumento.htmlOverflow;
+    document.body.style.overflow = estilosScrollDocumento.bodyOverflow;
+    document.body.style.paddingRight = estilosScrollDocumento.bodyPaddingRight;
+    estilosScrollDocumento = null;
+}
 
 const FOCUSABLE_SELECTOR = [
     "a[href]",
@@ -40,6 +68,7 @@ export function useDialogA11y(
         const entrada = { element: dialogRef.current };
         const focoAnterior = document.activeElement;
         dialogStack.push(entrada);
+        bloquearScrollDocumento();
 
         const frame = window.requestAnimationFrame(() => {
             const preferido = entrada.element.querySelector(
@@ -88,6 +117,7 @@ export function useDialogA11y(
             document.removeEventListener("keydown", manejarTeclado, true);
             const indice = dialogStack.indexOf(entrada);
             if (indice >= 0) dialogStack.splice(indice, 1);
+            restaurarScrollDocumento();
             if (focoAnterior instanceof HTMLElement && focoAnterior.isConnected) {
                 focoAnterior.focus({ preventScroll: true });
             }
