@@ -62,6 +62,7 @@ export const MOTIVOS_MOVIMIENTO = [
 export const MOTIVOS_CON_DOCUMENTOS = [
     "En arriendo a cliente",
     "En préstamo a cliente",
+    "Venta a cliente",
     "Devuelto de arriendo",
     "Mantención interna",
     "Retorno a cliente",
