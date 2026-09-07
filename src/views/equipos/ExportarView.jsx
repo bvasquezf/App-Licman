@@ -2,7 +2,9 @@ import { useCallback, useMemo, useState } from "react";
 import {
     BODEGAS,
     BODEGA_EN_CLIENTE,
+    ESTADO_UBICACION_POR_REGULARIZAR,
     PHOTO_EMAIL,
+    UBICACION_POR_REGULARIZAR,
 } from "../../lib/equiposConstants";
 import { exportarAExcel } from "../../lib/equiposExport";
 import EquiposHeader from "../../components/equipos/EquiposHeader";
@@ -66,6 +68,13 @@ export default function ExportarView() {
         if (bodega === BODEGA_EN_CLIENTE) {
             return equipos.filter((e) => Boolean(e.cliente_id));
         }
+        if (bodega === UBICACION_POR_REGULARIZAR) {
+            return equipos.filter(
+                (e) =>
+                    e.estado_ubicacion ===
+                    ESTADO_UBICACION_POR_REGULARIZAR,
+            );
+        }
         return equipos.filter((e) => e.bodega === bodega);
     }, [equipos, bodega]);
 
@@ -110,7 +119,7 @@ export default function ExportarView() {
             <p className="mt-1 text-sm text-slate-500 dark:text-neutral-400">
                 Descarga la planilla completa en Excel (.xlsx). Puedes filtrar
                 por bodega o descargar únicamente los equipos que están
-                asignados a clientes.
+                asignados a clientes o pendientes de regularización.
             </p>
 
             <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-[220px_1fr] sm:items-center">
@@ -123,6 +132,9 @@ export default function ExportarView() {
                     >
                         <option value="todas">Todas</option>
                         <option value={BODEGA_EN_CLIENTE}>En cliente</option>
+                        <option value={UBICACION_POR_REGULARIZAR}>
+                            Por regularizar
+                        </option>
                         {BODEGAS.map((b) => (
                             <option key={b} value={b}>
                                 {b}

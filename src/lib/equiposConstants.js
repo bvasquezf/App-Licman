@@ -4,6 +4,11 @@
 // Bodegas donde se realiza el levantamiento de inventario.
 export const BODEGAS = ["Antillanca", "Cordillera", "Renca"];
 
+// Estado logístico separado de bodegas/clientes. Evita representar una
+// ubicación dudosa como si fuera una bodega física o un cliente confirmado.
+export const ESTADO_UBICACION_POR_REGULARIZAR = "por_regularizar";
+export const UBICACION_POR_REGULARIZAR = "__por_regularizar__";
+
 // Estados operacionales posibles para un equipo.
 export const ESTADOS = [
     "Operativo",
@@ -283,6 +288,9 @@ export const ICONO_POR_MOTIVO = {
     "Cambio de equipo (garantía)": "🔁",
     "Cambio de equipo (fallo)": "🔁",
     "Mantención externa": "🔧",
+    "Regularización por ubicación desconocida": "⚠️",
+    "Regularización de ubicación": "📍",
+    "Regularización de venta histórica": "💰",
     Otro: "📝",
 };
 
@@ -294,6 +302,9 @@ export function iconoPorMotivo(motivo) {
 export const EXCEL_HEADERS = {
     correlativo: "Correlativo",
     ubicacion_logistica: "Ubicación logística",
+    ultima_ubicacion_registrada: "Última ubicación registrada",
+    ubicacion_por_regularizar_at: "Marcado por regularizar",
+    detalle_regularizacion: "Detalle de regularización",
     bodega: "Bodega",
     cliente_id: "ID Cliente",
     cliente_nombre: "Cliente",
@@ -326,6 +337,9 @@ export const EXCEL_HEADERS = {
 export const EXCEL_COLUMN_ORDER = [
     "correlativo",
     "ubicacion_logistica",
+    "ultima_ubicacion_registrada",
+    "ubicacion_por_regularizar_at",
+    "detalle_regularizacion",
     "bodega",
     "cliente_id",
     "cliente_nombre",

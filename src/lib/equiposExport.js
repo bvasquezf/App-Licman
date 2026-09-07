@@ -4,9 +4,12 @@
 import * as XLSX from "xlsx";
 import {
     BODEGA_EN_CLIENTE,
+    ESTADO_UBICACION_POR_REGULARIZAR,
     EXCEL_COLUMN_ORDER,
     EXCEL_HEADERS,
+    UBICACION_POR_REGULARIZAR,
 } from "./equiposConstants";
+import { descripcionUltimaUbicacion } from "./equiposPresentacion";
 
 /**
  * Exporta la lista de equipos a un archivo .xlsx.
@@ -24,7 +27,13 @@ export function exportarAExcel(equipos, opts = {}) {
     const filtrados = opts.bodega
         ? opts.bodega === BODEGA_EN_CLIENTE
             ? equipos.filter((e) => Boolean(e.cliente_id))
-            : equipos.filter((e) => e.bodega === opts.bodega)
+            : opts.bodega === UBICACION_POR_REGULARIZAR
+              ? equipos.filter(
+                    (e) =>
+                        e.estado_ubicacion ===
+                        ESTADO_UBICACION_POR_REGULARIZAR,
+                )
+              : equipos.filter((e) => e.bodega === opts.bodega)
         : equipos;
 
     if (filtrados.length === 0) {
@@ -42,9 +51,25 @@ export function exportarAExcel(equipos, opts = {}) {
 
             // Mapeos especiales
             if (key === "ubicacion_logistica") {
-                val = e.cliente_id
-                    ? "En cliente"
-                    : e.bodega || e.ubicacion_actual || "Sin ubicación";
+                val =
+                    e.estado_ubicacion ===
+                    ESTADO_UBICACION_POR_REGULARIZAR
+                    ? "Por regularizar"
+                    : e.cliente_id
+                      ? "En cliente"
+                      : e.bodega || e.ubicacion_actual || "Sin ubicación";
+            } else if (key === "ultima_ubicacion_registrada") {
+                val =
+                    e.estado_ubicacion ===
+                    ESTADO_UBICACION_POR_REGULARIZAR
+                        ? descripcionUltimaUbicacion(e, clientesPorId)
+                        : "";
+            } else if (key === "detalle_regularizacion") {
+                val =
+                    e.estado_ubicacion ===
+                    ESTADO_UBICACION_POR_REGULARIZAR
+                        ? e.ultimo_movimiento?.notas
+                        : "";
             } else if (key === "cliente_nombre") {
                 val =
                     cliente?.razon_social ??
@@ -75,7 +100,14 @@ export function exportarAExcel(equipos, opts = {}) {
                 val = Array.isArray(val) ? val.join(", ") : val || "";
             } else if (key === "horometro" && val !== null && val !== "") {
                 val = Number(val);
-            } else if (["created_at", "vendido_at"].includes(key) && val) {
+            } else if (
+                [
+                    "created_at",
+                    "vendido_at",
+                    "ubicacion_por_regularizar_at",
+                ].includes(key) &&
+                val
+            ) {
                 val = new Date(val).toISOString();
             }
 
@@ -90,6 +122,9 @@ export function exportarAExcel(equipos, opts = {}) {
     const anchos = {
         Correlativo: 12,
         "Ubicación logística": 20,
+        "Última ubicación registrada": 36,
+        "Marcado por regularizar": 24,
+        "Detalle de regularización": 48,
         Bodega: 14,
         "ID Cliente": 12,
         Cliente: 32,
@@ -126,7 +161,11 @@ export function exportarAExcel(equipos, opts = {}) {
 
     const wb = XLSX.utils.book_new();
     const nombreUbicacion =
-        opts.bodega === BODEGA_EN_CLIENTE ? "En cliente" : opts.bodega;
+        opts.bodega === BODEGA_EN_CLIENTE
+            ? "En cliente"
+            : opts.bodega === UBICACION_POR_REGULARIZAR
+              ? "Por regularizar"
+              : opts.bodega;
     const sheetName = nombreUbicacion?.slice(0, 25) || "Completo"; // Excel: max 31 chars
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
 

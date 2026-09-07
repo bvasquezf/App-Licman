@@ -10,6 +10,7 @@ export const PERMISOS = {
     EQUIPOS_ELIMINAR: "equipos.eliminar",
     EQUIPOS_GESTIONAR_CLIENTES: "equipos.gestionar_clientes",
     EQUIPOS_EXPORTAR: "equipos.exportar",
+    EQUIPOS_REGULARIZAR_UBICACION: "equipos.regularizar_ubicacion",
     MANTENIMIENTO: "mantenimiento.usar",
     TAREAS: "tareas.usar",
     TAREAS_PLANIFICAR: "tareas.planificar",

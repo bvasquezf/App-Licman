@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
     BODEGA_EN_CLIENTE,
+    UBICACION_POR_REGULARIZAR,
     usaBateriaElectrica,
 } from "../../lib/equiposConstants";
 import ConfirmDialog from "../../components/equipos/ConfirmDialog";
@@ -9,6 +10,7 @@ import MovimientoDialog from "../../components/equipos/MovimientoDialog";
 import MovimientoHistorialModal from "../../components/equipos/MovimientoHistorialModal";
 import EstadoDialog from "../../components/equipos/EstadoDialog";
 import BateriaDialog from "../../components/equipos/BateriaDialog";
+import RegularizarUbicacionDialog from "../../components/equipos/RegularizarUbicacionDialog";
 import EquiposHeader from "../../components/equipos/EquiposHeader";
 import ResumenBodegas from "../../components/equipos/ResumenBodegas";
 import { TablaEquipos } from "../../components/equipos/InventarioTabla";
@@ -28,7 +30,10 @@ import {
     getFotoUrlCached,
     uploadFotoEquipo,
 } from "../../lib/equiposStorage";
-import { parseFaltantes } from "../../lib/equiposPresentacion";
+import {
+    esUbicacionPorRegularizar,
+    parseFaltantes,
+} from "../../lib/equiposPresentacion";
 import {
     cacheEquipos,
     enqueuePendingWrite,
@@ -193,11 +198,18 @@ function Paginacion({ pagina, totalPaginas, desde, hasta, total, onCambiar }) {
 
 function cumpleFiltroBodega(equipo, filtroBodega) {
     if (filtroBodega === "todas") return true;
+    if (filtroBodega === UBICACION_POR_REGULARIZAR) {
+        return esUbicacionPorRegularizar(equipo);
+    }
+    if (esUbicacionPorRegularizar(equipo)) return false;
     if (filtroBodega === BODEGA_EN_CLIENTE) return Boolean(equipo.cliente_id);
     return equipo.bodega === filtroBodega;
 }
 
 function cumpleVistaRapida(equipo, vista, filtroBodega = "todas") {
+    if (esUbicacionPorRegularizar(equipo)) {
+        return !vista;
+    }
     switch (vista) {
         case "disponibles":
             // Dentro del ámbito "En cliente", este chip representa los
@@ -303,6 +315,9 @@ export default function InventarioView() {
     );
     const puedeCambiarEstado = puede(PERMISOS.EQUIPOS_CAMBIAR_ESTADO);
     const puedeEliminar = puede(PERMISOS.EQUIPOS_ELIMINAR);
+    const puedeRegularizarUbicacion = puede(
+        PERMISOS.EQUIPOS_REGULARIZAR_UBICACION,
+    );
     const puedeGestionarClientes = puede(
         PERMISOS.EQUIPOS_GESTIONAR_CLIENTES,
     );
@@ -316,6 +331,7 @@ export default function InventarioView() {
     // Equipo al que se le está cambiando el estado operacional (EstadoDialog).
     const [estadoEquipo, setEstadoEquipo] = useState(null);
     const [bateriaEquipo, setBateriaEquipo] = useState(null);
+    const [ubicacionEquipo, setUbicacionEquipo] = useState(null);
     const [fotoModalPath, setFotoModalPath] = useState(null);
     const [actualizacionEquipos, setActualizacionEquipos] = useState(0);
     // Modal hermano para crear cliente desde el dialog de movimiento.
@@ -358,11 +374,16 @@ export default function InventarioView() {
         [actualizarParametros],
     );
     const cambiarBodega = useCallback(
-        (valor) =>
-            actualizarParametros({
+        (valor) => {
+            const cambios = {
                 bodega: valor === "todas" ? null : valor,
                 pagina: null,
-            }),
+            };
+            if (valor === UBICACION_POR_REGULARIZAR) {
+                cambios.vista = null;
+            }
+            actualizarParametros(cambios);
+        },
         [actualizarParametros],
     );
     const cambiarPagina = useCallback(
@@ -433,13 +454,12 @@ export default function InventarioView() {
                     await cacheEquipos(equiposConBateria);
                 }
 
-                // Carga paralela de clientes activos (catálogo pequeño ~150).
-                // Se usa para resolver nombres en cards y como options del
-                // dropdown del MovimientoDialog.
+                // Se conservan también los clientes inactivos para poder
+                // reconstruir una venta histórica. Los movimientos normales
+                // reciben más abajo únicamente el subconjunto activo.
                 const { data: cliData } = await supabase
                     .from("clientes")
-                    .select("id, razon_social")
-                    .eq("activo", true)
+                    .select("id, razon_social, activo")
                     .order("razon_social");
                 setClientes(cliData ?? []);
             }
@@ -466,6 +486,10 @@ export default function InventarioView() {
         for (const c of clientes) map.set(c.id, c);
         return map;
     }, [clientes]);
+    const clientesActivos = useMemo(
+        () => clientes.filter((cliente) => cliente.activo !== false),
+        [clientes],
+    );
 
     const conteosVistas = useMemo(
         () => {
@@ -514,6 +538,10 @@ export default function InventarioView() {
                 e.bateria_asociada?.numero_serie,
                 clientesById.get(e.cliente_id)?.razon_social,
                 clientesById.get(e.cliente_retorno_id)?.razon_social,
+                e.ubicacion_anterior?.cliente_nombre,
+                e.ubicacion_anterior?.bodega,
+                e.ubicacion_anterior?.ubicacion_actual,
+                e.ultimo_movimiento?.notas,
             ].some((valor) =>
                 String(valor ?? "").toLowerCase().includes(texto),
             );
@@ -535,10 +563,12 @@ export default function InventarioView() {
             });
         const multiplicador = ordenDireccion === "asc" ? 1 : -1;
         const ubicacionDe = (equipo) =>
-            clientesById.get(equipo.cliente_id)?.razon_social ??
-            equipo.bodega ??
-            equipo.ubicacion_actual ??
-            "";
+            esUbicacionPorRegularizar(equipo)
+                ? "Por regularizar"
+                : clientesById.get(equipo.cliente_id)?.razon_social ??
+                  equipo.bodega ??
+                  equipo.ubicacion_actual ??
+                  "";
         const estadoValor = {
             Operativo: 0,
             "Operativo con observaciones": 1,
@@ -601,8 +631,13 @@ export default function InventarioView() {
     }, [equiposFiltrados, clientesById, ordenCampo, ordenDireccion]);
 
     const filtrosInventario = useMemo(
-        () =>
-            FILTROS_INVENTARIO.map((filtro) => {
+        () => {
+            if (filtroBodega === UBICACION_POR_REGULARIZAR) {
+                return FILTROS_INVENTARIO.filter(
+                    (filtro) => filtro.id === "todos",
+                );
+            }
+            return FILTROS_INVENTARIO.map((filtro) => {
                 if (filtroBodega !== BODEGA_EN_CLIENTE) return filtro;
                 if (filtro.id === "disponibles") {
                     return {
@@ -618,7 +653,8 @@ export default function InventarioView() {
                     };
                 }
                 return filtro;
-            }),
+            });
+        },
         [filtroBodega],
     );
 
@@ -721,6 +757,52 @@ export default function InventarioView() {
         } catch (err) {
             toast.error(err?.message ?? "No se pudieron actualizar los datos");
             throw err;
+        }
+    };
+
+    const handleRegularizarUbicacion = async (payload) => {
+        if (!puedeRegularizarUbicacion) {
+            toast.error("No tienes permiso para regularizar ubicaciones");
+            return false;
+        }
+        if (!online) {
+            toast.warning(
+                "Sin conexión: la regularización requiere conexión para mantener la trazabilidad.",
+            );
+            return false;
+        }
+
+        try {
+            const { error } = await supabase.rpc(
+                "regularizar_ubicacion_equipo",
+                {
+                    p_equipo_id: payload.equipo_id,
+                    p_accion: payload.accion,
+                    p_notas: payload.notas,
+                    p_responsable: payload.responsable,
+                    p_bodega_destino: payload.bodega_destino ?? null,
+                    p_cliente_destino_id:
+                        payload.cliente_destino_id ?? null,
+                    p_ubicacion_destino:
+                        payload.ubicacion_destino ?? null,
+                    p_fecha_venta: payload.fecha_venta ?? null,
+                },
+            );
+            if (error) throw error;
+
+            toast.success(
+                payload.accion === "marcar"
+                    ? "Equipo marcado como ubicación por regularizar"
+                    : "Ubicación del equipo regularizada",
+            );
+            setActualizacionEquipos((valor) => valor + 1);
+            await cargar();
+            return true;
+        } catch (error) {
+            toast.error(
+                error?.message ?? "No se pudo regularizar la ubicación",
+            );
+            return false;
         }
     };
 
@@ -1051,7 +1133,7 @@ export default function InventarioView() {
             const { data, error } = await supabase
                 .from("clientes")
                 .insert(payload)
-                .select("id, razon_social")
+                .select("id, razon_social, activo")
                 .single();
             if (error) throw error;
             setClientes((prev) =>
@@ -1087,11 +1169,15 @@ export default function InventarioView() {
                             Resumen por ubicación
                         </h2>
                         <p className="mt-0.5 text-xs text-slate-500 dark:text-neutral-400">
-                            Bodegas por estado; en clientes, separados entre arriendo y venta.
+                            Ubicaciones confirmadas y equipos que requieren regularización.
                         </p>
                     </div>
                 </div>
-                <ResumenBodegas equipos={equiposActivos} />
+                <ResumenBodegas
+                    equipos={equiposActivos}
+                    activa={filtroBodega}
+                    onSelect={cambiarBodega}
+                />
             </section>
 
             <div className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:p-6 dark:border-white/10 dark:bg-carbon-900">
@@ -1271,6 +1357,11 @@ export default function InventarioView() {
                         onBateria={
                             puedeGestionarBaterias ? setBateriaEquipo : undefined
                         }
+                        onRegularizar={
+                            puedeRegularizarUbicacion
+                                ? setUbicacionEquipo
+                                : undefined
+                        }
                         onEliminar={puedeEliminar ? setConfirmId : undefined}
                         onVerFoto={setFotoModalPath}
                         onGuardarEdicion={
@@ -1291,53 +1382,73 @@ export default function InventarioView() {
                 )}
             </div>
 
-            {puedeEliminar && <ConfirmDialog
-                open={Boolean(confirmId)}
-                title="Eliminar equipo"
-                message={
-                    equipoAEliminar
-                        ? `Vas a eliminar ${equipoAEliminar.marca} ${equipoAEliminar.modelo} (${equipoAEliminar.numero_interno}) de ${equipoAEliminar.bodega}. Esta acción no se puede deshacer.`
-                        : ""
-                }
-                confirmLabel="Eliminar"
-                onConfirm={handleConfirmarEliminar}
-                onCancel={() => setConfirmId(null)}
-                peligro
-            />}
+            {puedeEliminar && (
+                <ConfirmDialog
+                    open={Boolean(confirmId)}
+                    title="Eliminar equipo"
+                    message={
+                        equipoAEliminar
+                            ? `Vas a enviar ${equipoAEliminar.marca} ${equipoAEliminar.modelo} (${equipoAEliminar.numero_interno}) desde ${esUbicacionPorRegularizar(equipoAEliminar) ? "la lista por regularizar" : equipoAEliminar.bodega || "su ubicación actual"} a la papelera.`
+                            : ""
+                    }
+                    confirmLabel="Enviar a papelera"
+                    onConfirm={handleConfirmarEliminar}
+                    onCancel={() => setConfirmId(null)}
+                    peligro
+                />
+            )}
 
-            {puedeMover && <MovimientoDialog
-                open={Boolean(movimientoEquipo)}
-                equipo={movimientoEquipo}
-                clientes={clientes}
-                onSubmit={handleRegistrarMovimientoSimple}
-                onSubmitSwap={handleRegistrarSwap}
-                onCrearCliente={
-                    puedeGestionarClientes
-                        ? () => setCrearClienteAbierto(true)
-                        : undefined
-                }
-                onCancel={() => setMovimientoEquipo(null)}
-            />}
+            {puedeMover && (
+                <MovimientoDialog
+                    open={Boolean(movimientoEquipo)}
+                    equipo={movimientoEquipo}
+                    clientes={clientesActivos}
+                    onSubmit={handleRegistrarMovimientoSimple}
+                    onSubmitSwap={handleRegistrarSwap}
+                    onCrearCliente={
+                        puedeGestionarClientes
+                            ? () => setCrearClienteAbierto(true)
+                            : undefined
+                    }
+                    onCancel={() => setMovimientoEquipo(null)}
+                />
+            )}
 
-            {puedeVerHistorial && <MovimientoHistorialModal
-                open={Boolean(historialEquipo)}
-                equipo={historialEquipo}
-                onClose={() => setHistorialEquipo(null)}
-            />}
+            {puedeVerHistorial && (
+                <MovimientoHistorialModal
+                    open={Boolean(historialEquipo)}
+                    equipo={historialEquipo}
+                    onClose={() => setHistorialEquipo(null)}
+                />
+            )}
 
-            {puedeCambiarEstado && <EstadoDialog
-                open={Boolean(estadoEquipo)}
-                equipo={estadoEquipo}
-                onSubmit={handleActualizarEstado}
-                onCancel={() => setEstadoEquipo(null)}
-            />}
+            {puedeCambiarEstado && (
+                <EstadoDialog
+                    open={Boolean(estadoEquipo)}
+                    equipo={estadoEquipo}
+                    onSubmit={handleActualizarEstado}
+                    onCancel={() => setEstadoEquipo(null)}
+                />
+            )}
 
-            {puedeGestionarBaterias && <BateriaDialog
-                open={Boolean(bateriaEquipo)}
-                equipo={bateriaEquipo}
-                onSubmit={handleCambiarBateria}
-                onCancel={() => setBateriaEquipo(null)}
-            />}
+            {puedeGestionarBaterias && (
+                <BateriaDialog
+                    open={Boolean(bateriaEquipo)}
+                    equipo={bateriaEquipo}
+                    onSubmit={handleCambiarBateria}
+                    onCancel={() => setBateriaEquipo(null)}
+                />
+            )}
+
+            {puedeRegularizarUbicacion && (
+                <RegularizarUbicacionDialog
+                    open={Boolean(ubicacionEquipo)}
+                    equipo={ubicacionEquipo}
+                    clientes={clientes}
+                    onSubmit={handleRegularizarUbicacion}
+                    onCancel={() => setUbicacionEquipo(null)}
+                />
+            )}
 
             {/* Modal: foto en grande al clickear el thumbnail */}
             <FotoModal
@@ -1347,11 +1458,13 @@ export default function InventarioView() {
 
             {/* Modal hermano: crear cliente desde el botón "+ Nuevo"
                 del dropdown de cliente en el MovimientoDialog. */}
-            {puedeGestionarClientes && <CrearClienteForm
-                open={crearClienteAbierto}
-                onSubmit={handleCrearCliente}
-                onCancel={() => setCrearClienteAbierto(false)}
-            />}
+            {puedeGestionarClientes && (
+                <CrearClienteForm
+                    open={crearClienteAbierto}
+                    onSubmit={handleCrearCliente}
+                    onCancel={() => setCrearClienteAbierto(false)}
+                />
+            )}
         </section>
     );
 }

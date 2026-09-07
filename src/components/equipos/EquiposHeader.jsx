@@ -28,7 +28,12 @@
  * para filtrar equipos con cliente_id IS NOT NULL.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BODEGAS, BODEGA_EN_CLIENTE } from "../../lib/equiposConstants";
+import {
+    BODEGAS,
+    BODEGA_EN_CLIENTE,
+    ESTADO_UBICACION_POR_REGULARIZAR,
+    UBICACION_POR_REGULARIZAR,
+} from "../../lib/equiposConstants";
 import { useAsync } from "../../hooks/useAsync";
 import { useNetwork } from "../../context/NetworkContext";
 import { supabase } from "../../services/supabase";
@@ -48,7 +53,7 @@ export default function EquiposHeader({
         const { data, error } = await withRetry(() =>
             supabase
                 .from("equipos")
-                .select("bodega, cliente_id")
+                .select("bodega, cliente_id, estado_ubicacion")
                 .is("deleted_at", null),
         );
         if (error) throw error;
@@ -125,14 +130,18 @@ export default function EquiposHeader({
         const map = { todas: equipos.length };
         for (const b of BODEGAS) map[b] = 0;
         let enCliente = 0;
+        let porRegularizar = 0;
         for (const e of equipos) {
-            if (e.cliente_id) {
+            if (e.estado_ubicacion === ESTADO_UBICACION_POR_REGULARIZAR) {
+                porRegularizar += 1;
+            } else if (e.cliente_id) {
                 enCliente += 1;
             } else if (e.bodega && map[e.bodega] !== undefined) {
                 map[e.bodega] += 1;
             }
         }
         map[BODEGA_EN_CLIENTE] = enCliente;
+        map[UBICACION_POR_REGULARIZAR] = porRegularizar;
         return map;
     }, [equipos]);
 
@@ -273,6 +282,34 @@ export default function EquiposHeader({
                             </span>
                             <span className="text-base font-extrabold leading-tight text-white tabular-nums">
                                 {conteoPorBodega[BODEGA_EN_CLIENTE] ?? 0}
+                            </span>
+                        </button>
+
+                        {/* Ubicación dudosa: no se suma a cliente ni bodegas. */}
+                        <button
+                            type="button"
+                            onClick={() =>
+                                handleChipClick(UBICACION_POR_REGULARIZAR)
+                            }
+                            disabled={!onFilterBodega}
+                            aria-pressed={
+                                activeFilter === UBICACION_POR_REGULARIZAR
+                            }
+                            className={`flex min-w-[76px] flex-col items-center justify-center rounded-[10px] border-[1.5px] px-2.5 py-1 transition active:scale-95 disabled:cursor-default ${
+                                activeFilter === UBICACION_POR_REGULARIZAR
+                                    ? "border-amber-300 bg-amber-400/15"
+                                    : onFilterBodega
+                                      ? "border-amber-300/40 hover:border-amber-300 hover:bg-amber-400/10"
+                                      : "border-amber-300/30"
+                            }`}
+                        >
+                            <span className="text-xs font-bold uppercase tracking-wider text-amber-200">
+                                Regularizar
+                            </span>
+                            <span className="text-base font-extrabold leading-tight text-white tabular-nums">
+                                {conteoPorBodega[
+                                    UBICACION_POR_REGULARIZAR
+                                ] ?? 0}
                             </span>
                         </button>
 

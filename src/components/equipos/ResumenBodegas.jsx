@@ -1,5 +1,10 @@
 import { useMemo } from "react";
-import { BODEGAS, BODEGA_EN_CLIENTE } from "../../lib/equiposConstants";
+import {
+    BODEGAS,
+    BODEGA_EN_CLIENTE,
+    ESTADO_UBICACION_POR_REGULARIZAR,
+    UBICACION_POR_REGULARIZAR,
+} from "../../lib/equiposConstants";
 
 /**
  * Resumen visual del inventario por ubicación (bodegas + "En cliente").
@@ -33,10 +38,24 @@ export default function ResumenBodegas({ equipos, activa, onSelect }) {
             enArriendo: 0,
             vendidos: 0,
         });
+        porUbicacion.set(UBICACION_POR_REGULARIZAR, {
+            valor: UBICACION_POR_REGULARIZAR,
+            nombre: "Por regularizar",
+            total: 0,
+            operativos: 0,
+            inoperativos: 0,
+            enArriendo: 0,
+            vendidos: 0,
+        });
         for (const e of equipos) {
             // Misma lógica del filtro de InventarioView: si tiene cliente,
             // cuenta como "En cliente" aunque conserve bodega.
-            const clave = e.cliente_id ? BODEGA_EN_CLIENTE : e.bodega;
+            const clave =
+                e.estado_ubicacion === ESTADO_UBICACION_POR_REGULARIZAR
+                    ? UBICACION_POR_REGULARIZAR
+                    : e.cliente_id
+                      ? BODEGA_EN_CLIENTE
+                      : e.bodega;
             const r = porUbicacion.get(clave);
             if (!r) continue;
             r.total += 1;
@@ -52,7 +71,7 @@ export default function ResumenBodegas({ equipos, activa, onSelect }) {
 
     return (
         <div
-            className="grid grid-cols-2 gap-3 sm:grid-cols-4"
+            className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"
             role="group"
             aria-label="Resumen por ubicación"
         >
@@ -62,13 +81,21 @@ export default function ResumenBodegas({ equipos, activa, onSelect }) {
                 const contenido = (
                     <>
                         <p className="truncate text-[0.8rem] font-bold text-slate-700 dark:text-slate-200">
-                            {r.valor === BODEGA_EN_CLIENTE ? "🏢 " : ""}
+                            {r.valor === BODEGA_EN_CLIENTE
+                                ? "🏢 "
+                                : r.valor === UBICACION_POR_REGULARIZAR
+                                  ? "⚠️ "
+                                  : ""}
                             {r.nombre}
                         </p>
                         <p className="mt-1 text-[1.4rem] font-extrabold tabular-nums text-slate-900 dark:text-slate-100">
                             {r.total}
                         </p>
-                        {r.valor === BODEGA_EN_CLIENTE ? (
+                        {r.valor === UBICACION_POR_REGULARIZAR ? (
+                            <p className="mt-1 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                                Ubicación desconocida
+                            </p>
+                        ) : r.valor === BODEGA_EN_CLIENTE ? (
                             <>
                                 <p className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-xs font-semibold">
                                     <span className="text-sky-700 dark:text-sky-400">

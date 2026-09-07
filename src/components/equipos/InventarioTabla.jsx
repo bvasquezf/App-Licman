@@ -4,6 +4,8 @@ import {
     usaBateriaElectrica,
 } from "../../lib/equiposConstants";
 import {
+    descripcionUltimaUbicacion,
+    esUbicacionPorRegularizar,
     formatearCapacidad,
     mostrarDato,
     parseFaltantes,
@@ -115,6 +117,20 @@ function RetornoClientePendiente({ equipo, clientesById }) {
     );
 }
 
+function UbicacionPorRegularizarBadge({ equipo, clientesById, bloque = false }) {
+    if (!esUbicacionPorRegularizar(equipo)) return null;
+    const ultimaUbicacion = descripcionUltimaUbicacion(equipo, clientesById);
+
+    return (
+        <span
+            className={`${bloque ? "mt-1 flex max-w-full" : "inline-flex max-w-full"} items-center truncate rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-900 dark:bg-amber-500/15 dark:text-amber-300`}
+            title={`Ubicación desconocida · Último registro: ${ultimaUbicacion}`}
+        >
+            ⚠️ Ubicación por regularizar
+        </span>
+    );
+}
+
 function EquipoFilaMobile({
     equipo,
     esDuplicado,
@@ -124,12 +140,16 @@ function EquipoFilaMobile({
     onEstado,
     onHistorial,
     onBateria,
+    onRegularizar,
 }) {
     const faltantes = parseFaltantes(equipo.elementos_faltantes);
-    const ubicacion = equipo.cliente_id
-        ? clientesById.get(equipo.cliente_id)?.razon_social ??
-          `Cliente #${equipo.cliente_id}`
-        : equipo.bodega || equipo.ubicacion_actual || "Sin ubicación";
+    const ubicacionPendiente = esUbicacionPorRegularizar(equipo);
+    const ubicacion = ubicacionPendiente
+        ? descripcionUltimaUbicacion(equipo, clientesById)
+        : equipo.cliente_id
+          ? clientesById.get(equipo.cliente_id)?.razon_social ??
+            `Cliente #${equipo.cliente_id}`
+          : equipo.bodega || equipo.ubicacion_actual || "Sin ubicación";
 
     return (
         <article
@@ -174,10 +194,17 @@ function EquipoFilaMobile({
 
             <div className="flex flex-wrap items-center gap-1.5 border-y border-slate-100 px-3.5 py-2.5 dark:border-white/5">
                 <EstadoBadge estado={equipo.estado_operacional} />
-                <span className="inline-flex max-w-full items-center truncate rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-bold text-sky-800 dark:bg-sky-500/10 dark:text-sky-400">
-                    {equipo.cliente_id ? "🏢" : "📍"} {ubicacion}
-                </span>
-                {equipo.vendido && (
+                {ubicacionPendiente ? (
+                    <UbicacionPorRegularizarBadge
+                        equipo={equipo}
+                        clientesById={clientesById}
+                    />
+                ) : (
+                    <span className="inline-flex max-w-full items-center truncate rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-bold text-sky-800 dark:bg-sky-500/10 dark:text-sky-400">
+                        {equipo.cliente_id ? "🏢" : "📍"} {ubicacion}
+                    </span>
+                )}
+                {equipo.vendido && !ubicacionPendiente && (
                     <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800 dark:bg-amber-500/10 dark:text-amber-400">
                         💰 Vendido
                     </span>
@@ -198,6 +225,11 @@ function EquipoFilaMobile({
             </div>
 
             <div className="flex flex-wrap gap-x-4 gap-y-1 px-3.5 py-2 text-xs text-slate-600 dark:text-neutral-300">
+                {ubicacionPendiente && (
+                    <span className="w-full font-semibold text-amber-800 dark:text-amber-300">
+                        Último registro: {ubicacion}
+                    </span>
+                )}
                 <span>⚖ {formatearCapacidad(equipo.capacidad_kg)}</span>
                 <span>↕ {mostrarDato(equipo.altura)}</span>
                 {equipo.horometro !== null &&
@@ -207,9 +239,24 @@ function EquipoFilaMobile({
                     )}
             </div>
 
-            {(onMover || onEstado || onHistorial || onBateria) && (
+            {(onMover ||
+                onEstado ||
+                onHistorial ||
+                onBateria ||
+                onRegularizar) && (
                 <div className="grid grid-cols-2 gap-2 border-t border-slate-100 p-3 dark:border-white/5">
-                    {onMover && (
+                    {onRegularizar && (
+                        <button
+                            type="button"
+                            onClick={() => onRegularizar(equipo)}
+                            className="flex min-h-[44px] items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-2 text-xs font-bold text-amber-800 active:bg-amber-100 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300 dark:active:bg-amber-500/20"
+                        >
+                            {ubicacionPendiente
+                                ? "📍 Regularizar"
+                                : "⚠️ Revisar ubicación"}
+                        </button>
+                    )}
+                    {onMover && !ubicacionPendiente && (
                         <button
                             type="button"
                             onClick={() => onMover(equipo)}
@@ -222,7 +269,7 @@ function EquipoFilaMobile({
                                   : "🔄 Mover"}
                         </button>
                     )}
-                    {onEstado && (
+                    {onEstado && !ubicacionPendiente && (
                         <button
                             type="button"
                             onClick={() => onEstado(equipo)}
@@ -240,15 +287,17 @@ function EquipoFilaMobile({
                             📜 Historial
                         </button>
                     )}
-                    {usaBateriaElectrica(equipo) && onBateria && (
-                        <button
-                            type="button"
-                            onClick={() => onBateria(equipo)}
-                            className="flex min-h-[44px] items-center justify-center rounded-xl border border-cyan-200 bg-cyan-50 px-2 text-xs font-bold text-cyan-700 active:bg-cyan-100 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-400 dark:active:bg-cyan-500/20"
-                        >
-                            🔋 Batería
-                        </button>
-                    )}
+                    {usaBateriaElectrica(equipo) &&
+                        onBateria &&
+                        !ubicacionPendiente && (
+                            <button
+                                type="button"
+                                onClick={() => onBateria(equipo)}
+                                className="flex min-h-[44px] items-center justify-center rounded-xl border border-cyan-200 bg-cyan-50 px-2 text-xs font-bold text-cyan-700 active:bg-cyan-100 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-400 dark:active:bg-cyan-500/20"
+                            >
+                                🔋 Batería
+                            </button>
+                        )}
                 </div>
             )}
         </article>
@@ -319,6 +368,7 @@ export function TablaEquipos({
     onEstado,
     onHistorial,
     onBateria,
+    onRegularizar,
     onVerFoto,
     onEliminar,
     onGuardarEdicion,
@@ -388,6 +438,8 @@ export function TablaEquipos({
                         const correlativo = e.correlativo ?? "—";
                         const dupKey = `${e.bodega}|${e.numero_interno}`;
                         const esDuplicado = duplicados.has(dupKey);
+                        const ubicacionPendiente =
+                            esUbicacionPorRegularizar(e);
                         return (
                             <tr
                                 key={e.id}
@@ -462,12 +514,23 @@ export function TablaEquipos({
                                     <EstadoBadge
                                         estado={e.estado_operacional}
                                     />
-                                    {e.vendido && (
+                                    {e.vendido && !ubicacionPendiente && (
                                         <span className="ml-1 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800 dark:bg-amber-500/10 dark:text-amber-400">
                                             💰 Vendido
                                         </span>
                                     )}
-                                    {e.cliente_id ? (
+                                    {ubicacionPendiente ? (
+                                        <>
+                                            <UbicacionPorRegularizarBadge
+                                                equipo={e}
+                                                clientesById={clientesById}
+                                                bloque
+                                            />
+                                            <span className="mt-1 block truncate text-xs font-semibold text-amber-800 dark:text-amber-300">
+                                                Último: {descripcionUltimaUbicacion(e, clientesById)}
+                                            </span>
+                                        </>
+                                    ) : e.cliente_id ? (
                                         <span
                                             className="mt-1 block max-w-full truncate rounded-full bg-sky-100 px-2 py-0.5 text-xs font-bold text-sky-800 dark:bg-sky-500/10 dark:text-sky-400"
                                             title={
@@ -535,49 +598,75 @@ export function TablaEquipos({
                                 </td>
                                 <td className="px-2 py-3 align-top">
                                     <div className="ml-auto grid w-[94px] grid-cols-2 justify-items-end gap-1.5">
-                                        {onMover && <button
-                                            type="button"
-                                            onClick={(event) => {
-                                                event.stopPropagation();
-                                                onMover(e);
-                                            }}
-                                            className="flex h-11 w-11 items-center justify-center rounded-full border border-blue-200 bg-blue-50 text-blue-700 transition hover:border-blue-300 hover:bg-blue-100 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:border-blue-500/50 dark:hover:bg-blue-500/20"
-                                            title={
-                                                e.cliente_retorno_id
-                                                    ? "Resolver el retorno pendiente de esta reparación"
-                                                    : e.vendido
-                                                      ? "Registrar atención o ingreso a taller"
-                                                      : "Registrar un traslado o cambio de ubicación"
-                                            }
-                                            aria-label={`${e.vendido ? "Atender" : "Mover"} ${e.marca} ${e.modelo}`}
-                                        >
-                                            {e.vendido ? "🧰" : "🔄"}
-                                        </button>}
-                                        {onEstado && <button
-                                            type="button"
-                                            onClick={(event) => {
-                                                event.stopPropagation();
-                                                onEstado(e);
-                                            }}
-                                            className="flex h-11 w-11 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20"
-                                            title="Cambiar el estado operacional (ej. tras una reparación)"
-                                            aria-label={`Cambiar estado de ${e.marca} ${e.modelo}`}
-                                        >
-                                            🛠️
-                                        </button>}
-                                        {onHistorial && <button
-                                            type="button"
-                                            onClick={(event) => {
-                                                event.stopPropagation();
-                                                onHistorial(e);
-                                            }}
-                                            className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-200 dark:hover:bg-white/10"
-                                            title="Ver historial completo de movimientos"
-                                            aria-label={`Ver historial de ${e.marca} ${e.modelo}`}
-                                        >
-                                            📜
-                                        </button>}
-                                        {usaBateriaElectrica(e) && onBateria && (
+                                        {onRegularizar && (
+                                            <button
+                                                type="button"
+                                                onClick={(event) => {
+                                                    event.stopPropagation();
+                                                    onRegularizar(e);
+                                                }}
+                                                className="flex h-11 w-11 items-center justify-center rounded-full border border-amber-200 bg-amber-50 text-amber-800 transition hover:border-amber-300 hover:bg-amber-100 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300 dark:hover:border-amber-500/50 dark:hover:bg-amber-500/20"
+                                                title={
+                                                    ubicacionPendiente
+                                                        ? "Confirmar la ubicación real del equipo"
+                                                        : "Marcar esta ubicación como no confirmada"
+                                                }
+                                                aria-label={`${ubicacionPendiente ? "Regularizar" : "Revisar ubicación de"} ${e.marca} ${e.modelo}`}
+                                            >
+                                                {ubicacionPendiente ? "📍" : "⚠️"}
+                                            </button>
+                                        )}
+                                        {onMover && !ubicacionPendiente && (
+                                            <button
+                                                type="button"
+                                                onClick={(event) => {
+                                                    event.stopPropagation();
+                                                    onMover(e);
+                                                }}
+                                                className="flex h-11 w-11 items-center justify-center rounded-full border border-blue-200 bg-blue-50 text-blue-700 transition hover:border-blue-300 hover:bg-blue-100 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:border-blue-500/50 dark:hover:bg-blue-500/20"
+                                                title={
+                                                    e.cliente_retorno_id
+                                                        ? "Resolver el retorno pendiente de esta reparación"
+                                                        : e.vendido
+                                                          ? "Registrar atención o ingreso a taller"
+                                                          : "Registrar un traslado o cambio de ubicación"
+                                                }
+                                                aria-label={`${e.vendido ? "Atender" : "Mover"} ${e.marca} ${e.modelo}`}
+                                            >
+                                                {e.vendido ? "🧰" : "🔄"}
+                                            </button>
+                                        )}
+                                        {onEstado && !ubicacionPendiente && (
+                                            <button
+                                                type="button"
+                                                onClick={(event) => {
+                                                    event.stopPropagation();
+                                                    onEstado(e);
+                                                }}
+                                                className="flex h-11 w-11 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:border-emerald-500/50 dark:hover:bg-emerald-500/20"
+                                                title="Cambiar el estado operacional (ej. tras una reparación)"
+                                                aria-label={`Cambiar estado de ${e.marca} ${e.modelo}`}
+                                            >
+                                                🛠️
+                                            </button>
+                                        )}
+                                        {onHistorial && (
+                                            <button
+                                                type="button"
+                                                onClick={(event) => {
+                                                    event.stopPropagation();
+                                                    onHistorial(e);
+                                                }}
+                                                className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-200 dark:hover:bg-white/10"
+                                                title="Ver historial completo de movimientos"
+                                                aria-label={`Ver historial de ${e.marca} ${e.modelo}`}
+                                            >
+                                                📜
+                                            </button>
+                                        )}
+                                        {usaBateriaElectrica(e) &&
+                                            onBateria &&
+                                            !ubicacionPendiente && (
                                             <button
                                                 type="button"
                                                 onClick={(event) => {
@@ -614,6 +703,7 @@ export function TablaEquipos({
                         onEstado={onEstado}
                         onHistorial={onHistorial}
                         onBateria={onBateria}
+                        onRegularizar={onRegularizar}
                     />
                 ))}
             </div>
@@ -627,6 +717,7 @@ export function TablaEquipos({
                     onEstado={onEstado}
                     onHistorial={onHistorial}
                     onBateria={onBateria}
+                    onRegularizar={onRegularizar}
                     onEliminar={
                         onEliminar
                             ? (equipoSeleccionado) =>
@@ -679,6 +770,7 @@ function EquipoEdicionForm({
     onSubmit,
     onDirtyChange,
 }) {
+    const ubicacionPendiente = esUbicacionPorRegularizar(equipo);
     const valoresIniciales = valoresEdicionEquipo(equipo);
     const [form, setForm] = useState(() => valoresIniciales);
     const [errores, setErrores] = useState({});
@@ -836,11 +928,22 @@ function EquipoEdicionForm({
                     {campo("marca", "Marca")}
                     {campo("modelo", "Modelo")}
                     {campo("numero_serie", "N° de serie")}
-                    {campo("ubicacion_actual", "Ubicación actual")}
+                    {!ubicacionPendiente &&
+                        campo("ubicacion_actual", "Ubicación actual")}
                 </div>
                 <p className="mt-2 text-xs text-slate-500 dark:text-neutral-400">
-                    Bodega actual: <strong>{equipo.bodega || "En cliente"}</strong> ·
-                    para moverlo usa “Mover equipo”.
+                    {ubicacionPendiente ? (
+                        <>
+                            Ubicación logística: <strong>Por regularizar</strong>{" "}
+                            · confírmala desde “Regularizar ubicación”.
+                        </>
+                    ) : (
+                        <>
+                            Bodega actual:{" "}
+                            <strong>{equipo.bodega || "En cliente"}</strong>{" "}
+                            · para moverlo usa “Mover equipo”.
+                        </>
+                    )}
                 </p>
             </section>
 
@@ -961,6 +1064,7 @@ function EquipoDetallePanel({
     onEstado,
     onHistorial,
     onBateria,
+    onRegularizar,
     onEliminar,
     onVerFoto,
     onGuardarEdicion,
@@ -1024,10 +1128,13 @@ function EquipoDetallePanel({
         accionPendiente?.();
     };
 
-    const ubicacion = equipo.cliente_id
-        ? clientesById.get(equipo.cliente_id)?.razon_social ??
-          `Cliente #${equipo.cliente_id}`
-        : equipo.bodega || equipo.ubicacion_actual || "Sin ubicación";
+    const ubicacionPendiente = esUbicacionPorRegularizar(equipo);
+    const ubicacion = ubicacionPendiente
+        ? "Ubicación desconocida"
+        : equipo.cliente_id
+          ? clientesById.get(equipo.cliente_id)?.razon_social ??
+            `Cliente #${equipo.cliente_id}`
+          : equipo.bodega || equipo.ubicacion_actual || "Sin ubicación";
     const faltantes = parseFaltantes(equipo.elementos_faltantes);
     const ultimo = equipo.ultimo_movimiento;
     const bateriaAsociada = equipo.bateria_asociada ?? null;
@@ -1145,19 +1252,45 @@ function EquipoDetallePanel({
 
                     <div className="flex flex-wrap gap-1.5">
                         <EstadoBadge estado={equipo.estado_operacional} />
-                        <span className="inline-flex items-center rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-bold text-sky-800 dark:bg-sky-500/10 dark:text-sky-400">
-                            {equipo.cliente_id ? "🏢" : "📍"} {ubicacion}
-                        </span>
+                        {ubicacionPendiente ? (
+                            <UbicacionPorRegularizarBadge
+                                equipo={equipo}
+                                clientesById={clientesById}
+                            />
+                        ) : (
+                            <span className="inline-flex items-center rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-bold text-sky-800 dark:bg-sky-500/10 dark:text-sky-400">
+                                {equipo.cliente_id ? "🏢" : "📍"} {ubicacion}
+                            </span>
+                        )}
                         <RetornoClientePendiente
                             equipo={equipo}
                             clientesById={clientesById}
                         />
-                        {equipo.vendido && (
+                        {equipo.vendido && !ubicacionPendiente && (
                             <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-bold text-yellow-800 dark:bg-yellow-500/10 dark:text-yellow-400">
                                 💰 Vendido
                             </span>
                         )}
                     </div>
+
+                    {ubicacionPendiente && (
+                        <section className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-950 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+                            <h3 className="text-sm font-extrabold">
+                                ⚠️ Equipo por regularizar
+                            </h3>
+                            <p className="mt-1 text-sm font-semibold">
+                                Último registro: {descripcionUltimaUbicacion(equipo, clientesById)}
+                            </p>
+                            {equipo.ultimo_movimiento?.notas && (
+                                <p className="mt-2 text-sm">
+                                    {equipo.ultimo_movimiento.notas}
+                                </p>
+                            )}
+                            <p className="mt-2 text-xs text-amber-800 dark:text-amber-200">
+                                No se incluye en los totales de clientes, ventas ni bodegas hasta confirmar su ubicación.
+                            </p>
+                        </section>
+                    )}
 
                     <section>
                         <h3 className="text-sm font-extrabold uppercase tracking-wide text-slate-500 dark:text-neutral-400">
@@ -1186,7 +1319,7 @@ function EquipoDetallePanel({
                                 <h3 className="text-sm font-extrabold uppercase tracking-wide text-slate-500 dark:text-neutral-400">
                                     Batería actual
                                 </h3>
-                                {onBateria && (
+                                {onBateria && !ubicacionPendiente && (
                                     <button
                                         type="button"
                                         onClick={() =>
@@ -1295,9 +1428,25 @@ function EquipoDetallePanel({
                         onEstado ||
                         onHistorial ||
                         onBateria ||
+                        onRegularizar ||
                         onEliminar) && (
                         <footer className="sticky bottom-0 mt-auto grid grid-cols-2 gap-2 border-t border-slate-200 bg-white/95 p-4 backdrop-blur sm:flex dark:border-white/10 dark:bg-carbon-950/95">
-                            {onMover && (
+                            {onRegularizar && (
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        solicitarCierre(() =>
+                                            onRegularizar(equipo),
+                                        )
+                                    }
+                                    className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 text-sm font-bold text-amber-800 transition hover:bg-amber-100 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300 dark:hover:bg-amber-500/20"
+                                >
+                                    {ubicacionPendiente
+                                        ? "📍 Regularizar ubicación"
+                                        : "⚠️ Revisar ubicación"}
+                                </button>
+                            )}
+                            {onMover && !ubicacionPendiente && (
                                 <button
                                     type="button"
                                     onClick={() =>
@@ -1312,7 +1461,7 @@ function EquipoDetallePanel({
                                           : "🔄 Mover equipo"}
                                 </button>
                             )}
-                            {onEstado && (
+                            {onEstado && !ubicacionPendiente && (
                                 <button
                                     type="button"
                                     onClick={() =>
@@ -1336,19 +1485,21 @@ function EquipoDetallePanel({
                                     📜 Historial
                                 </button>
                             )}
-                            {usaBateriaElectrica(equipo) && onBateria && (
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        solicitarCierre(() =>
-                                            onBateria(equipo),
-                                        )
-                                    }
-                                    className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-cyan-200 bg-cyan-50 px-3 text-sm font-bold text-cyan-700 transition hover:bg-cyan-100 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-400 dark:hover:bg-cyan-500/20"
-                                >
-                                    🔋 Batería
-                                </button>
-                            )}
+                            {usaBateriaElectrica(equipo) &&
+                                onBateria &&
+                                !ubicacionPendiente && (
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            solicitarCierre(() =>
+                                                onBateria(equipo),
+                                            )
+                                        }
+                                        className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-cyan-200 bg-cyan-50 px-3 text-sm font-bold text-cyan-700 transition hover:bg-cyan-100 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-400 dark:hover:bg-cyan-500/20"
+                                    >
+                                        🔋 Batería
+                                    </button>
+                                )}
                             {!equipo.vendido && onEliminar && (
                                 <button
                                     type="button"

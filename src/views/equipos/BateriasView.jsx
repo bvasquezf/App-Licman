@@ -8,7 +8,10 @@ import Skeleton from "../../components/ui/Skeleton";
 import { useToast } from "../../context/ToastContext";
 import { useAsync } from "../../hooks/useAsync";
 import { useUrlFilters } from "../../hooks/useUrlFilters";
-import { usaBateriaElectrica } from "../../lib/equiposConstants";
+import {
+    ESTADO_UBICACION_POR_REGULARIZAR,
+    usaBateriaElectrica,
+} from "../../lib/equiposConstants";
 import { supabase } from "../../services/supabase";
 import { withRetry } from "../../utils/withRetry";
 
@@ -76,13 +79,18 @@ export default function BateriasView() {
             supabase
                 .from("equipos")
                 .select(
-                    "id, correlativo, numero_interno, numero_serie, tipo_equipo, marca, modelo, bodega, cliente_id, horometro, bateria, bateria_serie",
+                    "id, correlativo, numero_interno, numero_serie, tipo_equipo, marca, modelo, bodega, cliente_id, estado_ubicacion, horometro, bateria, bateria_serie",
                 )
                 .is("deleted_at", null)
                 .order("numero_interno", { ascending: true }),
         );
         if (error) throw error;
-        return (data ?? []).filter(usaBateriaElectrica);
+        return (data ?? []).filter(
+            (equipo) =>
+                equipo.estado_ubicacion !==
+                    ESTADO_UBICACION_POR_REGULARIZAR &&
+                usaBateriaElectrica(equipo),
+        );
     }, []);
 
     const { data: equiposElectricos = [] } = useAsync(

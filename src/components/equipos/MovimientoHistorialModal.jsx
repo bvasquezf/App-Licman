@@ -395,7 +395,11 @@ function renderDestino(m) {
     if (m.cliente_destino?.razon_social) {
         return `🏢 ${m.cliente_destino.razon_social}`;
     }
-    if (m.destino_externo) return `🔧 ${m.destino_externo}`;
+    if (m.destino_externo) {
+        return m.destino_externo === "Por regularizar"
+            ? `⚠️ ${m.destino_externo}`
+            : `🔧 ${m.destino_externo}`;
+    }
     return m.bodega_destino ?? "—";
 }
 

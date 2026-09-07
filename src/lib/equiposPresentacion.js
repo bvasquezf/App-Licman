@@ -48,3 +48,36 @@ export function mostrarDato(valor) {
         ? "—"
         : String(valor);
 }
+
+/** Indica si la ubicación vigente del equipo quedó pendiente de revisión. */
+export function esUbicacionPorRegularizar(equipo) {
+    return equipo?.estado_ubicacion === ESTADO_UBICACION_POR_REGULARIZAR;
+}
+
+/**
+ * Recupera la referencia que existía antes de marcar la ubicación como dudosa.
+ * El nombre del cliente queda congelado en el snapshot para que siga siendo
+ * legible aunque luego el cliente se desactive.
+ */
+export function descripcionUltimaUbicacion(equipo, clientesById = new Map()) {
+    const anterior = equipo?.ubicacion_anterior;
+    if (!anterior || typeof anterior !== "object") return "Sin registro anterior";
+
+    const clienteId = anterior.cliente_id;
+    const cliente =
+        anterior.cliente_nombre ||
+        clientesById.get(clienteId)?.razon_social ||
+        (clienteId ? `Cliente #${clienteId}` : "");
+    const principal = cliente
+        ? `Cliente: ${cliente}`
+        : anterior.bodega
+          ? `Bodega ${anterior.bodega}`
+          : anterior.ubicacion_actual || "Sin registro anterior";
+    const detalle =
+        anterior.ubicacion_actual && anterior.ubicacion_actual !== principal
+            ? ` · ${anterior.ubicacion_actual}`
+            : "";
+
+    return `${principal}${detalle}`;
+}
+import { ESTADO_UBICACION_POR_REGULARIZAR } from "./equiposConstants";
