@@ -21,6 +21,74 @@ export const ESTADOS_TAREA_ACTIVA = [
 export const PRIORIDADES_TAREA = ["Baja", "Normal", "Alta", "Urgente"];
 export const TIPOS_TAREA = ["Taller", "Terreno"];
 
+export const CATEGORIAS_REQUERIMIENTO = [
+    {
+        valor: "Visita técnica",
+        etiqueta: "Visita técnica",
+        icono: "🔍",
+        tipoSugerido: "Terreno",
+    },
+    {
+        valor: "Reparación en terreno",
+        etiqueta: "Reparación en terreno",
+        icono: "🛠️",
+        tipoSugerido: "Terreno",
+    },
+    {
+        valor: "Retiro para taller",
+        etiqueta: "Retiro para taller",
+        icono: "↙️",
+        tipoSugerido: "Terreno",
+    },
+    {
+        valor: "Trabajo en taller",
+        etiqueta: "Trabajo en taller",
+        icono: "🔧",
+        tipoSugerido: "Taller",
+    },
+    {
+        valor: "Despacho de arriendo",
+        etiqueta: "Despacho de arriendo",
+        icono: "🚚",
+        tipoSugerido: "Terreno",
+    },
+    {
+        valor: "Retiro fin de arriendo",
+        etiqueta: "Retiro fin de arriendo",
+        icono: "📥",
+        tipoSugerido: "Terreno",
+    },
+    {
+        valor: "Mantención preventiva",
+        etiqueta: "Mantención preventiva",
+        icono: "🧰",
+        tipoSugerido: "Terreno",
+    },
+    {
+        valor: "Otro",
+        etiqueta: "Otro requerimiento",
+        icono: "📌",
+        tipoSugerido: "Taller",
+    },
+];
+
+export const ORIGENES_REQUERIMIENTO = [
+    "Correo",
+    "Teléfono",
+    "WhatsApp",
+    "Cliente",
+    "Interno",
+    "Otro",
+];
+
+export function datosCategoriaRequerimiento(categoria) {
+    return (
+        CATEGORIAS_REQUERIMIENTO.find(
+            (opcion) => opcion.valor === categoria,
+        ) ?? CATEGORIAS_REQUERIMIENTO.at(-1)
+    );
+}
+
 export const PRIORIDAD_PESO = {
     Urgente: 4,
     Alta: 3,
@@ -201,29 +269,35 @@ export async function cargarModuloTareas({ incluirEliminadas = true } = {}) {
 
 export async function guardarTarea(tarea) {
     const params = {
-        p_tarea_id: tarea.id ?? null,
-        p_titulo: tarea.titulo,
-        p_descripcion: tarea.descripcion || null,
-        p_tipo: tarea.tipo,
-        p_estado: tarea.estado,
-        p_prioridad: tarea.prioridad,
-        p_fecha_programada: tarea.fecha_programada || null,
-        p_hora_inicio: tarea.hora_inicio || null,
-        p_hora_fin: tarea.hora_fin || null,
-        p_cliente_id: tarea.cliente_id || null,
-        p_cliente_nombre: tarea.cliente_nombre || null,
-        p_ubicacion: tarea.ubicacion || null,
-        p_contacto: tarea.contacto || null,
-        p_equipo_referencia: tarea.equipo_referencia || null,
-        p_observaciones: tarea.observaciones || null,
-        p_tecnico_ids: tarea.tecnico_ids ?? [],
-        p_equipo_id: tarea.equipo_id || null,
-        p_motivo_espera: tarea.motivo_espera || null,
-        p_resultado: tarea.resultado || null,
+        p_tarea: {
+            id: tarea.id ?? null,
+            titulo: tarea.titulo,
+            descripcion: tarea.descripcion || null,
+            tipo: tarea.tipo,
+            categoria_requerimiento:
+                tarea.categoria_requerimiento || "Otro",
+            origen_requerimiento: tarea.origen_requerimiento || "Otro",
+            referencia_origen: tarea.referencia_origen || null,
+            estado: tarea.estado,
+            prioridad: tarea.prioridad,
+            fecha_programada: tarea.fecha_programada || null,
+            hora_inicio: tarea.hora_inicio || null,
+            hora_fin: tarea.hora_fin || null,
+            cliente_id: tarea.cliente_id || null,
+            cliente_nombre: tarea.cliente_nombre || null,
+            ubicacion: tarea.ubicacion || null,
+            contacto: tarea.contacto || null,
+            equipo_referencia: tarea.equipo_referencia || null,
+            observaciones: tarea.observaciones || null,
+            tecnico_ids: tarea.tecnico_ids ?? [],
+            equipo_id: tarea.equipo_id || null,
+            motivo_espera: tarea.motivo_espera || null,
+            resultado: tarea.resultado || null,
+        },
     };
 
     const respuesta = await withRetry(() =>
-        supabase.rpc("guardar_tarea_usuarios", params),
+        supabase.rpc("guardar_requerimiento_tarea", params),
     );
     return revisarRespuesta(respuesta);
 }

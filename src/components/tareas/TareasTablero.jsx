@@ -5,7 +5,7 @@ const COLUMNAS = [
     {
         estado: "Por programar",
         titulo: "Por programar",
-        descripcion: "Solicitudes que necesitan fecha o responsable",
+        descripcion: "Requerimientos que necesitan fecha o responsable",
         icono: "📥",
         borde: "border-amber-300 dark:border-amber-500/30",
     },
@@ -77,7 +77,7 @@ export default function TareasTablero({
                                     title={`Sin tareas ${columna.titulo.toLowerCase()}`}
                                     description={
                                         columna.estado === "Por programar"
-                                            ? "Las nuevas solicitudes aparecerán aquí."
+                                            ? "Los nuevos requerimientos aparecerán aquí."
                                             : "No hay trabajos en este estado con los filtros actuales."
                                     }
                                     action={
@@ -88,7 +88,7 @@ export default function TareasTablero({
                                                 onClick={onNueva}
                                                 className="min-h-[44px] rounded-xl bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700"
                                             >
-                                                + Nueva tarea
+                                                + Nuevo requerimiento
                                             </button>
                                         ) : null
                                     }

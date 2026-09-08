@@ -51,18 +51,8 @@ export function rutaInicialParaPermisos(permisos = []) {
     ) {
         return "/tareas/mis-tareas";
     }
-    // Las rutas de /tareas exigen tareas.planificar o tareas.ejecutar_propias.
-    // Un rol con solo tareas.usar (lectura legada) no tiene ninguna vista
-    // disponible ahí: si /tareas fuera su ruta inicial, RequirePermission
-    // rebotaría en bucle a la misma ruta.
-    const modulos = MODULOS_ACCESO.filter(
-        ({ permiso }) =>
-            permiso !== PERMISOS.TAREAS ||
-            disponibles.has(PERMISOS.TAREAS_PLANIFICAR) ||
-            disponibles.has(PERMISOS.TAREAS_EJECUTAR_PROPIAS),
-    );
     return (
-        modulos.find(({ permiso }) => disponibles.has(permiso))?.ruta ??
+        MODULOS_ACCESO.find(({ permiso }) => disponibles.has(permiso))?.ruta ??
         "/sin-acceso"
     );
 }

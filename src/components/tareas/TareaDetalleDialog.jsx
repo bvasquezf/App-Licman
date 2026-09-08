@@ -7,6 +7,7 @@ import {
 import { formatearFechaTarea } from "../../lib/tareasData";
 import { EstadoTareaBadge } from "./TareaCard";
 import TareaHistorial from "./TareaHistorial";
+import RequerimientoBadge from "./RequerimientoBadge";
 
 function valorOPlaceholder(
     valor,
@@ -53,6 +54,10 @@ export default function TareaDetalleDialog({ open, tarea, onClose }) {
                   : ""
           }`
         : "Horario por confirmar";
+    const faltantes = [
+        !tareaVisible?.fecha_programada ? "fecha" : null,
+        !tareaVisible?.tecnico_ids?.length ? "técnico" : null,
+    ].filter(Boolean);
 
     useDialogA11y(open, { dialogRef, onClose });
 
@@ -80,6 +85,10 @@ export default function TareaDetalleDialog({ open, tarea, onClose }) {
                             <span className="rounded-full border border-slate-200 px-2 py-0.5 text-xs font-bold text-slate-600 dark:border-white/10 dark:text-neutral-300">
                                 {tareaVisible.prioridad}
                             </span>
+                            <RequerimientoBadge
+                                categoria={tareaVisible.categoria_requerimiento}
+                                compacta
+                            />
                             <span className="text-xs font-bold text-slate-500 dark:text-neutral-400">
                                 {tareaVisible.tipo === "Terreno"
                                     ? "🚐 Terreno"
@@ -93,7 +102,7 @@ export default function TareaDetalleDialog({ open, tarea, onClose }) {
                             {tareaVisible.titulo}
                         </h2>
                         <p className="mt-1 font-mono text-xs font-semibold text-slate-500 dark:text-neutral-400">
-                            Tarea #{String(tareaVisible.id).padStart(4, "0")}
+                            Requerimiento #{String(tareaVisible.id).padStart(4, "0")}
                         </p>
                     </div>
                     <button
@@ -107,6 +116,18 @@ export default function TareaDetalleDialog({ open, tarea, onClose }) {
                 </header>
 
                 <div className="app-modal-body dialog-scrollbar space-y-5">
+                    {faltantes.length > 0 &&
+                        [
+                            "Por programar",
+                            "Programada",
+                            "En proceso",
+                            "En espera",
+                        ].includes(tareaVisible.estado) && (
+                            <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-extrabold text-amber-800 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-300">
+                                ⚠ Pendiente de planificación: falta definir{" "}
+                                {faltantes.join(" y ")}.
+                            </p>
+                        )}
                     {tareaVisible.descripcion && (
                         <section aria-labelledby="detalle-descripcion">
                             <h3
@@ -122,6 +143,16 @@ export default function TareaDetalleDialog({ open, tarea, onClose }) {
                     )}
 
                     <dl className="grid gap-3 sm:grid-cols-2">
+                        <CampoDetalle icono="📨" etiqueta="Origen">
+                            {valorOPlaceholder(
+                                [
+                                    tareaVisible.origen_requerimiento,
+                                    tareaVisible.referencia_origen,
+                                ]
+                                    .filter(Boolean)
+                                    .join(" · "),
+                            )}
+                        </CampoDetalle>
                         <CampoDetalle icono="📅" etiqueta="Planificación" destacado>
                             {formatearFechaTarea(tareaVisible.fecha_programada)} · {hora}
                         </CampoDetalle>

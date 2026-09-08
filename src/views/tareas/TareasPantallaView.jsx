@@ -6,6 +6,7 @@ import Skeleton from "../../components/ui/Skeleton";
 import { useTareas } from "../../context/TareasContext";
 import {
     compararTareas,
+    datosCategoriaRequerimiento,
     estaTareaActiva,
     fechaLocalISO,
     formatearFechaTarea,
@@ -33,6 +34,9 @@ function horaActualizacion(valor) {
 function TarjetaPantalla({ tarea, alerta = false }) {
     const horario = horaCorta(tarea.hora_inicio);
     const termino = horaCorta(tarea.hora_fin);
+    const categoria = datosCategoriaRequerimiento(
+        tarea.categoria_requerimiento,
+    );
 
     return (
         <article
@@ -59,6 +63,9 @@ function TarjetaPantalla({ tarea, alerta = false }) {
                         <span className="text-slate-500">•</span>
                         <span className="text-slate-300">
                             {tarea.tipo === "Terreno" ? "🚐 Terreno" : "🔧 Taller"}
+                        </span>
+                        <span className="text-blue-300">
+                            {categoria.icono} {categoria.etiqueta}
                         </span>
                     </div>
                     <h3 className="mt-2 line-clamp-2 text-lg font-black leading-snug text-white 2xl:text-2xl">

@@ -74,7 +74,8 @@ RPCs (siempre vía `supabase.rpc`, nunca escritura directa a equipos):
 `registrar_movimiento` (soporta cliente y swap), `preview_next_correlativo`,
 `actualizar_estado_equipo`, `actualizar_foto_equipo`, `actualizar_equipo`, `import_equipo` (solo para la carga inicial desde
 `scripts/importar-inventario.mjs`; la app no la usa).
-Tareas usa `guardar_tarea` (guarda tarea + asignaciones en transacción) y
+Tareas usa `guardar_requerimiento_tarea` (guarda requerimiento + clasificación
++ asignaciones en transacción) y
 `cambiar_estado_tarea` para sus cambios rápidos.
 Los swaps de equipos usan `registrar_cambio_equipo`, que mueve en una sola
 transacción el reemplazante hacia el cliente y el equipo reemplazado a bodega.
@@ -82,7 +83,7 @@ Auth/RBAC usa `requiere_configurar_administrador`, `obtener_mi_acceso`, `puede`,
 `actualizar_mi_perfil`, `listar_roles_app`, `listar_usuarios_app`,
 `actualizar_usuario_app` y `obtener_mi_actividad`.
 
-Migraciones en `supabase/migrations/` (000–047), idempotentes.
+Migraciones en `supabase/migrations/` (000–048), idempotentes.
 046 incorpora permisos granulares de Bodega y movimientos por RPC; requiere validar
 los triggers históricos de stock antes de aplicarla (ver `docs/bodega-control.md`).
 047 repara permisos del superadministrador y asigna automáticamente capacidades nuevas.
@@ -107,10 +108,12 @@ de alta no los edita, pero sí se pueden corregir desde la ficha del inventario)
 - Mi perfil (`/perfil`) muestra actividad propia; administración (`/usuarios`) requiere
   `usuarios.gestionar`.
 - Sub-nav y rutas de `/tareas` gateadas por permiso granular (subNavConfig +
-  `RequirePermission` anidado en App.jsx): vistas de planificación (Hoy, Por programar,
-  Calendario, Semana, Por técnico, Tablero, Finalizadas, Pantalla TV) requieren
-  `tareas.planificar`; `Mis tareas` requiere `tareas.ejecutar_propias`; Papelera requiere
-  `tareas.eliminar`. Resultado: el rol Técnico solo ve "Mis tareas".
+  `RequirePermission` anidado en App.jsx): las vistas compartidas (Hoy,
+  Requerimientos, Calendario, Semana, Por técnico, Tablero, Finalizadas y Pantalla
+  TV) requieren `tareas.usar`; las acciones de creación/edición requieren
+  `tareas.planificar`; `Mis tareas` requiere `tareas.ejecutar_propias`; Papelera
+  requiere `tareas.eliminar`. Un Técnico entra directamente a "Mis tareas", pero
+  también puede consultar la planificación general desde la sub-nav.
 - Bodega separa `bodega.usar`, `bodega.productos`, `bodega.ingresar`,
   `bodega.retirar`, `bodega.devolver` y `bodega.historial`. Técnicos pueden consultar,
   retirar y devolver sus propios retiros. No compran ni editan catálogo.

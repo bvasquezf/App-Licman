@@ -9,7 +9,7 @@ App web unificada de gestión para Licman — **4 secciones en una sola SPA**, e
 | **Bodega** | `/bodega/*` | Inventario de repuestos: productos, entradas (compras), salidas (consumos), stock, historial, valorización, export a Excel |
 | **Equipos** | `/equipos/*` | Inventario de equipos entre bodegas y clientes: altas con foto, movimientos, swaps, clientes, papelera, export |
 | **Mantenimiento** | `/mantenimiento/*` | Dashboard de OTs e informes de terreno: KPIs, técnicos, reincidencia, tiempos, con auto-refresh |
-| **Tareas** | `/tareas/*` | Planificación de taller y terreno: tablero, calendario, carga por técnico y trabajos finalizados |
+| **Tareas** | `/tareas/*` | Registro de requerimientos, planificación de taller y terreno, calendario, carga por técnico y trabajos finalizados |
 
 ## 🛠️ Stack
 

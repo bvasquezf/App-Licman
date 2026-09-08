@@ -22,6 +22,7 @@ import { useTareas } from "../../context/TareasContext";
 import { useUrlFilters } from "../../hooks/useUrlFilters";
 import { PERMISOS } from "../../lib/authPermissions";
 import {
+    CATEGORIAS_REQUERIMIENTO,
     PRIORIDADES_TAREA,
     cambiarEstadoTarea,
     compararTareas,
@@ -39,9 +40,9 @@ const VISTAS = {
             "Coordina la jornada, resuelve atrasos y registra las visitas que van apareciendo.",
     },
     por_programar: {
-        titulo: "Por programar",
+        titulo: "Requerimientos",
         subtitulo:
-            "Ordena solicitudes nuevas y completa las que todavía no tienen fecha o técnico.",
+            "Registra solicitudes apenas lleguen y completa después la fecha o el técnico.",
     },
     tablero: {
         titulo: "Planificación de tareas",
@@ -97,11 +98,13 @@ export default function TareasView({ vista = "agenda" }) {
         prioridad: "todas",
         tecnico: "todos",
         tipo: "todos",
+        requerimiento: "todos",
     });
     const busqueda = filtrosUrl.q;
     const filtroPrioridad = filtrosUrl.prioridad;
     const filtroTecnico = filtrosUrl.tecnico;
     const filtroTipo = filtrosUrl.tipo;
+    const filtroRequerimiento = filtrosUrl.requerimiento;
     const [modalAbierto, setModalAbierto] = useState(false);
     const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
     const [tareaEditar, setTareaEditar] = useState(null);
@@ -172,6 +175,12 @@ export default function TareasView({ vista = "agenda" }) {
                     return false;
                 }
                 if (
+                    filtroRequerimiento !== "todos" &&
+                    tarea.categoria_requerimiento !== filtroRequerimiento
+                ) {
+                    return false;
+                }
+                if (
                     filtroTecnico !== "todos" &&
                     (filtroTecnico === "sin_asignar"
                         ? tarea.tecnico_ids?.length > 0
@@ -190,6 +199,9 @@ export default function TareasView({ vista = "agenda" }) {
                 tarea.contacto,
                 tarea.equipo_referencia,
                 tarea.observaciones,
+                tarea.categoria_requerimiento,
+                tarea.origen_requerimiento,
+                tarea.referencia_origen,
                 ...(tarea.tecnicos ?? []),
             ].some((valor) =>
                 String(valor ?? "")
@@ -218,6 +230,7 @@ export default function TareasView({ vista = "agenda" }) {
         filtroPrioridad,
         filtroTecnico,
         filtroTipo,
+        filtroRequerimiento,
         vista,
     ]);
 
@@ -257,11 +270,24 @@ export default function TareasView({ vista = "agenda" }) {
         }
         try {
             await guardarTarea(payload);
-            toast.success(payload.id ? "Tarea actualizada" : "Tarea creada");
+            toast.success(
+                payload.id
+                    ? "Requerimiento actualizado"
+                    : "Requerimiento registrado",
+            );
             await refetch();
             return true;
         } catch (err) {
-            toast.error(err?.message ?? "No se pudo guardar la tarea");
+            const faltaMigracion =
+                err?.code === "PGRST202" ||
+                String(err?.message ?? "").includes(
+                    "guardar_requerimiento_tarea",
+                );
+            toast.error(
+                faltaMigracion
+                    ? "Falta aplicar la migración 048 en Supabase para guardar requerimientos"
+                    : (err?.message ?? "No se pudo guardar el requerimiento"),
+            );
             return false;
         }
     };
@@ -380,12 +406,14 @@ export default function TareasView({ vista = "agenda" }) {
         (busqueda ||
             filtroPrioridad !== "todas" ||
             filtroTecnico !== "todos" ||
-            filtroTipo !== "todos");
+            filtroTipo !== "todos" ||
+            filtroRequerimiento !== "todos");
     const cantidadFiltrosActivos =
         Number(Boolean(busqueda)) +
         Number(filtroPrioridad !== "todas") +
         Number(filtroTecnico !== "todos") +
-        Number(filtroTipo !== "todos");
+        Number(filtroTipo !== "todos") +
+        Number(filtroRequerimiento !== "todos");
     const cargandoVista =
         vista === "eliminadas"
             ? loadingPapelera
@@ -440,7 +468,7 @@ export default function TareasView({ vista = "agenda" }) {
                                 onClick={() => abrirNueva()}
                                 className="min-h-[44px] rounded-xl bg-blue-600 px-4 text-sm font-extrabold text-white shadow-[0_4px_14px_rgba(37,99,235,0.25)] transition hover:bg-blue-700"
                             >
-                                + Nueva solicitud
+                                + Nuevo requerimiento
                             </button>
                         )}
                         {vista === "mis_tareas" && (
@@ -491,7 +519,7 @@ export default function TareasView({ vista = "agenda" }) {
             )}
 
             {mostrarFiltros ? <section className="mb-5 rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_6px_20px_rgba(15,23,42,0.04)] dark:border-white/10 dark:bg-carbon-900 sm:p-4">
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
                     <label className="relative block sm:col-span-2 lg:col-span-1">
                         <span className="sr-only">Buscar tareas</span>
                         <span
@@ -531,6 +559,24 @@ export default function TareasView({ vista = "agenda" }) {
                         id="filtros-tareas-avanzados"
                         className={`${filtrosAbiertos ? "contents" : "hidden"} sm:contents`}
                     >
+                        <select
+                            value={filtroRequerimiento}
+                            onChange={(event) =>
+                                setFiltroUrl("requerimiento", event.target.value)
+                            }
+                            className="min-h-[44px] w-full min-w-0 rounded-xl border-[1.5px] border-slate-300 bg-white px-3 text-base font-semibold text-slate-700 outline-none focus:border-blue-600 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-200"
+                            aria-label="Filtrar por tipo de requerimiento"
+                        >
+                            <option value="todos">Todos los requerimientos</option>
+                            {CATEGORIAS_REQUERIMIENTO.map((categoria) => (
+                                <option
+                                    key={categoria.valor}
+                                    value={categoria.valor}
+                                >
+                                    {categoria.etiqueta}
+                                </option>
+                            ))}
+                        </select>
                         <select
                             value={filtroTecnico}
                             onChange={(event) => setFiltroUrl("tecnico", event.target.value)}
@@ -687,7 +733,7 @@ export default function TareasView({ vista = "agenda" }) {
                     tareas={tareasFiltradas}
                     onEditar={abrirEditar}
                     onCambiarEstado={handleCambiarEstado}
-                    onNueva={puedePlanificar ? () => abrirNueva() : null}
+                    onNueva={puedePlanificar ? abrirNueva : null}
                 />
             ) : vista === "calendario" ? (
                 <TareasCalendario

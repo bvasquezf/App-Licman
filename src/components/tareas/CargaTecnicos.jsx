@@ -63,7 +63,7 @@ export default function CargaTecnicos({
                         onClick={onNueva}
                         className="min-h-[44px] rounded-xl bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700"
                     >
-                        + Nueva tarea
+                        + Nuevo requerimiento
                     </button>
                 ) : null}
             />
@@ -257,7 +257,7 @@ export default function CargaTecnicos({
                                 ⚠ Sin técnico asignado
                             </h2>
                             <p className="text-xs text-amber-700 dark:text-amber-400">
-                                Estas solicitudes todavía necesitan responsable.
+                                Estos requerimientos todavía necesitan responsable.
                             </p>
                         </header>
                         <div className="space-y-3 p-3">

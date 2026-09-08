@@ -105,6 +105,8 @@ export default function AgendaHoy({
                                         onNueva({
                                             fecha_programada: hoy,
                                             tipo: "Terreno",
+                                            categoria_requerimiento:
+                                                "Visita técnica",
                                         })
                                     }
                                     className="min-h-[48px] rounded-xl border border-white/20 bg-white/10 px-4 text-sm font-extrabold text-white hover:bg-white/15"
@@ -116,7 +118,7 @@ export default function AgendaHoy({
                                     onClick={() => onNueva()}
                                     className="col-span-2 min-h-[48px] rounded-xl border border-white/20 px-4 text-sm font-bold text-slate-200 hover:bg-white/10 sm:col-span-1"
                                 >
-                                    + Por programar
+                                    + Requerimiento
                                 </button>
                             </div>
                         )}
@@ -189,7 +191,7 @@ export default function AgendaHoy({
                     <EmptyState
                         icon="☀️"
                         title="No hay trabajos agendados para hoy"
-                        description="Puedes registrar una visita para hoy o dejar una solicitud en la bandeja por programar."
+                        description="Puedes registrar una visita para hoy o dejar un requerimiento pendiente de planificación."
                         action={onNueva ? (
                             <button
                                 type="button"

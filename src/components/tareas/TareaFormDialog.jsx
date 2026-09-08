@@ -3,9 +3,12 @@ import { useUnsavedChanges } from "../../hooks/useUnsavedChanges";
 import { useModalTransition } from "../../hooks/useModalTransition";
 import { useDialogA11y } from "../../hooks/useDialogA11y";
 import {
+    CATEGORIAS_REQUERIMIENTO,
     ESTADOS_TAREA,
+    ORIGENES_REQUERIMIENTO,
     PRIORIDADES_TAREA,
     TIPOS_TAREA,
+    datosCategoriaRequerimiento,
     estadoSegunPlanificacion,
     formatearFechaTarea,
     tareasSeSolapan,
@@ -21,6 +24,9 @@ function valoresIniciales(tarea) {
         titulo: tarea?.titulo ?? "",
         descripcion: tarea?.descripcion ?? "",
         tipo: tarea?.tipo ?? "Taller",
+        categoria_requerimiento: tarea?.categoria_requerimiento ?? "Otro",
+        origen_requerimiento: tarea?.origen_requerimiento ?? "Otro",
+        referencia_origen: tarea?.referencia_origen ?? "",
         estado: tarea?.estado ?? "Por programar",
         prioridad: tarea?.prioridad ?? "Normal",
         fecha_programada: tarea?.fecha_programada ?? "",
@@ -320,6 +326,15 @@ export default function TareaFormDialog({
         );
     };
 
+    const cambiarCategoria = (categoria) => {
+        const { tipoSugerido } = datosCategoriaRequerimiento(categoria);
+        setForm((prev) => ({
+            ...prev,
+            categoria_requerimiento: categoria,
+            tipo: tipoSugerido,
+        }));
+    };
+
     const alternarTecnico = (tecnicoId) => {
         setForm((prev) => ({
             ...prev,
@@ -440,6 +455,7 @@ export default function TareaFormDialog({
                 estado,
                 titulo: form.titulo.trim(),
                 descripcion: form.descripcion.trim(),
+                referencia_origen: form.referencia_origen.trim(),
                 cliente_nombre: form.cliente_nombre.trim(),
                 ubicacion: form.ubicacion.trim(),
                 contacto: form.contacto.trim(),
@@ -507,11 +523,13 @@ export default function TareaFormDialog({
                             id="tarea-form-titulo"
                             className="text-lg font-black text-slate-950 dark:text-white"
                         >
-                            {modoEdicion ? "Editar tarea" : "Nueva solicitud"}
+                            {modoEdicion
+                                ? "Editar requerimiento"
+                                : "Nuevo requerimiento"}
                         </h2>
                         <p className="mt-0.5 text-sm text-slate-500 dark:text-neutral-400">
                             {modoEdicion
-                                ? `Tarea #${String(form.id).padStart(4, "0")} · ${form.estado}`
+                                ? `Requerimiento #${String(form.id).padStart(4, "0")} · ${form.estado}`
                                 : planificacionAbierta
                                   ? "Registra y programa el trabajo en un solo paso"
                                   : "Anota lo esencial ahora y prográmala después"}
@@ -537,7 +555,7 @@ export default function TareaFormDialog({
                     <div className="app-modal-body dialog-scrollbar space-y-5">
                         <section>
                             <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-neutral-400">
-                                Solicitud
+                                Requerimiento
                             </h3>
                             <div className="mt-3 space-y-3">
                                 <label className="block text-sm font-bold text-slate-800 dark:text-slate-100">
@@ -591,22 +609,26 @@ export default function TareaFormDialog({
                                     />
                                 </label>
                                 <div className="grid gap-3 md:grid-cols-2">
-                                    <label className="block text-sm font-bold text-slate-800 dark:text-slate-100">
-                                        Tipo
+                                    <label className="block text-sm font-bold text-slate-800 dark:text-slate-100 md:col-span-2">
+                                        Tipo de requerimiento
                                         <select
-                                            value={form.tipo}
+                                            value={form.categoria_requerimiento}
                                             onChange={(event) =>
-                                                cambiar("tipo", event.target.value)
+                                                cambiarCategoria(event.target.value)
                                             }
                                             className={INPUT_CLASES}
                                         >
-                                            {TIPOS_TAREA.map((tipo) => (
-                                                <option key={tipo} value={tipo}>
-                                                    {tipo === "Taller"
-                                                        ? "🔧 Taller"
-                                                        : "🚐 Terreno"}
-                                                </option>
-                                            ))}
+                                            {CATEGORIAS_REQUERIMIENTO.map(
+                                                (categoria) => (
+                                                    <option
+                                                        key={categoria.valor}
+                                                        value={categoria.valor}
+                                                    >
+                                                        {categoria.icono}{" "}
+                                                        {categoria.etiqueta}
+                                                    </option>
+                                                ),
+                                            )}
                                         </select>
                                     </label>
                                     <label className="block text-sm font-bold text-slate-800 dark:text-slate-100">
@@ -630,6 +652,58 @@ export default function TareaFormDialog({
                                                 </option>
                                             ))}
                                         </select>
+                                    </label>
+                                    <label className="block text-sm font-bold text-slate-800 dark:text-slate-100">
+                                        Modalidad
+                                        <select
+                                            value={form.tipo}
+                                            onChange={(event) =>
+                                                cambiar("tipo", event.target.value)
+                                            }
+                                            className={INPUT_CLASES}
+                                        >
+                                            {TIPOS_TAREA.map((tipo) => (
+                                                <option key={tipo} value={tipo}>
+                                                    {tipo === "Taller"
+                                                        ? "🔧 En taller"
+                                                        : "🚐 En terreno"}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
+                                    <label className="block text-sm font-bold text-slate-800 dark:text-slate-100">
+                                        Canal de ingreso
+                                        <select
+                                            value={form.origen_requerimiento}
+                                            onChange={(event) =>
+                                                cambiar(
+                                                    "origen_requerimiento",
+                                                    event.target.value,
+                                                )
+                                            }
+                                            className={INPUT_CLASES}
+                                        >
+                                            {ORIGENES_REQUERIMIENTO.map((origen) => (
+                                                <option key={origen} value={origen}>
+                                                    {origen}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
+                                    <label className="block text-sm font-bold text-slate-800 dark:text-slate-100">
+                                        Referencia de origen
+                                        <input
+                                            type="text"
+                                            value={form.referencia_origen}
+                                            onChange={(event) =>
+                                                cambiar(
+                                                    "referencia_origen",
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="Asunto del correo, OC o folio"
+                                            className={INPUT_CLASES}
+                                        />
                                     </label>
                                 </div>
                             </div>
@@ -737,18 +811,19 @@ export default function TareaFormDialog({
                         {!planificacionAbierta && !modoEdicion ? (
                             <section className="rounded-2xl border border-blue-200 bg-blue-50/60 p-4 dark:border-blue-500/25 dark:bg-blue-500/5">
                                 <h3 className="text-base font-black text-blue-950 dark:text-blue-200">
-                                    ¿Ya sabes cuándo y quién la realizará?
+                                    ¿Quieres agregar la planificación ahora?
                                 </h3>
                                 <p className="mt-1 text-sm leading-relaxed text-blue-800 dark:text-blue-300">
-                                    Puedes guardarla ahora en Por programar o completar
-                                    fecha, horario, técnico, ubicación y equipo.
+                                    Puedes guardar el requerimiento de inmediato,
+                                    aunque todavía no exista un técnico. También
+                                    puedes agregar fecha, ubicación y equipo ahora.
                                 </p>
                                 <button
                                     type="button"
                                     onClick={() => setPlanificacionAbierta(true)}
                                     className="mt-3 min-h-[44px] rounded-xl bg-blue-600 px-4 text-sm font-extrabold text-white hover:bg-blue-700"
                                 >
-                                    📅 Programar ahora
+                                    📅 Agregar planificación y detalles
                                 </button>
                             </section>
                         ) : (
@@ -889,8 +964,8 @@ export default function TareaFormDialog({
                                     ) : (
                                         <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
                                             No hay cuentas activas con rol Técnico.
-                                            Invita al usuario o asígnale ese rol
-                                            desde la sección Usuarios.
+                                            Puedes guardar igualmente: quedará con
+                                            la alerta “Falta asignar técnico”.
                                         </p>
                                     )}
                                     {(tarea?.asignaciones_tecnicos ?? []).some(
@@ -1250,7 +1325,7 @@ export default function TareaFormDialog({
                                   ? "Guardar cambios"
                                   : estadoCalculado === "Programada"
                                     ? "Crear programada"
-                                    : "Guardar por programar"}
+                                    : "Guardar requerimiento"}
                         </button>
                     </footer>
                 </form>

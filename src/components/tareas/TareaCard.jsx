@@ -4,6 +4,7 @@ import {
 } from "../../lib/tareasData";
 import { useAuth } from "../../context/AuthContext";
 import { PERMISOS } from "../../lib/authPermissions";
+import RequerimientoBadge from "./RequerimientoBadge";
 
 const ESTADO_CLASES = {
     "Por programar":
@@ -63,6 +64,10 @@ export default function TareaCard({
     const planificacionCompleta = Boolean(
         tarea.fecha_programada && tarea.tecnico_ids?.length,
     );
+    const faltantes = [
+        !tarea.fecha_programada ? "fecha" : null,
+        !tarea.tecnico_ids?.length ? "técnico" : null,
+    ].filter(Boolean);
     const estadoReapertura = planificacionCompleta
         ? "Programada"
         : "Por programar";
@@ -118,7 +123,7 @@ export default function TareaCard({
                 className={`block min-h-[44px] w-full text-left transition hover:bg-slate-50 dark:hover:bg-white/5 ${
                     compacta ? "p-3" : "p-4"
                 }`}
-                aria-label={`${puedePlanificar ? "Editar" : "Abrir detalle de"} la tarea ${tarea.titulo}, estado ${tarea.estado}, prioridad ${tarea.prioridad}`}
+                aria-label={`${puedePlanificar ? "Editar" : "Abrir detalle de"} el requerimiento ${tarea.titulo}, estado ${tarea.estado}, prioridad ${tarea.prioridad}`}
             >
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
@@ -139,6 +144,10 @@ export default function TareaCard({
                             >
                                 {tarea.prioridad}
                             </span>
+                            <RequerimientoBadge
+                                categoria={tarea.categoria_requerimiento}
+                                compacta
+                            />
                             <span className="text-xs font-semibold text-slate-500 dark:text-neutral-400">
                                 {tarea.tipo === "Terreno" ? "🚐 Terreno" : "🔧 Taller"}
                             </span>
@@ -159,6 +168,11 @@ export default function TareaCard({
                 )}
 
                 <div className="mt-3 space-y-1.5 text-xs font-medium text-slate-600 dark:text-neutral-300">
+                    {faltantes.length > 0 && activa && (
+                        <p className="rounded-lg bg-amber-50 px-2.5 py-2 font-extrabold text-amber-800 ring-1 ring-amber-200/70 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20">
+                            ⚠ Falta definir {faltantes.join(" y ")}
+                        </p>
+                    )}
                     <p className={vencida ? "font-bold text-rose-600 dark:text-rose-400" : ""}>
                         📅 {formatearFechaTarea(tarea.fecha_programada)}
                         {hora ? ` · ${hora}` : ""}
