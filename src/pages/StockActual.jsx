@@ -1,17 +1,20 @@
+import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { cantidadBodega, stockConProductos } from "../lib/bodegaUtils";
 import { useCallback } from "react";
-import { supabase } from "../services/supabase";
+import { leerCatalogoBodega } from "../lib/bodegaData";
 import { exportToExcel } from "../utils/exportToExcel";
 import { useToast } from "../context/ToastContext";
 import { useAsync } from "../hooks/useAsync";
 import { useUrlFilters } from "../hooks/useUrlFilters";
-import { withRetry } from "../utils/withRetry";
 import PageHeader from "../components/ui/PageHeader";
 import EmptyState from "../components/ui/EmptyState";
 import Skeleton from "../components/ui/Skeleton";
 
 import { formatCLP } from "../utils/format";
 
-function StockActual() {
+function StockActual({ soloReposicion = false }) {
+    const { puede } = useAuth();
     const [filtrosUrl, setFiltroUrl] = useUrlFilters({
         q: "",
         estado: "todos",
@@ -21,43 +24,34 @@ function StockActual() {
     const { showToast } = useToast();
 
     const cargarStock = useCallback(async () => {
-        const [stockRes, productosRes] = await Promise.all([
-            withRetry(() =>
-                supabase
-                    .from("stock_actual")
-                    .select("*")
-                    .order("nombre", { ascending: true })
-            ),
-            withRetry(() => supabase.from("productos").select("*")),
+        const [stock, productos] = await Promise.all([
+            leerCatalogoBodega("stock_actual"),
+            leerCatalogoBodega("productos", { soloActivos: true }),
         ]);
-
-        if (stockRes.error) throw stockRes.error;
-        if (productosRes.error) throw productosRes.error;
-
-        return {
-            stock: stockRes.data || [],
-            productos: productosRes.data || [],
-        };
+        return { stock, productos };
     }, []);
 
-    const { data, loading } = useAsync(cargarStock, {
+    const { data, loading, error, refetch } = useAsync(cargarStock, {
         errorContexto: "cargar stock",
         onError: (err) => showToast(err.message, "error"),
     });
 
-    const stock = data?.stock || [];
     const productos = data?.productos || [];
+    const stock = stockConProductos(productos, data?.stock || []);
 
     const exportarStock = () => {
-        if (stock.length === 0) {
+        if (stockFiltrado.length === 0) {
             showToast("No hay stock para exportar", "warning");
             return;
         }
-        const dataExport = stock.map((item) => ({
+        const dataExport = stockFiltrado.map((item) => ({
             ID: item.id,
             Código: item.codigo || "",
             Nombre: item.nombre || "",
             Stock: item.stock ?? 0,
+            Unidad: item.unidad || "",
+            "Stock mínimo": item.stockMin,
+            "Falta para mínimo": Math.max(0, item.stockMin - item.stock),
         }));
         exportToExcel(dataExport, "stock_actual_bodega", "Stock");
         showToast("Reporte exportado");
@@ -83,7 +77,7 @@ function StockActual() {
                 item.codigo?.toLowerCase().includes(texto);
             const matchEstado =
                 filtroEstado === "todos" || item.estado === filtroEstado;
-            return matchTexto && matchEstado;
+            return matchTexto && matchEstado && (!soloReposicion || item.estado !== "ok");
         })
         .sort((a, b) => {
             // Priorizar sin stock, luego bajo, luego por nombre
@@ -95,7 +89,7 @@ function StockActual() {
         });
 
     const counts = {
-        todos: stockConEstado.length,
+        todos: stockConEstado.filter((i) => !soloReposicion || i.estado !== "ok").length,
         bajo: stockConEstado.filter((i) => i.estado === "bajo").length,
         sin_stock: stockConEstado.filter((i) => i.estado === "sin_stock").length,
     };
@@ -124,12 +118,12 @@ function StockActual() {
         <div className="space-y-6">
             <PageHeader
                 icon="🗂️"
-                title="Stock actual"
-                subtitle="Unidades disponibles por producto"
+                title={soloReposicion ? "Por comprar" : "Stock actual"}
+                subtitle={soloReposicion ? "Productos en el mínimo o por debajo: revisa qué necesitas reponer" : "Existencias y mínimos en la unidad de cada producto"}
                 actions={
                     <button
                         onClick={exportarStock}
-                        className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[10px] bg-slate-800 px-3 py-2 text-xs font-medium text-white shadow-sm transition-all duration-200 hover:bg-slate-900 hover:shadow-md active:scale-95 sm:gap-2 sm:px-4 sm:text-sm"
+                        className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[10px] bg-slate-800 px-3 py-2 text-xs font-medium text-white shadow-sm transition-all duration-200 hover:bg-slate-900 hover:shadow-md active:scale-95 sm:gap-2 sm:px-4 sm:text-sm"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -152,6 +146,9 @@ function StockActual() {
                 }
             />
 
+            {soloReposicion && <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">Esta lista se actualiza al consultar el stock. El mínimo es el umbral de alerta; define la cantidad a comprar según el consumo del taller.</p>}
+            <div className="flex items-center justify-end"><button onClick={refetch} disabled={loading} className="min-h-[44px] rounded-xl border border-slate-200 px-4 text-sm dark:border-white/15 disabled:opacity-50">{loading ? "Actualizando…" : "Actualizar existencias"}</button></div>
+            {error && <p role="alert" className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">{error.message}. No se pudo confirmar el stock actual.</p>}
             {/* Filtros */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <div className="relative flex-1">
@@ -271,7 +268,7 @@ function StockActual() {
                                             item.estado
                                         )}`}
                                     >
-                                        {item.stock}
+                                        {cantidadBodega(item.stock)}
                                     </p>
                                     <p className="text-xs text-slate-500 dark:text-neutral-400">
                                         {item.producto?.unidad || "unidades"}
@@ -282,11 +279,13 @@ function StockActual() {
                                         Mínimo
                                     </p>
                                     <p className="text-sm font-medium text-slate-600 tabular-nums dark:text-neutral-400">
-                                        {item.stockMin}
+                                        {cantidadBodega(item.stockMin, item.unidad)}
                                     </p>
                                 </div>
                             </div>
 
+                            {item.estado !== "ok" && <p className="mt-3 text-xs font-medium text-amber-700 dark:text-amber-300">{item.stock < item.stockMin ? `Faltan ${cantidadBodega(item.stockMin - item.stock, item.unidad)} para alcanzar el mínimo.` : "En el umbral de reposición."}</p>}
+                            {soloReposicion && puede("bodega.ingresar") && <Link to={`/bodega/nueva-entrada?producto=${item.id}`} className="mt-3 inline-flex min-h-[44px] items-center text-sm font-semibold text-blue-600 dark:text-blue-400">Ingresar compra →</Link>}
                             {item.producto?.precio_referencia != null && (
                                 <div className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-500 dark:border-white/10 dark:text-neutral-400">
                                     Ref:{" "}

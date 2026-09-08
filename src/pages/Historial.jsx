@@ -1,3 +1,4 @@
+import { cantidadBodega } from "../lib/bodegaUtils";
 import { useCallback, useState, useMemo } from "react";
 import { supabase } from "../services/supabase";
 import { exportToExcel } from "../utils/exportToExcel";
@@ -22,25 +23,37 @@ function Historial() {
     const fechaHasta = filtrosUrl.hasta;
     const tipoFiltro = filtrosUrl.tipo;
     const busqueda = filtrosUrl.q;
+    const [paginas, setPaginas] = useState({ clave: "", cursores: [null] });
+    const clave = `${fechaDesde}|${fechaHasta}|${tipoFiltro}`;
+    const cursores = paginas.clave === clave ? paginas.cursores : [null];
+    const cursor = cursores.at(-1);
     const [expandido, setExpandido] = useState(null);
     const { showToast } = useToast();
 
     const cargarMovimientos = useCallback(async () => {
-        const res = await withRetry(() =>
-            supabase
-                .from("bodega_movimientos")
-                .select(
-                    `id, tipo_movimiento, motivo_movimiento, cantidad, precio_unitario, proveedor, numero_documento, tipo_documento, solicitante, destino, observacion, fecha, creado_por, productos (nombre, codigo), autor:perfiles!bodega_movimientos_creado_por_fkey(nombre_completo)`
-                )
-                .order("id", { ascending: false })
-        );
-        if (res.error) throw res.error;
-        return res.data || [];
-    }, []);
+        if (fechaDesde && fechaHasta && fechaDesde > fechaHasta) throw new Error("La fecha inicial debe ser anterior a la final");
+        return withRetry(async () => {
+            let query = supabase.from("bodega_movimientos").select(
+                `id, tipo_movimiento, motivo_movimiento, cantidad, precio_unitario, proveedor, numero_documento, tipo_documento, solicitante, destino, observacion, recipiente, retiro_id, fecha, creado_por, productos (nombre, codigo, unidad), autor:perfiles!bodega_movimientos_creado_por_fkey(nombre_completo)`
+            ).order("id", { ascending: false }).limit(50);
+            if (cursor) query = query.lt("id", cursor);
+            if (tipoFiltro !== "todos") query = query.eq("tipo_movimiento", tipoFiltro);
+            if (fechaDesde) query = query.gte("fecha", fechaDesde);
+            if (fechaHasta) {
+                const fin = new Date(`${fechaHasta}T12:00:00Z`);
+                fin.setUTCDate(fin.getUTCDate() + 1);
+                query = query.lt("fecha", fin.toISOString().slice(0, 10));
+            }
+            const { data, error } = await query;
+            if (error) throw error;
+            return data || [];
+        });
+    }, [cursor, fechaDesde, fechaHasta, tipoFiltro]);
 
-    const { data: movimientos = [], loading } = useAsync(
+    const { data: movimientos = [], loading, error, refetch } = useAsync(
         cargarMovimientos,
         {
+            deps: [cursor, fechaDesde, fechaHasta, tipoFiltro],
             errorContexto: "cargar el historial",
             onError: (err) => showToast(err.message, "error"),
         }
@@ -59,6 +72,9 @@ function Historial() {
             Código: mov.productos?.codigo || "",
             Producto: mov.productos?.nombre || "",
             Cantidad: mov.cantidad ?? 0,
+            Unidad: mov.productos?.unidad || "",
+            "Retiro original": mov.retiro_id || "",
+            Recipiente: mov.recipiente || "",
             "Precio unitario": mov.precio_unitario ?? 0,
             Proveedor: mov.proveedor || "",
             "Tipo documento": mov.tipo_documento || "",
@@ -88,7 +104,7 @@ function Historial() {
             const cumpleTipo =
                 tipoFiltro === "todos" || mov.tipo_movimiento === tipoFiltro;
             const cumpleDesde = fechaDesde ? mov.fecha >= fechaDesde : true;
-            const cumpleHasta = fechaHasta ? mov.fecha <= fechaHasta : true;
+            const cumpleHasta = fechaHasta ? String(mov.fecha).slice(0, 10) <= fechaHasta : true;
             const cumpleTexto =
                 !texto ||
                 mov.productos?.nombre?.toLowerCase().includes(texto) ||
@@ -128,7 +144,7 @@ function Historial() {
                 actions={
                     <button
                         onClick={exportarHistorial}
-                        className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[10px] bg-slate-800 px-3 py-2 text-xs font-medium text-white shadow-sm transition-all duration-200 hover:bg-slate-900 hover:shadow-md active:scale-95 sm:gap-2 sm:px-4 sm:text-sm"
+                        className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[10px] bg-slate-800 px-3 py-2 text-xs font-medium text-white shadow-sm transition-all duration-200 hover:bg-slate-900 hover:shadow-md active:scale-95 sm:gap-2 sm:px-4 sm:text-sm"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -170,7 +186,7 @@ function Historial() {
                 </svg>
                 <input
                     type="text"
-                    placeholder="Buscar por producto, código, proveedor..."
+                    placeholder="Buscar en esta página por producto, código o persona..."
                     value={busqueda}
                     onChange={(e) => setFiltroUrl("q", e.target.value)}
                     className="min-h-[44px] w-full rounded-[14px] border border-slate-200/60 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 shadow-[0_10px_30px_rgba(15,23,42,0.10)] transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/10 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500 sm:text-base"
@@ -251,6 +267,14 @@ function Historial() {
                 )}
             </div>
 
+            <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+                <p className="text-xs text-slate-500 dark:text-neutral-400">Página {cursores.length} · hasta 50 movimientos. Búsqueda, contadores y Excel corresponden a esta página.</p>
+                <div className="flex gap-2">
+                    <button className="min-h-[44px] rounded-xl border border-slate-200 px-3 dark:border-white/15 disabled:opacity-40" disabled={loading || cursores.length === 1} onClick={() => setPaginas({ clave, cursores: cursores.slice(0, -1) })}>Más recientes</button>
+                    <button className="min-h-[44px] rounded-xl border border-slate-200 px-3 dark:border-white/15 disabled:opacity-40" disabled={loading || movimientos.length < 50} onClick={() => setPaginas({ clave, cursores: [...cursores, movimientos.at(-1).id] })}>Anteriores</button>
+                </div>
+            </div>
+            {error && <div role="alert" className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">{error.message}<button onClick={refetch} className="ml-3 min-h-[44px] underline">Reintentar</button></div>}
             {/* Timeline de movimientos */}
             <div>
                 {loading ? (
@@ -274,6 +298,7 @@ function Historial() {
                         {movimientosFiltrados.map((mov) => {
                             const isExpanded = expandido === mov.id;
                             const hasDetails =
+                                mov.recipiente || mov.retiro_id ||
                                 mov.precio_unitario ||
                                 mov.proveedor ||
                                 mov.numero_documento ||
@@ -286,6 +311,7 @@ function Historial() {
                                     className="overflow-hidden rounded-[14px] border border-slate-200/60 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.10)] transition-all duration-200 hover:border-slate-300 dark:border-white/10 dark:bg-carbon-900 dark:hover:border-white/20"
                                 >
                                     <button
+                                        aria-expanded={Boolean(isExpanded)}
                                         onClick={() =>
                                             hasDetails &&
                                             setExpandido(
@@ -353,7 +379,7 @@ function Historial() {
                                                 {mov.tipo_movimiento === "entrada"
                                                     ? "+"
                                                     : "−"}
-                                                {mov.cantidad}
+                                                {cantidadBodega(mov.cantidad, mov.productos?.unidad)}
                                             </p>
                                             <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-neutral-400">
                                                 {mov.tipo_movimiento}
@@ -383,6 +409,8 @@ function Historial() {
                                     {isExpanded && hasDetails && (
                                         <div className="border-t border-slate-100 bg-slate-50/50 p-3 dark:border-white/10 dark:bg-white/5 sm:p-4">
                                             <div className="grid gap-3 text-xs sm:grid-cols-2">
+                                                {mov.retiro_id && <p>Devolución del retiro <strong>#{mov.retiro_id}</strong></p>}
+                                                {mov.recipiente && <p>Recipiente: <strong>{mov.recipiente}</strong></p>}
                                                 {mov.precio_unitario && (
                                                     <div>
                                                         <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-neutral-400">

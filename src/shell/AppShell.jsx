@@ -1,5 +1,6 @@
+import BodegaAccesoPendiente from "../components/ui/BodegaAccesoPendiente";
 import { useState } from "react";
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { SubNavBar } from "./SubNavBar";
 import ThemeToggle from "../components/ui/ThemeToggle";
@@ -21,6 +22,7 @@ import { inicialesNombre } from "../lib/authPermissions";
  * Instagram/Dribbble/Linear.
  */
 export function AppShell() {
+    const { pathname } = useLocation();
     const [menuAbierto, setMenuAbierto] = useState(false);
     const { profile } = useAuth();
 
@@ -139,7 +141,8 @@ export function AppShell() {
                         "max(1.5rem, env(safe-area-inset-bottom))",
                 }}
             >
-                <Outlet />
+                {(pathname === "/bodega" || pathname.startsWith("/bodega/")) && <BodegaAccesoPendiente />}
+                    <Outlet />
             </main>
 
             {/* Toasts globales los renderiza <ToastProvider> en main.jsx */}

@@ -1,59 +1,48 @@
+import { stockConProductos } from "../lib/bodegaUtils";
+import { useMovimientoBodega } from "../hooks/useMovimientoBodega";
 import { useCallback } from "react";
-import { supabase } from "../services/supabase";
+import { leerCatalogoBodega } from "../lib/bodegaData";
 import EntradaForm from "../components/forms/EntradaForm";
 import PageHeader from "../components/ui/PageHeader";
 import Card from "../components/ui/Card";
 import { useToast } from "../context/ToastContext";
 import { useAsync } from "../hooks/useAsync";
-import { withRetry } from "../utils/withRetry";
 
 function NuevaEntrada() {
     const { showToast } = useToast();
 
-    const cargarProductos = useCallback(
-        () =>
-            withRetry(() =>
-                supabase
-                    .from("productos")
-                    .select("*")
-                    .eq("activo", true)
-                    .order("nombre", { ascending: true })
-            ).then((res) => res.data || []),
-        []
-    );
+    const cargarProductos = useCallback(async () => {
+        const [productos, stock] = await Promise.all([
+            leerCatalogoBodega("productos", { soloActivos: true }),
+            leerCatalogoBodega("stock_actual"),
+        ]);
+        return stockConProductos(productos, stock).sort((a, b) => a.nombre.localeCompare(b.nombre));
+    }, []);
 
-    const { data: productos = [] } = useAsync(cargarProductos, {
+    const { data: productos = [], loading, error, refetch } = useAsync(cargarProductos, {
         errorContexto: "cargar productos",
         onError: (err) => showToast(err.message, "error"),
     });
 
+    const registrarMovimiento = useMovimientoBodega();
     const guardarEntrada = async (entrada) => {
-        const { error } = await supabase
-            .from("bodega_movimientos")
-            .insert([entrada]);
-
-        if (error) {
-            showToast(
-                "No se pudo registrar el ingreso. Inténtalo de nuevo.",
-                "error"
-            );
-            return false;
-        }
-
-        showToast("Ingreso registrado correctamente");
-        return true;
+        const ok = await registrarMovimiento(entrada);
+        if (ok) await refetch();
+        return ok;
     };
 
     return (
         <div className="space-y-6">
             <PageHeader
                 icon="⬇️"
-                title="Nueva entrada"
+                title="Ingresar compra o stock"
                 subtitle="Registra un ingreso de stock a la bodega"
             />
 
             <div className="grid gap-4 lg:grid-cols-3 sm:gap-6">
                 <div className="lg:col-span-2">
+                    {error && <div role="alert" className="mb-3 rounded-xl bg-rose-50 p-4 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">{error.message}<button onClick={refetch} className="ml-3 min-h-[44px] underline">Reintentar</button></div>}
+                    {loading && <p role="status" className="mb-3 text-sm text-slate-500">Actualizando productos y existencias…</p>}
                     <EntradaForm
                         productos={productos}
                         onGuardar={guardarEntrada}
@@ -66,9 +55,9 @@ function NuevaEntrada() {
                             💡 ¿Qué es una entrada?
                         </h3>
                         <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-neutral-400">
-                            Las entradas suman unidades al stock. Usá este
+                            Las entradas suman unidades al stock. Usa este
                             formulario para compras a proveedores, conteos
-                            iniciales, devoluciones o ajustes de inventario.
+                            iniciales o ajustes de inventario.
                         </p>
                     </Card>
 
@@ -100,7 +89,7 @@ function NuevaEntrada() {
                                 <span className="font-medium text-slate-700 dark:text-slate-200">
                                     Devolución
                                 </span>{" "}
-                                — material que vuelve a bodega desde terreno.
+                                — usa la pestaña Devoluciones y selecciona el retiro original.
                             </li>
                         </ul>
                     </Card>

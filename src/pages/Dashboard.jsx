@@ -1,3 +1,7 @@
+import { leerCatalogoBodega } from "../lib/bodegaData";
+import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { stockConProductos, cantidadBodega } from "../lib/bodegaUtils";
 import { useCallback } from "react";
 import { supabase } from "../services/supabase";
 import { exportWorkbook } from "../utils/exportWorkbook";
@@ -14,11 +18,12 @@ import Skeleton from "../components/ui/Skeleton";
 
 function Dashboard() {
     const { showToast } = useToast();
+    const { puede } = useAuth();
 
     const cargarData = useCallback(async () => {
         const [productosRes, stockRes, movimientosRes] = await Promise.all([
-            withRetry(() => supabase.from("productos").select("*")),
-            withRetry(() => supabase.from("stock_actual").select("*")),
+            leerCatalogoBodega("productos", { soloActivos: true }),
+            leerCatalogoBodega("stock_actual"),
             withRetry(() =>
                 supabase
                     .from("bodega_movimientos")
@@ -33,34 +38,28 @@ function Dashboard() {
                         destino,
                         observacion,
                         fecha,
-                        productos (nombre, codigo)
+                        productos (nombre, codigo, unidad)
                     `)
-                    .order("id", { ascending: false })
+                    .order("id", { ascending: false }).limit(5)
             ),
         ]);
 
-        // Acumulamos errores: el primero que se presente detiene el flujo
-        // y se reporta con un mensaje claro al usuario.
-        const err =
-            productosRes.error ||
-            stockRes.error ||
-            movimientosRes.error;
-        if (err) throw err;
+        if (movimientosRes.error) throw movimientosRes.error;
 
         return {
-            productos: productosRes.data || [],
-            stock: stockRes.data || [],
+            productos: productosRes,
+            stock: stockRes,
             movimientos: movimientosRes.data || [],
         };
     }, []);
 
-    const { data, loading } = useAsync(cargarData, {
+    const { data, loading, error, refetch } = useAsync(cargarData, {
         errorContexto: "cargar el dashboard",
         onError: (err) => showToast(err.message, "error"),
     });
 
-    const productos = data?.productos || [];
-    const stock = data?.stock || [];
+    const productos = (data?.productos || []).filter((p) => p.activo);
+    const stock = stockConProductos(productos, data?.stock || []);
     const movimientos = data?.movimientos || [];
 
     const totalProductos = productos.length;
@@ -138,7 +137,7 @@ function Dashboard() {
             [
                 { name: "Productos", data: productosSheet },
                 { name: "Stock", data: stockSheet },
-                { name: "Historial", data: historialSheet },
+                { name: "Actividad reciente (5)", data: historialSheet },
             ],
             "reporte_maestro_bodega"
         );
@@ -157,12 +156,12 @@ function Dashboard() {
         <div className="space-y-6">
             <PageHeader
                 icon="📊"
-                title="Dashboard"
-                subtitle="Vista general del inventario"
+                title="Resumen de bodega"
+                subtitle="Existencias del taller y reposición · actividad reciente según tu acceso"
                 actions={
                     <button
                         onClick={exportarReporteMaestro}
-                        className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[10px] bg-brand-600 px-3 py-2 text-xs font-medium text-white shadow-[0_2px_8px_rgba(232,18,26,0.28)] transition-all duration-200 hover:bg-brand-700 hover:shadow-md active:scale-95 sm:gap-2 sm:px-4 sm:text-sm"
+                        className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[10px] bg-brand-600 px-3 py-2 text-xs font-medium text-white shadow-[0_2px_8px_rgba(232,18,26,0.28)] transition-all duration-200 hover:bg-brand-700 hover:shadow-md active:scale-95 sm:gap-2 sm:px-4 sm:text-sm"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -188,6 +187,16 @@ function Dashboard() {
                 }
             />
 
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {[
+                    { to: "productos", permiso: "bodega.productos", title: "Crear producto", detail: "Nombre, unidad y mínimo de reposición" },
+                    { to: "nueva-salida", permiso: "bodega.retirar", title: "Retirar productos", detail: "Repuestos y líquidos para el trabajo" },
+                    { to: "devoluciones", permiso: "bodega.devolver", title: "Devolver sobrantes", detail: "Vinculados al retiro original" },
+                    { to: "nueva-entrada", permiso: "bodega.ingresar", title: "Ingresar compra", detail: "Proveedor, documento y cantidad" },
+                    { to: "reposicion", permiso: "bodega.usar", title: "Revisar por comprar", detail: "Productos que llegaron al mínimo" },
+                ].filter((a) => puede(a.permiso)).map((a) => <Link key={a.to} to={`/bodega/${a.to}`} className="rounded-2xl border border-slate-200 bg-white p-4 transition-colors hover:border-blue-400 hover:bg-blue-50 dark:border-white/10 dark:bg-carbon-900 dark:hover:bg-blue-500/10"><p className="font-semibold text-blue-700 dark:text-blue-300">{a.title} →</p><p className="mt-1 text-xs text-slate-500 dark:text-neutral-400">{a.detail}</p></Link>)}
+            </div>
+            {error && <div role="alert" className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">{error.message}<button onClick={refetch} className="ml-3 min-h-[44px] underline">Reintentar</button></div>}
             {/* KPIs */}
             {loading ? (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
@@ -289,7 +298,7 @@ function Dashboard() {
                                                 {producto?.nombre}
                                             </p>
                                             <p className="text-xs text-slate-500 dark:text-neutral-400">
-                                                Stock: {item.stock}
+                                                Stock: {cantidadBodega(item.stock, item.unidad)}
                                             </p>
                                         </div>
                                         <span className="ml-3 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700">
@@ -302,14 +311,14 @@ function Dashboard() {
                     )}
                 </Card>
 
-                {/* Últimos movimientos */}
+                {/* Últimos movimientos visibles */}
                 <Card
                     className="animate-fade-in"
                     style={{ animationDelay: "320ms" }}
                 >
                     <div className="mb-4 flex items-center justify-between">
                         <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
-                            Últimos movimientos
+                            Últimos movimientos visibles
                         </h2>
                     </div>
 
@@ -357,7 +366,7 @@ function Dashboard() {
                                         {mov.tipo_movimiento === "entrada"
                                             ? "+"
                                             : "−"}
-                                        {mov.cantidad}
+                                        {cantidadBodega(mov.cantidad, mov.productos?.unidad)}
                                     </span>
                                 </li>
                             ))}

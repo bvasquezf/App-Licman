@@ -1,5 +1,10 @@
 export const PERMISOS = {
     BODEGA: "bodega.usar",
+    BODEGA_PRODUCTOS: "bodega.productos",
+    BODEGA_INGRESAR: "bodega.ingresar",
+    BODEGA_RETIRAR: "bodega.retirar",
+    BODEGA_DEVOLVER: "bodega.devolver",
+    BODEGA_HISTORIAL: "bodega.historial",
     EQUIPOS: "equipos.usar",
     EQUIPOS_REGISTRAR: "equipos.registrar",
     EQUIPOS_EDITAR: "equipos.editar",

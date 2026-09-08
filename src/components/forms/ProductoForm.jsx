@@ -1,3 +1,5 @@
+import { useAuth } from "../../context/AuthContext";
+import { validarCantidad } from "../../lib/bodegaUtils";
 import { useEffect, useState } from "react";
 import { useToast } from "../../context/ToastContext";
 import { useUnsavedChanges } from "../../hooks/useUnsavedChanges";
@@ -11,12 +13,12 @@ import { useCodigoDisponible } from "../../hooks/useCodigoDisponible";
 
 function Field({ label, required, children, className = "" }) {
     return (
-        <div className={className}>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-200">
+        <label className={`block ${className}`}>
+            <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-200">
                 {label} {required && <span className="text-rose-500">*</span>}
-            </label>
+            </span>
             {children}
-        </div>
+        </label>
     );
 }
 
@@ -25,6 +27,7 @@ const inputClass =
 
 function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
     const { showToast } = useToast();
+    const { puede } = useAuth();
 
     const getInitialProductoData = () => ({
         codigo: "",
@@ -154,11 +157,14 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
             showToast("El nombre del producto es obligatorio", "error");
             return false;
         }
+        if (!productoData.unidad.trim()) { showToast("Define la unidad del producto; usa litro para líquidos", "error"); return false; }
+        const minimo = Number(productoData.stock_minimo || 0);
+        if (!Number.isFinite(minimo) || minimo < 0 || (minimo > 0 && validarCantidad(minimo, productoData.unidad))) { showToast("Ingresa un mínimo válido en la unidad del producto", "error"); return false; }
         return true;
     };
 
     const validarPaso2 = () => {
-        if (!stockData.cantidad || Number(stockData.cantidad) < 0) {
+        if (validarCantidad(stockData.cantidad, productoData.unidad)) {
             showToast("Debes ingresar una cantidad inicial válida", "error");
             return false;
         }
@@ -175,6 +181,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
     const handleSiguiente = (e) => {
         e.preventDefault();
         if (validarPaso1()) {
+            if (!puede("bodega.ingresar")) setQuiereStockInicial(false);
             setPaso(2);
         }
     };
@@ -189,6 +196,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!validarPaso1()) return;
         if (quiereStockInicial && !validarPaso2()) {
             return;
         }
@@ -224,12 +232,12 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
 
         // Solo limpiar el form si el guardado fue exitoso: si falla
         // (ej: código duplicado), el usuario conserva lo que escribió.
-        const ok = await onGuardar(payload);
+        let ok = false;
+        try { ok = await onGuardar(payload); } catch { showToast("No se pudo guardar. Revisa la conexión", "error"); } finally { setLoading(false); }
 
         if (ok && !productoEditar) {
             resetForm();
         }
-        setLoading(false);
     };
 
     // ─── MODO EDICIÓN ────────────────────────────────────────────
@@ -262,7 +270,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                         e.preventDefault();
                         if (!validarPaso1()) return;
                         setLoading(true);
-                        await onGuardar({
+                        try { await onGuardar({
                             producto: {
                                 codigo: productoData.codigo.trim() || null,
                                 nombre: productoData.nombre.trim(),
@@ -278,8 +286,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                                         : null,
                             },
                             stockInicial: null,
-                        });
-                        setLoading(false);
+                        }); } catch { showToast("No se pudo guardar. Revisa la conexión", "error"); } finally { setLoading(false); }
                     }}
                     className="p-4 sm:p-5"
                 >
@@ -340,20 +347,24 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                                 placeholder="Ej: Pernos"
                             />
                         </Field>
-                        <Field label="Unidad">
+                        <datalist id="unidades-bodega"><option value="unidad" /><option value="litro" /><option value="kg" /><option value="metro" /><option value="caja" /></datalist>
+                        <Field label="Unidad" required>
                             <input
                                 type="text"
                                 name="unidad"
+                                required
                                 value={productoData.unidad}
                                 onChange={handleProductoChange}
                                 className={inputClass}
                                 placeholder="Ej: unidad, caja, litro"
+                                list="unidades-bodega"
                             />
                         </Field>
-                        <Field label="Stock mínimo">
+                        <Field label="Mínimo de reposición (en la misma unidad)">
                             <input
                                 type="number"
                                 name="stock_minimo"
+                                step="0.001"
                                 min="0"
                                 value={productoData.stock_minimo}
                                 onChange={handleProductoChange}
@@ -556,20 +567,24 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                                 )}
                             </div>
                         </Field>
-                        <Field label="Unidad">
+                        <datalist id="unidades-bodega"><option value="unidad" /><option value="litro" /><option value="kg" /><option value="metro" /><option value="caja" /></datalist>
+                        <Field label="Unidad" required>
                             <input
                                 type="text"
                                 name="unidad"
+                                required
                                 value={productoData.unidad}
                                 onChange={handleProductoChange}
                                 className={inputClass}
                                 placeholder="Ej: unidad, caja, litro"
+                                list="unidades-bodega"
                             />
                         </Field>
-                        <Field label="Stock mínimo">
+                        <Field label="Mínimo de reposición (en la misma unidad)">
                             <input
                                 type="number"
                                 name="stock_minimo"
+                                step="0.001"
                                 min="0"
                                 value={productoData.stock_minimo}
                                 onChange={handleProductoChange}
@@ -667,6 +682,7 @@ function ProductoForm({ onGuardar, productoEditar, onCancelarEdicion }) {
                                     <input
                                         type="number"
                                         name="cantidad"
+                                        step="0.001"
                                         min="0"
                                         value={stockData.cantidad}
                                         onChange={handleStockChange}

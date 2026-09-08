@@ -1,31 +1,35 @@
+import { useAuth } from "../../context/AuthContext";
+import ResumenCantidad from "./ResumenCantidad";
+import { esUnidadEntera, validarCantidad } from "../../lib/bodegaUtils";
 import { useMemo, useState } from "react";
 import { useToast } from "../../context/ToastContext";
 import { useUnsavedChanges } from "../../hooks/useUnsavedChanges";
 import Card from "../ui/Card";
 
 const inputClass =
-    "w-full rounded-[10px] border border-slate-200/60 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500 sm:text-base";
+    "min-h-[44px] w-full rounded-[10px] border border-slate-200/60 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500 sm:text-base";
 
 function Field({ label, required, children, className = "" }) {
     return (
-        <div className={className}>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-200">
+        <label className={`block ${className}`}>
+            <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-200">
                 {label} {required && <span className="text-rose-500">*</span>}
-            </label>
+            </span>
             {children}
-        </div>
+        </label>
     );
 }
 
 function SalidaForm({ productos, onGuardar, stockActual = {} }) {
     const { showToast } = useToast();
+    const { profile } = useAuth();
 
     const [formData, setFormData] = useState({
         producto_id: "",
         cantidad: "",
-        solicitante: "",
         destino: "",
         observacion: "",
+        recipiente: "",
     });
 
     const [loading, setLoading] = useState(false);
@@ -57,9 +61,9 @@ function SalidaForm({ productos, onGuardar, stockActual = {} }) {
         setFormData({
             producto_id: "",
             cantidad: "",
-            solicitante: "",
             destino: "",
             observacion: "",
+            recipiente: "",
         });
 
     const handleSubmit = async (e) => {
@@ -74,20 +78,28 @@ function SalidaForm({ productos, onGuardar, stockActual = {} }) {
             return;
         }
 
+        const errorCantidad = validarCantidad(formData.cantidad, productoSeleccionado?.unidad);
+        if (errorCantidad) { showToast(errorCantidad, "error"); return; }
+        if (loading) return;
         setLoading(true);
 
         const salida = {
             producto_id: Number(formData.producto_id),
             tipo_movimiento: "salida",
             cantidad: Number(formData.cantidad),
-            solicitante: formData.solicitante.trim() || null,
+            solicitante: profile?.nombre_completo || null,
+            motivo_movimiento: "consumo_interno",
+            recipiente: formData.recipiente.trim() || null,
             destino: formData.destino.trim() || null,
             observacion: formData.observacion.trim() || null,
         };
 
-        const ok = await onGuardar(salida);
-        if (ok) resetForm();
-        setLoading(false);
+        try {
+            const ok = await onGuardar(salida);
+            if (ok) resetForm();
+        } catch {
+            showToast("No se pudo registrar. Tus datos siguen en el formulario", "error");
+        } finally { setLoading(false); }
     };
 
     return (
@@ -109,7 +121,7 @@ function SalidaForm({ productos, onGuardar, stockActual = {} }) {
             </div>
 
             <form onSubmit={handleSubmit} className="p-4 sm:p-5">
-                <div className="grid gap-4 md:grid-cols-2">
+                <fieldset disabled={loading} className="grid gap-4 md:grid-cols-2">
                     <Field label="Producto" required>
                         <select
                             name="producto_id"
@@ -127,10 +139,13 @@ function SalidaForm({ productos, onGuardar, stockActual = {} }) {
                         </select>
                     </Field>
 
-                    <Field label="Cantidad" required>
+                    <Field label={`Cantidad (${productoSeleccionado?.unidad || "unidad del producto"})`} required>
                         <input
                             type="number"
                             name="cantidad"
+                            required
+                            step={esUnidadEntera(productoSeleccionado?.unidad) ? "1" : "0.001"}
+                            inputMode="decimal"
                             min="0"
                             value={formData.cantidad}
                             onChange={handleChange}
@@ -163,17 +178,19 @@ function SalidaForm({ productos, onGuardar, stockActual = {} }) {
                         <input
                             type="text"
                             name="solicitante"
-                            value={formData.solicitante}
+                            value={profile?.nombre_completo || "Cuenta actual"}
+                            readOnly
                             onChange={handleChange}
                             className={inputClass}
                             placeholder="Ej: Juan Pérez"
                         />
                     </Field>
 
-                    <Field label="Destino">
+                    <Field label="Destino / OT" required>
                         <input
                             type="text"
                             name="destino"
+                            required
                             value={formData.destino}
                             onChange={handleChange}
                             className={inputClass}
@@ -181,6 +198,9 @@ function SalidaForm({ productos, onGuardar, stockActual = {} }) {
                         />
                     </Field>
 
+                    <Field label="Tarro o recipiente (opcional)">
+                        <input name="recipiente" value={formData.recipiente} onChange={handleChange} className={inputClass} placeholder="Ej: Tarro Juan · capacidad 5 L" />
+                    </Field>
                     <Field
                         label="Observación"
                         className="md:col-span-2"
@@ -194,13 +214,14 @@ function SalidaForm({ productos, onGuardar, stockActual = {} }) {
                             placeholder="Detalle del consumo o entrega"
                         />
                     </Field>
-                </div>
+                </fieldset>
 
+                <div className="mt-4"><ResumenCantidad producto={productoSeleccionado} cantidad={formData.cantidad} stock={stockDelProducto} /></div>
                 <div className="mt-6 flex justify-end">
                     <button
                         type="submit"
                         disabled={loading || excedeStock}
-                        className="inline-flex items-center gap-2 rounded-[10px] bg-rose-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-rose-700 hover:shadow-md active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex min-h-[44px] items-center gap-2 rounded-[10px] bg-rose-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-rose-700 hover:shadow-md active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {loading ? "Guardando..." : "Registrar salida"}
                     </button>

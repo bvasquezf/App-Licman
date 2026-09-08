@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { supabase } from "../services/supabase";
+import { leerCatalogoBodega } from "../lib/bodegaData";
 import SalidaForm from "../components/forms/SalidaForm";
 import PageHeader from "../components/ui/PageHeader";
 import Card from "../components/ui/Card";
@@ -7,8 +7,7 @@ import EmptyState from "../components/ui/EmptyState";
 import Skeleton from "../components/ui/Skeleton";
 import { useToast } from "../context/ToastContext";
 import { useAsync } from "../hooks/useAsync";
-import { withRetry } from "../utils/withRetry";
-import { handleSupabaseError } from "../utils/handleSupabaseError";
+import { useMovimientoBodega } from "../hooks/useMovimientoBodega";
 
 function NuevaSalida() {
     const { showToast } = useToast();
@@ -17,100 +16,36 @@ function NuevaSalida() {
     const [stockActual, setStockActual] = useState({});
 
     const cargarDatos = useCallback(async () => {
-        const [productosRes, stockRes] = await Promise.all([
-            withRetry(() =>
-                supabase
-                    .from("productos")
-                    .select("*")
-                    .eq("activo", true)
-                    .order("nombre", { ascending: true })
-            ),
-            withRetry(() =>
-                supabase.from("stock_actual").select("id, stock")
-            ),
+        const [productos, stock] = await Promise.all([
+            leerCatalogoBodega("productos", { soloActivos: true }),
+            leerCatalogoBodega("stock_actual"),
         ]);
 
-        if (productosRes.error) throw productosRes.error;
-        if (stockRes.error) throw stockRes.error;
-
         // Sincronizamos el stock local con el remoto.
-        const mapa = (stockRes.data || []).reduce((acc, item) => {
+        const mapa = stock.reduce((acc, item) => {
             acc[item.id] = item;
             return acc;
         }, {});
         setStockActual(mapa);
 
-        return productosRes.data || [];
+        return productos.sort((a,b) => a.nombre.localeCompare(b.nombre));
     }, []);
 
     const {
         data: productos = [],
         loading: loadingStock,
+        error,
+        refetch,
     } = useAsync(cargarDatos, {
         errorContexto: "cargar datos de salida",
         onError: (err) => showToast(err.message, "error"),
     });
 
+    const registrarMovimiento = useMovimientoBodega();
     const guardarSalida = async (salida) => {
-        // ── Validación online de stock (defensa en profundidad) ──
-        // Confiamos en la BD, pero chequeamos antes de mandar el insert
-        // para mostrar un mensaje claro si el stock cambió en otra pestaña.
-        const { data: stockRemoto, error: stockError } = await withRetry(() =>
-            supabase
-                .from("stock_actual")
-                .select("id, stock")
-                .eq("id", salida.producto_id)
-                .maybeSingle()
-        );
-
-        if (stockError) {
-            const normalizado = handleSupabaseError(
-                stockError,
-                "verificar stock disponible"
-            );
-            showToast(normalizado.message, "error");
-            return false;
-        }
-
-        const stockDisponible = stockRemoto?.stock ?? 0;
-        if (Number(salida.cantidad) > Number(stockDisponible)) {
-            showToast(
-                `Stock insuficiente. Disponible: ${stockDisponible}, solicitado: ${salida.cantidad}`,
-                "error"
-            );
-            return false;
-        }
-
-        const { error } = await supabase
-            .from("bodega_movimientos")
-            .insert([salida]);
-
-        if (error) {
-            const normalizado = handleSupabaseError(error, "registrar la salida");
-            // Si el trigger devolvió "Stock insuficiente", respetamos el
-            // mensaje crudo (es el más claro).
-            const mensaje = error.message?.includes("Stock insuficiente")
-                ? error.message
-                : normalizado.message;
-            showToast(mensaje, "error");
-            return false;
-        }
-
-        // Actualizamos el stock local para reflejar la salida.
-        setStockActual((prev) => ({
-            ...prev,
-            [salida.producto_id]: {
-                ...(prev[salida.producto_id] || { id: salida.producto_id }),
-                stock: Math.max(
-                    0,
-                    (prev[salida.producto_id]?.stock ?? 0) -
-                        Number(salida.cantidad)
-                ),
-            },
-        }));
-
-        showToast("Salida registrada correctamente");
-        return true;
+        const ok = await registrarMovimiento(salida);
+        if (ok) await refetch();
+        return ok;
     };
 
     // Productos con stock disponible (ordenados por nombre)
@@ -134,12 +69,14 @@ function NuevaSalida() {
         <div className="space-y-6">
             <PageHeader
                 icon="⬆️"
-                title="Nueva salida"
+                title="Retirar productos"
                 subtitle="Registra un egreso de stock desde la bodega"
             />
 
             <div className="grid gap-4 lg:grid-cols-3 sm:gap-6">
                 <div className="lg:col-span-2">
+                    {error && <div role="alert" className="mb-3 rounded-xl bg-rose-50 p-4 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">{error.message}<button onClick={refetch} className="ml-3 min-h-[44px] underline">Reintentar</button></div>}
+                    {loadingStock && <p role="status" className="mb-3 text-sm text-slate-500">Actualizando productos y existencias…</p>}
                     <SalidaForm
                         productos={productos}
                         stockActual={stockActual}
@@ -196,7 +133,7 @@ function NuevaSalida() {
                                                         : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
                                                 }`}
                                             >
-                                                {p.stock}
+                                                {p.stock} {p.unidad}
                                             </span>
                                         </li>
                                     ))}

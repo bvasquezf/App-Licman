@@ -55,23 +55,26 @@ export const SUB_NAV_POR_SECCION = {
     bodega: [
         {
             to: "/bodega",
-            label: "Dashboard",
+            label: "Resumen",
             icon: "📊",
             end: true,
         },
         {
             to: "/bodega/productos",
-            label: "Productos",
+            permiso: PERMISOS.BODEGA_PRODUCTOS,
+            label: "Crear / editar productos",
             icon: "🏷️",
         },
         {
             to: "/bodega/nueva-entrada",
-            label: "Nueva entrada",
+            permiso: PERMISOS.BODEGA_INGRESAR,
+            label: "Ingresar compra",
             icon: "⬇️",
         },
         {
             to: "/bodega/nueva-salida",
-            label: "Nueva salida",
+            permiso: PERMISOS.BODEGA_RETIRAR,
+            label: "Retirar productos",
             icon: "⬆️",
         },
         {
@@ -81,9 +84,12 @@ export const SUB_NAV_POR_SECCION = {
         },
         {
             to: "/bodega/historial",
+            permiso: PERMISOS.BODEGA_HISTORIAL,
             label: "Historial",
             icon: "🕓",
         },
+        { to: "/bodega/devoluciones", label: "Devoluciones", icon: "↩️", permiso: PERMISOS.BODEGA_DEVOLVER },
+        { to: "/bodega/reposicion", label: "Por comprar", icon: "🛒" },
     ],
     equipos: [
         {

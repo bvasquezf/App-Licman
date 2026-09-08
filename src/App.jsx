@@ -1,3 +1,4 @@
+import Devoluciones from "./pages/Devoluciones";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AppShell } from "./shell/AppShell";
 import { DashboardProvider } from "./context/DashboardContext";
@@ -60,17 +61,23 @@ function App() {
                         element={<RequirePermission permiso={PERMISOS.BODEGA} />}
                     >
                         <Route path="/bodega" element={<Dashboard />} />
-                        <Route path="/bodega/productos" element={<Productos />} />
-                        <Route
-                            path="/bodega/nueva-entrada"
-                            element={<NuevaEntrada />}
-                        />
-                        <Route
-                            path="/bodega/nueva-salida"
-                            element={<NuevaSalida />}
-                        />
+                        <Route element={<RequirePermission permiso={PERMISOS.BODEGA_PRODUCTOS} />}>
+                            <Route path="/bodega/productos" element={<Productos />} />
+                        </Route>
+                        <Route element={<RequirePermission permiso={PERMISOS.BODEGA_INGRESAR} />}>
+                            <Route path="/bodega/nueva-entrada" element={<NuevaEntrada />} />
+                        </Route>
+                        <Route element={<RequirePermission permiso={PERMISOS.BODEGA_RETIRAR} />}>
+                            <Route path="/bodega/nueva-salida" element={<NuevaSalida />} />
+                        </Route>
+                        <Route element={<RequirePermission permiso={PERMISOS.BODEGA_DEVOLVER} />}>
+                            <Route path="/bodega/devoluciones" element={<Devoluciones />} />
+                        </Route>
                         <Route path="/bodega/stock" element={<StockActual />} />
-                        <Route path="/bodega/historial" element={<Historial />} />
+                        <Route path="/bodega/reposicion" element={<StockActual soloReposicion />} />
+                        <Route element={<RequirePermission permiso={PERMISOS.BODEGA_HISTORIAL} />}>
+                            <Route path="/bodega/historial" element={<Historial />} />
+                        </Route>
                     </Route>
 
                     <Route

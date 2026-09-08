@@ -1,26 +1,30 @@
+import { useSearchParams } from "react-router-dom";
+import ResumenCantidad from "./ResumenCantidad";
+import { esUnidadEntera, validarCantidad } from "../../lib/bodegaUtils";
 import { useState } from "react";
 import { useToast } from "../../context/ToastContext";
 import { useUnsavedChanges } from "../../hooks/useUnsavedChanges";
 import Card from "../ui/Card";
 
 const inputClass =
-    "w-full rounded-[10px] border border-slate-200/60 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500 sm:text-base";
+    "min-h-[44px] w-full rounded-[10px] border border-slate-200/60 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-[3px] focus:ring-blue-600/15 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-100 dark:placeholder-neutral-500 sm:text-base";
 
 function Field({ label, required, children, className = "" }) {
     return (
-        <div className={className}>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-200">
+        <label className={`block ${className}`}>
+            <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-200">
                 {label} {required && <span className="text-rose-500">*</span>}
-            </label>
+            </span>
             {children}
-        </div>
+        </label>
     );
 }
 
 function EntradaForm({ productos, onGuardar }) {
     const { showToast } = useToast();
+    const [params] = useSearchParams();
     const initialFormData = {
-        producto_id: "",
+        producto_id: params.get("producto") || "",
         motivo_movimiento: "compra",
         cantidad: "",
         precio_unitario: "",
@@ -35,6 +39,7 @@ function EntradaForm({ productos, onGuardar }) {
 
     useUnsavedChanges(formData);
 
+    const productoSeleccionado = productos.find((p) => String(p.id) === formData.producto_id);
     const esCompra = formData.motivo_movimiento === "compra";
     const requiereObservacion =
         formData.motivo_movimiento === "ajuste_positivo";
@@ -100,6 +105,9 @@ function EntradaForm({ productos, onGuardar }) {
             return;
         }
 
+        const errorCantidad = validarCantidad(formData.cantidad, productoSeleccionado?.unidad);
+        if (errorCantidad) { showToast(errorCantidad, "error"); return; }
+        if (loading) return;
         setLoading(true);
 
         const nuevaEntrada = {
@@ -117,9 +125,12 @@ function EntradaForm({ productos, onGuardar }) {
             observacion: formData.observacion.trim() || null,
         };
 
-        const ok = await onGuardar(nuevaEntrada);
-        if (ok) resetForm();
-        setLoading(false);
+        try {
+            const ok = await onGuardar(nuevaEntrada);
+            if (ok) resetForm();
+        } catch {
+            showToast("No se pudo registrar. Tus datos siguen en el formulario", "error");
+        } finally { setLoading(false); }
     };
 
     const getObservacionPlaceholder = () => {
@@ -147,14 +158,14 @@ function EntradaForm({ productos, onGuardar }) {
                         Registrar ingreso de stock
                     </h2>
                     <p className="mt-0.5 text-xs text-slate-500 dark:text-neutral-400">
-                        Compras, stock inicial, devoluciones o ajustes
+                        Compras, stock inicial o ajustes
                         positivos
                     </p>
                 </div>
             </div>
 
             <form onSubmit={handleSubmit} className="p-4 sm:p-5">
-                <div className="grid gap-4 md:grid-cols-2">
+                <fieldset disabled={loading} className="grid gap-4 md:grid-cols-2">
                     <Field label="Producto" required>
                         <select
                             name="producto_id"
@@ -186,14 +197,16 @@ function EntradaForm({ productos, onGuardar }) {
                             <option value="ajuste_positivo">
                                 Ajuste positivo
                             </option>
-                            <option value="devolucion">Devolución</option>
                         </select>
                     </Field>
 
-                    <Field label="Cantidad" required>
+                    <Field label={`Cantidad (${productoSeleccionado?.unidad || "unidad del producto"})`} required>
                         <input
                             type="number"
                             name="cantidad"
+                            required
+                            step={esUnidadEntera(productoSeleccionado?.unidad) ? "1" : "0.001"}
+                            inputMode="decimal"
                             min="0"
                             value={formData.cantidad}
                             onChange={handleChange}
@@ -202,7 +215,7 @@ function EntradaForm({ productos, onGuardar }) {
                         />
                     </Field>
 
-                    <Field label="Precio unitario" required={esCompra}>
+                    <Field label={`Precio por ${productoSeleccionado?.unidad || "unidad"} (CLP)`} required={esCompra}>
                         <input
                             type="number"
                             name="precio_unitario"
@@ -279,13 +292,14 @@ function EntradaForm({ productos, onGuardar }) {
                             placeholder={getObservacionPlaceholder()}
                         />
                     </Field>
-                </div>
+                </fieldset>
 
+                <div className="mt-4"><ResumenCantidad producto={productoSeleccionado} cantidad={formData.cantidad} stock={productoSeleccionado?.stock} entrada /></div>
                 <div className="mt-6 flex justify-end">
                     <button
                         type="submit"
                         disabled={loading}
-                        className="inline-flex items-center gap-2 rounded-[10px] bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-emerald-700 hover:shadow-md active:scale-95 disabled:opacity-50"
+                        className="inline-flex min-h-[44px] items-center gap-2 rounded-[10px] bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-emerald-700 hover:shadow-md active:scale-95 disabled:opacity-50"
                     >
                         {loading ? "Guardando..." : "Guardar ingreso"}
                     </button>

@@ -1,3 +1,6 @@
+import { leerCatalogoBodega } from "../lib/bodegaData";
+import ConfirmDialog from "../components/equipos/ConfirmDialog";
+import { useMovimientoBodega } from "../hooks/useMovimientoBodega";
 import { useCallback, useState } from "react";
 import ProductoForm from "../components/forms/ProductoForm";
 import { supabase } from "../services/supabase";
@@ -5,7 +8,6 @@ import { exportToExcel } from "../utils/exportToExcel";
 import { useToast } from "../context/ToastContext";
 import { useAsync } from "../hooks/useAsync";
 import { useUrlFilters } from "../hooks/useUrlFilters";
-import { withRetry } from "../utils/withRetry";
 import { handleSupabaseError } from "../utils/handleSupabaseError";
 import PageHeader from "../components/ui/PageHeader";
 import Card from "../components/ui/Card";
@@ -15,6 +17,9 @@ import Skeleton from "../components/ui/Skeleton";
 import { formatCLP } from "../utils/format";
 
 function Productos() {
+    const [porDesactivar, setPorDesactivar] = useState(null);
+    const [desactivando, setDesactivando] = useState(false);
+    const registrarMovimiento = useMovimientoBodega();
     const [productoEditar, setProductoEditar] = useState(null);
     const [filtrosUrl, setFiltroUrl] = useUrlFilters({
         q: "",
@@ -25,18 +30,7 @@ function Productos() {
     const { showToast } = useToast();
 
     const cargarProductos = useCallback(async () => {
-        let query = supabase
-            .from("productos")
-            .select("*")
-            .order("id", { ascending: false });
-
-        if (!mostrarInactivos) {
-            query = query.eq("activo", true);
-        }
-
-        const res = await withRetry(() => query);
-        if (res.error) throw res.error;
-        return res.data || [];
+        return (await leerCatalogoBodega("productos", { soloActivos: !mostrarInactivos })).sort((a,b) => b.id-a.id);
     }, [mostrarInactivos]);
 
     const {
@@ -98,16 +92,11 @@ function Productos() {
                     stockInicial.observacion ?? "Stock inicial del producto",
             };
 
-            const { error: movError } = await supabase
-                .from("bodega_movimientos")
-                .insert([movimientoPayload]);
+            const okMovimiento = await registrarMovimiento(movimientoPayload);
 
-            if (movError) {
+            if (!okMovimiento) {
                 showToast(
-                    `Producto creado, pero falló el stock inicial: ${
-                        handleSupabaseError(movError, "registrar el stock inicial")
-                            .message
-                    }`,
+                    "Producto creado, pero falló el stock inicial. Registra el ingreso desde Nueva entrada",
                     "error"
                 );
                 await cargarProductosRefetch();
@@ -126,12 +115,6 @@ function Productos() {
     };
 
     const desactivarProducto = async (producto) => {
-        const confirmar = window.confirm(
-            `¿Seguro que deseas desactivar "${producto.nombre}"?`
-        );
-
-        if (!confirmar) return;
-
         const { error } = await supabase
             .from("productos")
             .update({ activo: false })
@@ -204,6 +187,13 @@ function Productos() {
 
     return (
         <div className="space-y-6">
+            <ConfirmDialog open={Boolean(porDesactivar)} title="Desactivar producto" message={`¿Desactivar ${porDesactivar?.nombre || "este producto"}? Sus movimientos se conservan. Debe tener stock cero y podrás reactivarlo después.`} confirmLabel="Desactivar" loading={desactivando} onCancel={() => setPorDesactivar(null)} onConfirm={async () => {
+                if (desactivando || !porDesactivar) return;
+                setDesactivando(true);
+                try { await desactivarProducto(porDesactivar); setPorDesactivar(null); }
+                catch (error) { showToast(handleSupabaseError(error, "desactivar producto").message, "error"); }
+                finally { setDesactivando(false); }
+            }} />
             <PageHeader
                 icon="📦"
                 title="Productos"
@@ -367,16 +357,16 @@ function Productos() {
                                             onClick={() =>
                                                 setProductoEditar(producto)
                                             }
-                                            className="rounded-lg px-2.5 py-2 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-500/10 sm:px-3 sm:py-1.5"
+                                            className="min-h-[44px] rounded-lg px-2.5 py-2 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-500/10 sm:px-3 sm:py-1.5"
                                         >
                                             Editar
                                         </button>
                                         {producto.activo ? (
                                             <button
                                                 onClick={() =>
-                                                    desactivarProducto(producto)
+                                                    setPorDesactivar(producto)
                                                 }
-                                                className="rounded-lg px-2.5 py-2 text-xs font-medium text-amber-600 transition-colors hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-500/10 sm:px-3 sm:py-1.5"
+                                                className="min-h-[44px] rounded-lg px-2.5 py-2 text-xs font-medium text-amber-600 transition-colors hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-500/10 sm:px-3 sm:py-1.5"
                                             >
                                                 Desactivar
                                             </button>
@@ -385,7 +375,7 @@ function Productos() {
                                                 onClick={() =>
                                                     activarProducto(producto)
                                                 }
-                                                className="rounded-lg px-2.5 py-2 text-xs font-medium text-emerald-600 transition-colors hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-500/10 sm:px-3 sm:py-1.5"
+                                                className="min-h-[44px] rounded-lg px-2.5 py-2 text-xs font-medium text-emerald-600 transition-colors hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-500/10 sm:px-3 sm:py-1.5"
                                             >
                                                 Activar
                                             </button>

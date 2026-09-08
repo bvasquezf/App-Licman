@@ -82,7 +82,10 @@ Auth/RBAC usa `requiere_configurar_administrador`, `obtener_mi_acceso`, `puede`,
 `actualizar_mi_perfil`, `listar_roles_app`, `listar_usuarios_app`,
 `actualizar_usuario_app` y `obtener_mi_actividad`.
 
-Migraciones en `supabase/migrations/` (000–033), idempotentes.
+Migraciones en `supabase/migrations/` (000–047), idempotentes.
+046 incorpora permisos granulares de Bodega y movimientos por RPC; requiere validar
+los triggers históricos de stock antes de aplicarla (ver `docs/bodega-control.md`).
+047 repara permisos del superadministrador y asigna automáticamente capacidades nuevas.
 Desde 010 `equipos` tiene además `capacidad_kg`, `mastil`, `anio`, `altura`,
 `bateria`, `bateria_serie` (vienen de la planilla de inventario; el formulario
 de alta no los edita, pero sí se pueden corregir desde la ficha del inventario).
@@ -108,6 +111,12 @@ de alta no los edita, pero sí se pueden corregir desde la ficha del inventario)
   Calendario, Semana, Por técnico, Tablero, Finalizadas, Pantalla TV) requieren
   `tareas.planificar`; `Mis tareas` requiere `tareas.ejecutar_propias`; Papelera requiere
   `tareas.eliminar`. Resultado: el rol Técnico solo ve "Mis tareas".
+- Bodega separa `bodega.usar`, `bodega.productos`, `bodega.ingresar`,
+  `bodega.retirar`, `bodega.devolver` y `bodega.historial`. Técnicos pueden consultar,
+  retirar y devolver sus propios retiros. No compran ni editan catálogo.
+- Movimientos de Bodega usan `guardar_movimiento_bodega` con token de reintento.
+  Devoluciones usan `listar_retiros_bodega` y `retiro_id`; nunca insertar movimientos
+  directamente desde la app. Líquidos se controlan en litros (hasta 3 decimales).
 - Face ID/Touch ID mediante passkeys queda para después de desplegar un dominio estable.
 
 ## Offline (sección Equipos)
@@ -216,10 +225,13 @@ useUnsavedChanges(formData, {
   `useUnsavedChanges`. Bloque "cache → fetch" duplicado entre ambos (candidato a hook).
 - **Duplicación restante**: mapeo de params del RPC `registrar_movimiento` ×3
   (candidato a `buildMovimientoParams`).
-- **Dashboard/Historial de bodega** traen TODOS los movimientos sin `.limit()`.
+- **Bodega**: resumen limitado a 5 movimientos y historial paginado de 50;
+  exportación de historial corresponde a la página visible. Catálogos por lotes.
 - **Validación**: `validarEquipo` exige bodega
   aunque el modelo Fase 2 permite NULL con cliente.
-- **Tests**: sin tests unitarios ni E2E.
+- **Tests**: Bodega tiene pruebas de cantidades y catálogo en `tests/`; prueba SQL
+  privada con esquema de prueba en `supabase/tests/`. Falta E2E y validación con los
+  triggers reales de stock.
 - **PWA**: no hay service worker ni instalabilidad.
 - **Auditoría pendiente**: ya existe autoría para movimientos, tareas y altas; falta una
   bitácora detallada de cada campo modificado en productos/equipos/clientes.
