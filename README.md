@@ -100,6 +100,32 @@ SPA, Node 22, caché de assets y encabezados de seguridad.
 
 Cada `git push` a la rama de producción genera automáticamente un nuevo deploy.
 
+## 📱 Instalar en la pantalla de inicio
+
+La versión publicada funciona como una aplicación web instalable. Debe abrirse
+desde el dominio HTTPS de producción al menos una vez antes de instalarla.
+
+### iPhone o iPad
+
+1. Abrir la aplicación en **Safari**.
+2. Tocar **Compartir** (el cuadrado con una flecha hacia arriba).
+3. Elegir **Agregar a inicio**.
+4. Activar **Abrir como app web**.
+5. Confirmar el nombre **Licman** y tocar **Agregar**.
+
+Si **Agregar a inicio** no aparece, bajar hasta **Editar acciones** y agregarla
+al menú de Compartir.
+
+Apple no permite iniciar esta instalación automáticamente desde un botón web.
+Después de agregarla, se abre desde su propio ícono y en una ventana independiente.
+
+### Android
+
+1. Abrir la aplicación en **Chrome**.
+2. Abrir el menú de tres puntos.
+3. Elegir **Instalar aplicación** o **Agregar a la pantalla principal**.
+4. Confirmar la instalación.
+
 ## 📁 Estructura
 
 ```

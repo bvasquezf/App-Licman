@@ -40,16 +40,6 @@ export function Sidebar({ abiertoMobile, onCerrarMobile }) {
         onClose: onCerrarMobile,
     });
 
-    // Body scroll lock cuando el drawer mobile está abierto
-    useEffect(() => {
-        if (!abiertoMobile) return;
-        const prev = document.body.style.overflow;
-        document.body.style.overflow = "hidden";
-        return () => {
-            document.body.style.overflow = prev;
-        };
-    }, [abiertoMobile]);
-
     return (
         <>
             {/* Backdrop mobile */}

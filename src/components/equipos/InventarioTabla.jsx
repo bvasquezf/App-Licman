@@ -1085,15 +1085,6 @@ function EquipoDetallePanel({
         cierreCompletadoRef.current = false;
     }, [equipoInicial]);
 
-    useEffect(() => {
-        const overflowAnterior = document.body.style.overflow;
-        document.body.style.overflow = "hidden";
-
-        return () => {
-            document.body.style.overflow = overflowAnterior;
-        };
-    }, []);
-
     const solicitarCierre = (accion = null) => {
         if (cerrando) return;
         if (
