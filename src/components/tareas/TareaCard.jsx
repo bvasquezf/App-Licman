@@ -4,7 +4,13 @@ import {
 } from "../../lib/tareasData";
 import { useAuth } from "../../context/AuthContext";
 import { PERMISOS } from "../../lib/authPermissions";
+import {
+    equipoIdentificado,
+    propiedadEquipoTarea,
+    resumenEquipoTarea,
+} from "../../lib/tareasEquipo";
 import RequerimientoBadge from "./RequerimientoBadge";
+import EquipoPropiedadBadge from "./EquipoPropiedadBadge";
 
 const ESTADO_CLASES = {
     "Por programar":
@@ -62,11 +68,15 @@ export default function TareaCard({
           }`
         : null;
     const planificacionCompleta = Boolean(
-        tarea.fecha_programada && tarea.tecnico_ids?.length,
+        tarea.fecha_programada &&
+            tarea.tecnico_ids?.length &&
+            equipoIdentificado(tarea),
     );
+    const propiedadEquipo = propiedadEquipoTarea(tarea);
     const faltantes = [
         !tarea.fecha_programada ? "fecha" : null,
         !tarea.tecnico_ids?.length ? "técnico" : null,
+        !equipoIdentificado(tarea) ? "equipo" : null,
     ].filter(Boolean);
     const estadoReapertura = planificacionCompleta
         ? "Programada"
@@ -148,6 +158,7 @@ export default function TareaCard({
                                 categoria={tarea.categoria_requerimiento}
                                 compacta
                             />
+                            <EquipoPropiedadBadge tarea={tarea} compacta />
                             <span className="text-xs font-semibold text-slate-500 dark:text-neutral-400">
                                 {tarea.tipo === "Terreno" ? "🚐 Terreno" : "🔧 Taller"}
                             </span>
@@ -191,11 +202,14 @@ export default function TareaCard({
                     {!compacta && tarea.ubicacion && (
                         <p className="truncate">📍 {tarea.ubicacion}</p>
                     )}
-                    {!compacta && tarea.equipo_referencia && (
-                        <p className="truncate">
-                            🚜 {tarea.equipo_referencia}
-                        </p>
-                    )}
+                    {!compacta &&
+                        ["Licman", "Cliente"].includes(
+                            propiedadEquipo.valor,
+                        ) && (
+                            <p className="truncate">
+                                🚜 {resumenEquipoTarea(tarea)}
+                            </p>
+                        )}
                     {tarea.estado === "En espera" && tarea.motivo_espera && (
                         <p className="line-clamp-2 font-bold text-orange-700 dark:text-orange-300">
                             ⏸ {tarea.motivo_espera}

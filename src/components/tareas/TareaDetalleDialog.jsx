@@ -5,9 +5,15 @@ import {
     useRetainedValue,
 } from "../../hooks/useModalTransition";
 import { formatearFechaTarea } from "../../lib/tareasData";
+import {
+    equipoIdentificado,
+    propiedadEquipoTarea,
+    resumenEquipoTarea,
+} from "../../lib/tareasEquipo";
 import { EstadoTareaBadge } from "./TareaCard";
 import TareaHistorial from "./TareaHistorial";
 import RequerimientoBadge from "./RequerimientoBadge";
+import EquipoPropiedadBadge from "./EquipoPropiedadBadge";
 
 function valorOPlaceholder(
     valor,
@@ -47,6 +53,7 @@ export default function TareaDetalleDialog({ open, tarea, onClose }) {
     const tareaVisible = useRetainedValue(tarea, open);
     const dialogRef = useRef(null);
     const telefono = telefonoDesdeContacto(tareaVisible?.contacto);
+    const propiedadEquipo = propiedadEquipoTarea(tareaVisible);
     const hora = tareaVisible?.hora_inicio
         ? `${String(tareaVisible.hora_inicio).slice(0, 5)}${
               tareaVisible.hora_fin
@@ -57,6 +64,7 @@ export default function TareaDetalleDialog({ open, tarea, onClose }) {
     const faltantes = [
         !tareaVisible?.fecha_programada ? "fecha" : null,
         !tareaVisible?.tecnico_ids?.length ? "técnico" : null,
+        !equipoIdentificado(tareaVisible) ? "equipo" : null,
     ].filter(Boolean);
 
     useDialogA11y(open, { dialogRef, onClose });
@@ -87,6 +95,10 @@ export default function TareaDetalleDialog({ open, tarea, onClose }) {
                             </span>
                             <RequerimientoBadge
                                 categoria={tareaVisible.categoria_requerimiento}
+                                compacta
+                            />
+                            <EquipoPropiedadBadge
+                                tarea={tareaVisible}
                                 compacta
                             />
                             <span className="text-xs font-bold text-slate-500 dark:text-neutral-400">
@@ -197,7 +209,16 @@ export default function TareaDetalleDialog({ open, tarea, onClose }) {
                             </div>
                         </CampoDetalle>
                         <CampoDetalle icono="🚜" etiqueta="Equipo">
-                            {valorOPlaceholder(tareaVisible.equipo_referencia)}
+                            <div className="flex flex-col items-start gap-2">
+                                <EquipoPropiedadBadge tarea={tareaVisible} />
+                                <span>{resumenEquipoTarea(tareaVisible)}</span>
+                                {propiedadEquipo.valor === "Cliente" &&
+                                    tareaVisible.equipo_cliente_condicion && (
+                                        <span className="font-normal text-slate-600 dark:text-neutral-400">
+                                            Condición: {tareaVisible.equipo_cliente_condicion}
+                                        </span>
+                                    )}
+                            </div>
                         </CampoDetalle>
                     </dl>
 

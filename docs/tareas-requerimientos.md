@@ -3,15 +3,16 @@
 El módulo permite registrar un requerimiento apenas llega, aunque todavía no
 existan técnicos creados o no se haya acordado una fecha. En ese caso queda en
 estado **Por programar** y aparece en la bandeja **Requerimientos** con una alerta
-que indica si falta fecha, técnico o ambos.
+que indica si falta fecha, técnico o identificar el equipo.
 
 ## Flujo operativo
 
 1. Un usuario con permiso `tareas.planificar` elige **Nuevo requerimiento**.
-2. Registra el trabajo solicitado, su categoría, prioridad, origen y cliente.
+2. Registra el trabajo solicitado, su categoría, prioridad, origen, cliente y
+   la propiedad del equipo.
 3. Puede guardarlo de inmediato o abrir **Agregar planificación y detalles**.
-4. Cuando el requerimiento tiene fecha y al menos un técnico, el sistema lo
-   cambia automáticamente a **Programada**.
+4. Cuando el requerimiento tiene fecha, al menos un técnico y el equipo está
+   identificado, el sistema lo cambia automáticamente a **Programada**.
 5. El técnico lo ve en **Mis tareas** y puede iniciarlo, dejarlo en espera con
    motivo o finalizarlo con resultado.
 
@@ -20,6 +21,25 @@ retiros para taller, trabajos de taller, despachos de arriendo, retiros al
 finalizar un arriendo, mantenciones preventivas y otros requerimientos. El campo
 **Referencia de origen** sirve para guardar el asunto de un correo, una orden de
 compra o un folio entregado por el cliente.
+
+## Identificación del equipo
+
+Cada requerimiento debe quedar en una de estas cuatro situaciones:
+
+- **Equipo Licman:** se selecciona desde el inventario existente y mantiene su
+  vínculo mediante `equipo_id`.
+- **Equipo del cliente:** guarda tipo, marca, modelo, serie y condición de
+  recepción dentro de la tarea; no crea registros en el inventario Licman.
+- **Por confirmar:** permite registrar la solicitud apenas llega, pero la tarea
+  permanece **Por programar** hasta aclarar el equipo.
+- **Sin equipo:** se usa para gestiones o trabajos que no involucran un equipo
+  específico y sí permite completar la planificación.
+
+Las tarjetas y el detalle muestran una insignia con la propiedad. Los filtros
+permiten separar rápidamente equipos Licman, equipos de clientes, pendientes de
+confirmación y tareas sin equipo. Al seleccionar un equipo Licman se conserva su
+`equipo_id`; el historial del módulo Equipos puede mostrar después los trabajos
+de Tareas asociados a ese mismo equipo.
 
 ## Acceso por rol
 
@@ -35,14 +55,14 @@ en la barra del módulo; allí opera los trabajos asignados a su propia cuenta.
 
 ## Base de datos
 
-Antes de usar el formulario actualizado se debe aplicar
-`supabase/migrations/048_requerimientos_tareas.sql` en el proyecto Supabase. La
-migración agrega los campos de clasificación y el RPC
-`guardar_requerimiento_tarea`. Es aditiva e idempotente; conserva las tareas y el
-historial existentes.
+Antes de usar el formulario actualizado se deben aplicar, en orden, las
+migraciones `048_requerimientos_tareas.sql`, `049_propiedad_equipos_tareas.sql`
+y `050_historial_tareas_equipos.sql` en el proyecto Supabase. La tercera agrega
+la relación con el inventario y el RPC `listar_historial_tareas_equipo`. Son
+aditivas e idempotentes; conservan las tareas y el historial existentes.
 
 La prueba SQL local se ejecuta con:
 
 ```bash
-BODEGA_PGLITE_MODULE=/private/tmp/licman-bodega-sql-check/node_modules/@electric-sql/pglite/dist/index.js node supabase/tests/tareas-requerimientos.mjs supabase/migrations/048_requerimientos_tareas.sql
+BODEGA_PGLITE_MODULE=/private/tmp/licman-bodega-sql-check/node_modules/@electric-sql/pglite/dist/index.js node supabase/tests/tareas-requerimientos.mjs supabase/migrations/048_requerimientos_tareas.sql supabase/migrations/049_propiedad_equipos_tareas.sql supabase/migrations/050_historial_tareas_equipos.sql
 ```

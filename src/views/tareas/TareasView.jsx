@@ -22,6 +22,10 @@ import { useTareas } from "../../context/TareasContext";
 import { useUrlFilters } from "../../hooks/useUrlFilters";
 import { PERMISOS } from "../../lib/authPermissions";
 import {
+    PROPIEDADES_EQUIPO,
+    propiedadEquipoTarea,
+} from "../../lib/tareasEquipo";
+import {
     CATEGORIAS_REQUERIMIENTO,
     PRIORIDADES_TAREA,
     cambiarEstadoTarea,
@@ -99,12 +103,14 @@ export default function TareasView({ vista = "agenda" }) {
         tecnico: "todos",
         tipo: "todos",
         requerimiento: "todos",
+        propiedad: "todas",
     });
     const busqueda = filtrosUrl.q;
     const filtroPrioridad = filtrosUrl.prioridad;
     const filtroTecnico = filtrosUrl.tecnico;
     const filtroTipo = filtrosUrl.tipo;
     const filtroRequerimiento = filtrosUrl.requerimiento;
+    const filtroPropiedad = filtrosUrl.propiedad;
     const [modalAbierto, setModalAbierto] = useState(false);
     const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
     const [tareaEditar, setTareaEditar] = useState(null);
@@ -181,6 +187,12 @@ export default function TareasView({ vista = "agenda" }) {
                     return false;
                 }
                 if (
+                    filtroPropiedad !== "todas" &&
+                    propiedadEquipoTarea(tarea).valor !== filtroPropiedad
+                ) {
+                    return false;
+                }
+                if (
                     filtroTecnico !== "todos" &&
                     (filtroTecnico === "sin_asignar"
                         ? tarea.tecnico_ids?.length > 0
@@ -198,6 +210,12 @@ export default function TareasView({ vista = "agenda" }) {
                 tarea.ubicacion,
                 tarea.contacto,
                 tarea.equipo_referencia,
+                tarea.propiedad_equipo,
+                tarea.equipo_cliente_tipo,
+                tarea.equipo_cliente_marca,
+                tarea.equipo_cliente_modelo,
+                tarea.equipo_cliente_serie,
+                tarea.equipo_cliente_condicion,
                 tarea.observaciones,
                 tarea.categoria_requerimiento,
                 tarea.origen_requerimiento,
@@ -228,6 +246,7 @@ export default function TareasView({ vista = "agenda" }) {
         data.eliminadas,
         data.tareas,
         filtroPrioridad,
+        filtroPropiedad,
         filtroTecnico,
         filtroTipo,
         filtroRequerimiento,
@@ -281,11 +300,11 @@ export default function TareasView({ vista = "agenda" }) {
             const faltaMigracion =
                 err?.code === "PGRST202" ||
                 String(err?.message ?? "").includes(
-                    "guardar_requerimiento_tarea",
+                    "guardar_tarea_identificada",
                 );
             toast.error(
                 faltaMigracion
-                    ? "Falta aplicar la migración 048 en Supabase para guardar requerimientos"
+                    ? "Falta aplicar la migración 049 en Supabase para identificar los equipos de las tareas"
                     : (err?.message ?? "No se pudo guardar el requerimiento"),
             );
             return false;
@@ -407,13 +426,15 @@ export default function TareasView({ vista = "agenda" }) {
             filtroPrioridad !== "todas" ||
             filtroTecnico !== "todos" ||
             filtroTipo !== "todos" ||
-            filtroRequerimiento !== "todos");
+            filtroRequerimiento !== "todos" ||
+            filtroPropiedad !== "todas");
     const cantidadFiltrosActivos =
         Number(Boolean(busqueda)) +
         Number(filtroPrioridad !== "todas") +
         Number(filtroTecnico !== "todos") +
         Number(filtroTipo !== "todos") +
-        Number(filtroRequerimiento !== "todos");
+        Number(filtroRequerimiento !== "todos") +
+        Number(filtroPropiedad !== "todas");
     const cargandoVista =
         vista === "eliminadas"
             ? loadingPapelera
@@ -519,7 +540,7 @@ export default function TareasView({ vista = "agenda" }) {
             )}
 
             {mostrarFiltros ? <section className="mb-5 rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_6px_20px_rgba(15,23,42,0.04)] dark:border-white/10 dark:bg-carbon-900 sm:p-4">
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
                     <label className="relative block sm:col-span-2 lg:col-span-1">
                         <span className="sr-only">Buscar tareas</span>
                         <span
@@ -574,6 +595,24 @@ export default function TareasView({ vista = "agenda" }) {
                                     value={categoria.valor}
                                 >
                                     {categoria.etiqueta}
+                                </option>
+                            ))}
+                        </select>
+                        <select
+                            value={filtroPropiedad}
+                            onChange={(event) =>
+                                setFiltroUrl("propiedad", event.target.value)
+                            }
+                            className="min-h-[44px] w-full min-w-0 rounded-xl border-[1.5px] border-slate-300 bg-white px-3 text-base font-semibold text-slate-700 outline-none focus:border-blue-600 dark:border-white/15 dark:bg-carbon-800 dark:text-slate-200"
+                            aria-label="Filtrar por propiedad del equipo"
+                        >
+                            <option value="todas">Cualquier equipo</option>
+                            {PROPIEDADES_EQUIPO.map((propiedad) => (
+                                <option
+                                    key={propiedad.valor}
+                                    value={propiedad.valor}
+                                >
+                                    {propiedad.etiqueta}
                                 </option>
                             ))}
                         </select>

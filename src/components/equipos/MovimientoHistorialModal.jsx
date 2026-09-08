@@ -91,6 +91,38 @@ export default function MovimientoHistorialModal({
     });
     const movimientos = historial?.movimientos ?? [];
 
+    const cargarTareasEquipo = useCallback(async () => {
+        if (!equipo?.id || !supabase) return [];
+        const respuesta = await supabase.rpc("listar_historial_tareas_equipo", {
+            p_equipo_id: equipo.id,
+            p_limite: 50,
+            p_offset: 0,
+        });
+        if (!respuesta.error) return respuesta.data ?? [];
+
+        // Mientras la migración de integración no se aplique, el historial de
+        // movimientos debe seguir funcionando sin mostrar un error técnico.
+        if (
+            respuesta.error.code === "PGRST202" ||
+            String(respuesta.error.message ?? "").includes(
+                "listar_historial_tareas_equipo",
+            )
+        ) {
+            return [];
+        }
+        throw respuesta.error;
+    }, [equipo?.id]);
+
+    const {
+        data: tareasEquipo = [],
+        loading: cargandoTareas,
+        error: errorTareas,
+    } = useAsync(cargarTareasEquipo, {
+        immediate: open,
+        deps: [open, equipo?.id],
+        errorContexto: "cargar trabajos del equipo",
+    });
+
     useDialogA11y(open, { dialogRef, onClose });
 
     if (!transicion.renderizar || !equipo) return null;
@@ -167,6 +199,72 @@ export default function MovimientoHistorialModal({
                     <div className="rounded-[10px] border-l-4 border-rose-600 bg-rose-50 px-3 py-2.5 text-sm text-rose-900 dark:bg-rose-500/10 dark:text-rose-300">
                         Error al cargar: {error}
                     </div>
+                )}
+
+                {cargandoTareas && !cargando && (
+                    <div className="mb-4 rounded-2xl border border-blue-200 bg-blue-50/60 px-4 py-3 text-sm font-semibold text-blue-800 dark:border-blue-500/25 dark:bg-blue-500/5 dark:text-blue-300">
+                        🧰 Consultando trabajos registrados en Tareas…
+                    </div>
+                )}
+
+                {errorTareas && (
+                    <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-300">
+                        No se pudieron cargar los trabajos de Tareas. Los
+                        movimientos físicos siguen disponibles.
+                    </div>
+                )}
+
+                {!cargandoTareas && tareasEquipo.length > 0 && (
+                    <section className="mb-5 rounded-2xl border border-blue-200 bg-blue-50/60 p-4 dark:border-blue-500/25 dark:bg-blue-500/5">
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                            <div>
+                                <h3 className="text-sm font-black text-blue-950 dark:text-blue-200">
+                                    🧰 Trabajos registrados en Tareas
+                                </h3>
+                                <p className="mt-1 text-xs text-blue-800 dark:text-blue-300">
+                                    Requerimientos y reparaciones vinculados a este equipo.
+                                </p>
+                            </div>
+                            <span className="rounded-full bg-blue-600 px-2.5 py-1 text-xs font-black text-white">
+                                {tareasEquipo.length}
+                            </span>
+                        </div>
+                        <ol className="mt-3 space-y-2">
+                            {tareasEquipo.map((tarea) => (
+                                <li
+                                    key={tarea.id}
+                                    className="rounded-xl border border-blue-200/80 bg-white/80 p-3 dark:border-blue-500/20 dark:bg-carbon-800/70"
+                                >
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <p className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
+                                            {tarea.titulo}
+                                        </p>
+                                        <span className="text-xs font-bold text-slate-500 dark:text-neutral-400">
+                                            {tarea.fecha_programada
+                                                ? formatearFecha(
+                                                      `${tarea.fecha_programada}T12:00:00`,
+                                                  )
+                                                : formatearFecha(tarea.created_at)}
+                                        </span>
+                                    </div>
+                                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs font-semibold text-slate-600 dark:text-neutral-300">
+                                        <span>{tarea.estado}</span>
+                                        {tarea.categoria_requerimiento && (
+                                            <span>{tarea.categoria_requerimiento}</span>
+                                        )}
+                                        {tarea.cliente_nombre && (
+                                            <span>🏢 {tarea.cliente_nombre}</span>
+                                        )}
+                                    </div>
+                                    {tarea.resultado && (
+                                        <p className="mt-2 text-xs text-emerald-700 dark:text-emerald-300">
+                                            ✓ {tarea.resultado}
+                                        </p>
+                                    )}
+                                </li>
+                            ))}
+                        </ol>
+                    </section>
                 )}
 
                 {!cargando && !error && movimientos.length === 0 && (

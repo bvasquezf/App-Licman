@@ -1,6 +1,7 @@
 import { supabase } from "../services/supabase";
 import { withRetry } from "../utils/withRetry";
 import { PERMISOS } from "./authPermissions";
+import { equipoIdentificado } from "./tareasEquipo";
 
 export const ESTADOS_TAREA = [
     "Por programar",
@@ -287,6 +288,13 @@ export async function guardarTarea(tarea) {
             cliente_nombre: tarea.cliente_nombre || null,
             ubicacion: tarea.ubicacion || null,
             contacto: tarea.contacto || null,
+            propiedad_equipo: tarea.propiedad_equipo || "Por confirmar",
+            equipo_cliente_tipo: tarea.equipo_cliente_tipo || null,
+            equipo_cliente_marca: tarea.equipo_cliente_marca || null,
+            equipo_cliente_modelo: tarea.equipo_cliente_modelo || null,
+            equipo_cliente_serie: tarea.equipo_cliente_serie || null,
+            equipo_cliente_condicion:
+                tarea.equipo_cliente_condicion || null,
             equipo_referencia: tarea.equipo_referencia || null,
             observaciones: tarea.observaciones || null,
             tecnico_ids: tarea.tecnico_ids ?? [],
@@ -297,7 +305,7 @@ export async function guardarTarea(tarea) {
     };
 
     const respuesta = await withRetry(() =>
-        supabase.rpc("guardar_requerimiento_tarea", params),
+        supabase.rpc("guardar_tarea_identificada", params),
     );
     return revisarRespuesta(respuesta);
 }
@@ -428,7 +436,9 @@ export function compararTareas(a, b) {
 export function estadoSegunPlanificacion(tarea) {
     const tieneFecha = Boolean(tarea.fecha_programada);
     const tieneTecnico = Boolean(tarea.tecnico_ids?.length);
-    return tieneFecha && tieneTecnico ? "Programada" : "Por programar";
+    return tieneFecha && tieneTecnico && equipoIdentificado(tarea)
+        ? "Programada"
+        : "Por programar";
 }
 
 export function estaTareaActiva(tarea) {

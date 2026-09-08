@@ -13,6 +13,11 @@ import {
     formatearFechaTarea,
     tareasSeSolapan,
 } from "../../lib/tareasData";
+import {
+    PROPIEDADES_EQUIPO,
+    propiedadEquipoTarea,
+    referenciaEquipoCliente,
+} from "../../lib/tareasEquipo";
 import TareaHistorial from "./TareaHistorial";
 
 const INPUT_CLASES =
@@ -40,8 +45,14 @@ function valoresIniciales(tarea) {
         cliente_nombre: tarea?.cliente_nombre ?? "",
         ubicacion: tarea?.ubicacion ?? "",
         contacto: tarea?.contacto ?? "",
+        propiedad_equipo: propiedadEquipoTarea(tarea).valor,
         equipo_id: tarea?.equipo_id ?? null,
         equipo_referencia: tarea?.equipo_referencia ?? "",
+        equipo_cliente_tipo: tarea?.equipo_cliente_tipo ?? "",
+        equipo_cliente_marca: tarea?.equipo_cliente_marca ?? "",
+        equipo_cliente_modelo: tarea?.equipo_cliente_modelo ?? "",
+        equipo_cliente_serie: tarea?.equipo_cliente_serie ?? "",
+        equipo_cliente_condicion: tarea?.equipo_cliente_condicion ?? "",
         observaciones: tarea?.observaciones ?? "",
         motivo_espera: tarea?.motivo_espera ?? "",
         resultado: tarea?.resultado ?? "",
@@ -51,6 +62,11 @@ function valoresIniciales(tarea) {
 
 function etiquetaEquipo(equipo) {
     return [
+        equipo.numero_interno
+            ? `N° interno ${equipo.numero_interno}`
+            : equipo.correlativo
+              ? `#${String(equipo.correlativo).padStart(4, "0")}`
+              : null,
         equipo.numero_serie ? `Serie ${equipo.numero_serie}` : null,
         [equipo.marca, equipo.modelo].filter(Boolean).join(" "),
         equipo.estado_operacional || null,
@@ -82,6 +98,7 @@ export default function TareaFormDialog({
     const [guardando, setGuardando] = useState(false);
     const [tecnicosLocales, setTecnicosLocales] = useState([]);
     const [planificacionAbierta, setPlanificacionAbierta] = useState(false);
+    const [busquedaEquipo, setBusquedaEquipo] = useState("");
 
     useEffect(() => {
         if (open && !abiertoAnteriorRef.current) {
@@ -120,6 +137,16 @@ export default function TareaFormDialog({
         abiertoAnteriorRef.current = open;
     }, [open, tarea, tecnicos]);
 
+    useEffect(() => {
+        if (!open || form.propiedad_equipo !== "Licman" || !form.equipo_id) {
+            return;
+        }
+        const seleccionado = equipos.find(
+            (equipo) => equipo.id === Number(form.equipo_id),
+        );
+        if (seleccionado) setBusquedaEquipo(etiquetaEquipo(seleccionado));
+    }, [equipos, form.equipo_id, form.propiedad_equipo, open]);
+
     useUnsavedChanges(form, {
         habilitado: open && !guardando,
         resetKey: `${tarea?.id ?? "nueva"}-${versionFormulario}`,
@@ -145,7 +172,9 @@ export default function TareaFormDialog({
     const equiposDisponibles = useMemo(() => {
         const delCliente = form.cliente_id
             ? equipos.filter(
-                  (equipo) => equipo.cliente_id === Number(form.cliente_id),
+                  (equipo) =>
+                      !equipo.cliente_id ||
+                      equipo.cliente_id === Number(form.cliente_id),
               )
             : equipos;
         const actual = equipos.find(
@@ -156,6 +185,9 @@ export default function TareaFormDialog({
         }
         return delCliente;
     }, [equipos, form.cliente_id, form.equipo_id]);
+    const equipoSeleccionado = equipos.find(
+        (equipo) => equipo.id === Number(form.equipo_id),
+    );
 
     const estaSucio = () =>
         JSON.stringify(form) !== JSON.stringify(inicialRef.current);
@@ -233,6 +265,7 @@ export default function TareaFormDialog({
         const equipoCompatible =
             !cambiaCliente ||
             !equipoActual ||
+            !equipoActual.cliente_id ||
             Boolean(
                 encontrado && equipoActual.cliente_id === encontrado.id,
             );
@@ -289,6 +322,7 @@ export default function TareaFormDialog({
 
         setForm((prev) => ({
             ...prev,
+            propiedad_equipo: "Licman",
             equipo_id: equipoId,
             equipo_referencia: encontrado
                 ? etiquetaEquipo(encontrado)
@@ -318,11 +352,49 @@ export default function TareaFormDialog({
                           .join(" · ")
                     : prev.contacto,
         }));
+        setBusquedaEquipo(encontrado ? etiquetaEquipo(encontrado) : "");
         limpiarErrores(
             "cliente_nombre",
             "ubicacion",
             "contacto",
             "equipo_id",
+        );
+    };
+
+    const cambiarBusquedaEquipo = (valor) => {
+        setBusquedaEquipo(valor);
+        const normalizado = valor.trim().toLocaleLowerCase("es");
+        const encontrado = equiposDisponibles.find(
+            (equipo) =>
+                etiquetaEquipo(equipo).toLocaleLowerCase("es") === normalizado,
+        );
+        if (encontrado) cambiarEquipo(String(encontrado.id));
+        if (!valor.trim() && form.equipo_id) cambiarEquipo("");
+    };
+
+    const cambiarPropiedadEquipo = (propiedad) => {
+        setForm((prev) => ({
+            ...prev,
+            propiedad_equipo: propiedad,
+            equipo_id: propiedad === "Licman" ? prev.equipo_id : null,
+            equipo_referencia:
+                propiedad === "Licman" ? prev.equipo_referencia : "",
+            equipo_cliente_tipo:
+                propiedad === "Cliente" ? prev.equipo_cliente_tipo : "",
+            equipo_cliente_marca:
+                propiedad === "Cliente" ? prev.equipo_cliente_marca : "",
+            equipo_cliente_modelo:
+                propiedad === "Cliente" ? prev.equipo_cliente_modelo : "",
+            equipo_cliente_serie:
+                propiedad === "Cliente" ? prev.equipo_cliente_serie : "",
+            equipo_cliente_condicion:
+                propiedad === "Cliente" ? prev.equipo_cliente_condicion : "",
+        }));
+        if (propiedad !== "Licman") setBusquedaEquipo("");
+        limpiarErrores(
+            "propiedad_equipo",
+            "equipo_id",
+            "equipo_cliente_tipo",
         );
     };
 
@@ -357,6 +429,31 @@ export default function TareaFormDialog({
 
         if (!form.titulo.trim()) {
             nextErrores.titulo = "Escribe qué trabajo hay que realizar";
+        }
+        if (form.propiedad_equipo === "Licman" && !form.equipo_id) {
+            nextErrores.equipo_id =
+                "Selecciona el equipo Licman desde el inventario";
+        }
+        if (
+            form.propiedad_equipo === "Cliente" &&
+            !form.cliente_nombre.trim()
+        ) {
+            nextErrores.cliente_nombre =
+                "Indica a qué cliente pertenece el equipo";
+        }
+        if (
+            form.propiedad_equipo === "Cliente" &&
+            !form.equipo_cliente_tipo.trim()
+        ) {
+            nextErrores.equipo_cliente_tipo =
+                "Indica qué tipo de equipo entregó el cliente";
+        }
+        if (
+            ["Programada", "En proceso", "En espera"].includes(estado) &&
+            form.propiedad_equipo === "Por confirmar"
+        ) {
+            nextErrores.propiedad_equipo =
+                "Confirma el equipo o marca que el trabajo no lleva equipo";
         }
         if (
             (form.hora_inicio || form.hora_fin) &&
@@ -424,7 +521,11 @@ export default function TareaFormDialog({
             "En proceso",
             "En espera",
         ].includes(estado);
-        if (form.equipo_id && exigeEquipoVigente) {
+        if (
+            form.propiedad_equipo === "Licman" &&
+            form.equipo_id &&
+            exigeEquipoVigente
+        ) {
             const equipoSeleccionado = equipos.find(
                 (equipo) => equipo.id === Number(form.equipo_id),
             );
@@ -450,6 +551,12 @@ export default function TareaFormDialog({
 
         setGuardando(true);
         try {
+            const referenciaEquipo =
+                form.propiedad_equipo === "Cliente"
+                    ? referenciaEquipoCliente(form)
+                    : form.propiedad_equipo === "Licman"
+                      ? form.equipo_referencia.trim()
+                      : "";
             const payload = {
                 ...form,
                 estado,
@@ -459,7 +566,13 @@ export default function TareaFormDialog({
                 cliente_nombre: form.cliente_nombre.trim(),
                 ubicacion: form.ubicacion.trim(),
                 contacto: form.contacto.trim(),
-                equipo_referencia: form.equipo_referencia.trim(),
+                equipo_referencia: referenciaEquipo,
+                equipo_cliente_tipo: form.equipo_cliente_tipo.trim(),
+                equipo_cliente_marca: form.equipo_cliente_marca.trim(),
+                equipo_cliente_modelo: form.equipo_cliente_modelo.trim(),
+                equipo_cliente_serie: form.equipo_cliente_serie.trim(),
+                equipo_cliente_condicion:
+                    form.equipo_cliente_condicion.trim(),
                 observaciones: form.observaciones.trim(),
                 motivo_espera: form.motivo_espera.trim(),
                 resultado: form.resultado.trim(),
@@ -716,7 +829,8 @@ export default function TareaFormDialog({
                             <div className="mt-3 grid gap-3 md:grid-cols-2">
                                 <label className="block text-sm font-bold text-slate-800 dark:text-slate-100 md:col-span-2">
                                     Cliente
-                                    {requiereDatosTerreno && (
+                                    {(requiereDatosTerreno ||
+                                        form.propiedad_equipo === "Cliente") && (
                                         <span className="text-rose-600"> *</span>
                                     )}
                                     <input
@@ -808,6 +922,271 @@ export default function TareaFormDialog({
                             </div>
                         </section>
 
+                        <section className="border-t border-slate-200 pt-5 dark:border-white/10">
+                            <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-neutral-400">
+                                Equipo relacionado
+                            </h3>
+                            <p className="mt-1 text-sm text-slate-600 dark:text-neutral-400">
+                                Indica de quién es el equipo para mantener separados
+                                el inventario Licman y los equipos recibidos de clientes.
+                            </p>
+                            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                                {PROPIEDADES_EQUIPO.map((opcion) => {
+                                    const seleccionada =
+                                        form.propiedad_equipo === opcion.valor;
+                                    return (
+                                        <button
+                                            key={opcion.valor}
+                                            ref={(el) => {
+                                                if (seleccionada) {
+                                                    refs.current.propiedad_equipo = el;
+                                                }
+                                            }}
+                                            type="button"
+                                            onClick={() =>
+                                                cambiarPropiedadEquipo(opcion.valor)
+                                            }
+                                            aria-pressed={seleccionada}
+                                            className={`flex min-h-[76px] items-start gap-3 rounded-2xl border p-3 text-left transition ${
+                                                seleccionada
+                                                    ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500/15 dark:border-blue-400/60 dark:bg-blue-500/10"
+                                                    : "border-slate-200 bg-white hover:border-blue-300 hover:bg-blue-50/50 dark:border-white/10 dark:bg-carbon-800 dark:hover:border-blue-500/30"
+                                            }`}
+                                        >
+                                            <span
+                                                className="text-2xl"
+                                                aria-hidden="true"
+                                            >
+                                                {opcion.icono}
+                                            </span>
+                                            <span>
+                                                <span className="block text-sm font-extrabold text-slate-900 dark:text-slate-100">
+                                                    {opcion.etiqueta}
+                                                </span>
+                                                <span className="mt-0.5 block text-xs leading-relaxed text-slate-500 dark:text-neutral-400">
+                                                    {opcion.descripcion}
+                                                </span>
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            {errores.propiedad_equipo && (
+                                <p
+                                    role="alert"
+                                    className="mt-2 text-xs font-semibold text-rose-600"
+                                >
+                                    {errores.propiedad_equipo}
+                                </p>
+                            )}
+
+                            {form.propiedad_equipo === "Licman" && (
+                                <div className="mt-4">
+                                    <label className="block text-sm font-bold text-slate-800 dark:text-slate-100">
+                                        Equipo del inventario{" "}
+                                        <span className="text-rose-600">*</span>
+                                        <input
+                                            type="search"
+                                            list="equipos-licman-tareas"
+                                            value={busquedaEquipo}
+                                            onChange={(event) =>
+                                                cambiarBusquedaEquipo(
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="Escribe serie, marca o modelo"
+                                            className={`${INPUT_CLASES} mb-2`}
+                                            autoComplete="off"
+                                        />
+                                        <datalist id="equipos-licman-tareas">
+                                            {equiposDisponibles.map((equipo) => (
+                                                <option
+                                                    key={equipo.id}
+                                                    value={etiquetaEquipo(equipo)}
+                                                />
+                                            ))}
+                                        </datalist>
+                                        <span className="mb-1 block text-xs font-semibold text-slate-500 dark:text-neutral-400">
+                                            O selecciona directamente desde la lista
+                                        </span>
+                                        <select
+                                            ref={(el) => {
+                                                refs.current.equipo_id = el;
+                                            }}
+                                            value={form.equipo_id ?? ""}
+                                            onChange={(event) =>
+                                                cambiarEquipo(event.target.value)
+                                            }
+                                            aria-invalid={Boolean(errores.equipo_id)}
+                                            className={`${INPUT_CLASES} ${
+                                                errores.equipo_id
+                                                    ? "border-rose-500"
+                                                    : ""
+                                            }`}
+                                        >
+                                            <option value="">
+                                                Selecciona un equipo Licman
+                                            </option>
+                                            {equiposDisponibles.map((equipo) => (
+                                                <option
+                                                    key={equipo.id}
+                                                    value={equipo.id}
+                                                    disabled={Boolean(
+                                                        form.cliente_id &&
+                                                            equipo.cliente_id &&
+                                                            equipo.cliente_id !==
+                                                                Number(
+                                                                    form.cliente_id,
+                                                                ),
+                                                    )}
+                                                >
+                                                    {etiquetaEquipo(equipo)}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {errores.equipo_id && (
+                                            <span
+                                                role="alert"
+                                                className="mt-1 block text-xs text-rose-600"
+                                            >
+                                                {errores.equipo_id}
+                                            </span>
+                                        )}
+                                        {equipoSeleccionado && (
+                                            <div className="mt-3 rounded-2xl border border-blue-200 bg-blue-50/70 p-3 text-xs text-blue-900 dark:border-blue-500/25 dark:bg-blue-500/10 dark:text-blue-200">
+                                                <p className="font-black">
+                                                    Datos del inventario Licman
+                                                </p>
+                                                <div className="mt-2 grid gap-x-4 gap-y-1 sm:grid-cols-2">
+                                                    <span>
+                                                        Identificador: {equipoSeleccionado.numero_interno || (equipoSeleccionado.correlativo ? `#${String(equipoSeleccionado.correlativo).padStart(4, "0")}` : "Sin identificador")}
+                                                    </span>
+                                                    <span>
+                                                        Serie: {equipoSeleccionado.numero_serie || "Sin serie"}
+                                                    </span>
+                                                    <span>
+                                                        Marca/modelo: {[equipoSeleccionado.marca, equipoSeleccionado.modelo].filter(Boolean).join(" ") || "Sin datos"}
+                                                    </span>
+                                                    <span>
+                                                        Estado: {equipoSeleccionado.estado_operacional || "Sin estado"}
+                                                    </span>
+                                                    <span>
+                                                        Ubicación: {equipoSeleccionado.ubicacion_actual || "Sin ubicación"}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </label>
+                                </div>
+                            )}
+
+                            {form.propiedad_equipo === "Cliente" && (
+                                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                                    <label className="block text-sm font-bold text-slate-800 dark:text-slate-100">
+                                        Tipo de equipo{" "}
+                                        <span className="text-rose-600">*</span>
+                                        <input
+                                            ref={(el) => {
+                                                refs.current.equipo_cliente_tipo = el;
+                                            }}
+                                            type="text"
+                                            value={form.equipo_cliente_tipo}
+                                            onChange={(event) =>
+                                                cambiar(
+                                                    "equipo_cliente_tipo",
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="Ej. Grúa horquilla"
+                                            aria-invalid={Boolean(
+                                                errores.equipo_cliente_tipo,
+                                            )}
+                                            className={`${INPUT_CLASES} ${
+                                                errores.equipo_cliente_tipo
+                                                    ? "border-rose-500"
+                                                    : ""
+                                            }`}
+                                        />
+                                        {errores.equipo_cliente_tipo && (
+                                            <span
+                                                role="alert"
+                                                className="mt-1 block text-xs text-rose-600"
+                                            >
+                                                {errores.equipo_cliente_tipo}
+                                            </span>
+                                        )}
+                                    </label>
+                                    <label className="block text-sm font-bold text-slate-800 dark:text-slate-100">
+                                        Marca
+                                        <input
+                                            type="text"
+                                            value={form.equipo_cliente_marca}
+                                            onChange={(event) =>
+                                                cambiar(
+                                                    "equipo_cliente_marca",
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="Ej. Toyota"
+                                            className={INPUT_CLASES}
+                                        />
+                                    </label>
+                                    <label className="block text-sm font-bold text-slate-800 dark:text-slate-100">
+                                        Modelo
+                                        <input
+                                            type="text"
+                                            value={form.equipo_cliente_modelo}
+                                            onChange={(event) =>
+                                                cambiar(
+                                                    "equipo_cliente_modelo",
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="Modelo informado"
+                                            className={INPUT_CLASES}
+                                        />
+                                    </label>
+                                    <label className="block text-sm font-bold text-slate-800 dark:text-slate-100">
+                                        Número de serie
+                                        <input
+                                            type="text"
+                                            value={form.equipo_cliente_serie}
+                                            onChange={(event) =>
+                                                cambiar(
+                                                    "equipo_cliente_serie",
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="Serie, patente o identificador"
+                                            className={INPUT_CLASES}
+                                        />
+                                    </label>
+                                    <label className="block text-sm font-bold text-slate-800 dark:text-slate-100 md:col-span-2">
+                                        Condición al recibirlo
+                                        <textarea
+                                            value={form.equipo_cliente_condicion}
+                                            onChange={(event) =>
+                                                cambiar(
+                                                    "equipo_cliente_condicion",
+                                                    event.target.value,
+                                                )
+                                            }
+                                            rows={2}
+                                            placeholder="Daños visibles, accesorios entregados o estado informado"
+                                            className={INPUT_CLASES}
+                                        />
+                                    </label>
+                                </div>
+                            )}
+
+                            {form.propiedad_equipo === "Por confirmar" && (
+                                <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-800 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-300">
+                                    ⚠ Puedes guardar el requerimiento ahora, pero
+                                    deberá identificarse el equipo antes de programarlo.
+                                </p>
+                            )}
+                        </section>
+
                         {!planificacionAbierta && !modoEdicion ? (
                             <section className="rounded-2xl border border-blue-200 bg-blue-50/60 p-4 dark:border-blue-500/25 dark:bg-blue-500/5">
                                 <h3 className="text-base font-black text-blue-950 dark:text-blue-200">
@@ -816,7 +1195,7 @@ export default function TareaFormDialog({
                                 <p className="mt-1 text-sm leading-relaxed text-blue-800 dark:text-blue-300">
                                     Puedes guardar el requerimiento de inmediato,
                                     aunque todavía no exista un técnico. También
-                                    puedes agregar fecha, ubicación y equipo ahora.
+                                    puedes agregar fecha, técnicos y ubicación ahora.
                                 </p>
                                 <button
                                     type="button"
@@ -1032,7 +1411,7 @@ export default function TareaFormDialog({
 
                                 <section className="border-t border-slate-200 pt-5 dark:border-white/10">
                                     <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-neutral-400">
-                                        Ubicación y equipo
+                                        Ubicación y antecedentes
                                     </h3>
                                     <div className="mt-3 grid gap-3 md:grid-cols-2">
                                         <label className="block text-sm font-bold text-slate-800 dark:text-slate-100 md:col-span-2">
@@ -1078,82 +1457,6 @@ export default function TareaFormDialog({
                                                     {errores.ubicacion}
                                                 </span>
                                             )}
-                                        </label>
-                                        <label className="block text-sm font-bold text-slate-800 dark:text-slate-100 md:col-span-2">
-                                            Equipo vinculado
-                                            <select
-                                                ref={(el) => {
-                                                    refs.current.equipo_id = el;
-                                                }}
-                                                value={form.equipo_id ?? ""}
-                                                onChange={(event) =>
-                                                    cambiarEquipo(event.target.value)
-                                                }
-                                                aria-invalid={Boolean(
-                                                    errores.equipo_id,
-                                                )}
-                                                aria-describedby={
-                                                    errores.equipo_id
-                                                        ? "tarea-error-equipo"
-                                                        : undefined
-                                                }
-                                                className={`${INPUT_CLASES} ${
-                                                    errores.equipo_id
-                                                        ? "border-rose-500"
-                                                        : ""
-                                                }`}
-                                            >
-                                                <option value="">
-                                                    Sin equipo vinculado
-                                                </option>
-                                                {equiposDisponibles.map((equipo) => (
-                                                    <option
-                                                        key={equipo.id}
-                                                        value={equipo.id}
-                                                        disabled={Boolean(
-                                                            form.cliente_id &&
-                                                                equipo.cliente_id &&
-                                                                equipo.cliente_id !==
-                                                                    Number(
-                                                                        form.cliente_id,
-                                                                    ),
-                                                        )}
-                                                    >
-                                                        {etiquetaEquipo(equipo)}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            {form.cliente_id &&
-                                                equiposDisponibles.length === 0 && (
-                                                    <span className="mt-1 block text-xs font-normal text-slate-500 dark:text-neutral-400">
-                                                        El cliente no tiene equipos
-                                                        asociados en inventario.
-                                                    </span>
-                                                )}
-                                            {errores.equipo_id && (
-                                                <span
-                                                    id="tarea-error-equipo"
-                                                    role="alert"
-                                                    className="mt-1 block text-xs text-rose-600"
-                                                >
-                                                    {errores.equipo_id}
-                                                </span>
-                                            )}
-                                        </label>
-                                        <label className="block text-sm font-bold text-slate-800 dark:text-slate-100 md:col-span-2">
-                                            Referencia libre
-                                            <input
-                                                type="text"
-                                                value={form.equipo_referencia}
-                                                onChange={(event) =>
-                                                    cambiar(
-                                                        "equipo_referencia",
-                                                        event.target.value,
-                                                    )
-                                                }
-                                                placeholder="N° interno, modelo, patente u otra referencia"
-                                                className={INPUT_CLASES}
-                                            />
                                         </label>
                                         <label className="block text-sm font-bold text-slate-800 dark:text-slate-100 md:col-span-2">
                                             Observaciones internas

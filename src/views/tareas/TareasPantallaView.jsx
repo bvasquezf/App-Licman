@@ -11,6 +11,11 @@ import {
     fechaLocalISO,
     formatearFechaTarea,
 } from "../../lib/tareasData";
+import {
+    equipoIdentificado,
+    propiedadEquipoTarea,
+    resumenEquipoTarea,
+} from "../../lib/tareasEquipo";
 
 const COLUMNA_CLASES = {
     azul: "border-blue-400/25 bg-blue-400/10",
@@ -37,6 +42,7 @@ function TarjetaPantalla({ tarea, alerta = false }) {
     const categoria = datosCategoriaRequerimiento(
         tarea.categoria_requerimiento,
     );
+    const propiedadEquipo = propiedadEquipoTarea(tarea);
 
     return (
         <article
@@ -97,6 +103,15 @@ function TarjetaPantalla({ tarea, alerta = false }) {
                 {tarea.cliente_nombre && (
                     <p className="line-clamp-1">🏢 {tarea.cliente_nombre}</p>
                 )}
+                <p
+                    className={`line-clamp-1 ${
+                        propiedadEquipo.valor === "Por confirmar"
+                            ? "text-amber-300"
+                            : "text-slate-400"
+                    }`}
+                >
+                    {propiedadEquipo.icono} {resumenEquipoTarea(tarea)}
+                </p>
                 {tarea.ubicacion && (
                     <p className="line-clamp-2 text-slate-400">📍 {tarea.ubicacion}</p>
                 )}
@@ -216,7 +231,8 @@ export default function TareasPantallaView() {
                 (tarea) =>
                     tarea.fecha_programada === hoy &&
                     ["Programada", "Por programar"].includes(tarea.estado) &&
-                    tarea.tecnico_ids?.length,
+                    tarea.tecnico_ids?.length &&
+                    equipoIdentificado(tarea),
             )
             .sort(compararTareas);
         const alertasPorId = new Map();
@@ -224,7 +240,8 @@ export default function TareasPantallaView() {
             const atrasada =
                 tarea.fecha_programada && tarea.fecha_programada < hoy;
             const incompletaHoy =
-                tarea.fecha_programada === hoy && !tarea.tecnico_ids?.length;
+                tarea.fecha_programada === hoy &&
+                (!tarea.tecnico_ids?.length || !equipoIdentificado(tarea));
             if (
                 tarea.estado !== "En proceso" &&
                 (tarea.estado === "En espera" || atrasada || incompletaHoy)
@@ -423,7 +440,7 @@ export default function TareasPantallaView() {
                         />
                         <ColumnaPantalla
                             titulo="⚠️ Requieren atención"
-                            subtitulo="Atrasos, esperas o trabajos sin técnico"
+                            subtitulo="Atrasos, esperas o datos pendientes"
                             tareas={resumen.alertas}
                             tono="alerta"
                             vacio="Sin alertas operativas"
