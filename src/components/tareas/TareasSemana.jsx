@@ -46,7 +46,6 @@ export default function TareasSemana({
     tareas,
     onEditar,
     onCambiarEstado,
-    onNueva,
 }) {
     const [semana, setSemana] = useState(() => inicioSemana(new Date()));
     const [diaSeleccionado, setDiaSeleccionado] = useState(() =>
@@ -203,9 +202,6 @@ export default function TareasSemana({
                         >
                             <header className="mb-3 flex items-center justify-between gap-2">
                                 <h3 className="text-sm font-black capitalize text-slate-900 dark:text-white">{etiquetaDia(dia)}</h3>
-                                {onNueva && (
-                                    <button type="button" onClick={() => onNueva(iso)} className="min-h-[44px] rounded-xl px-2 text-xs font-extrabold text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-500/10" aria-label={`Agregar tarea el ${iso}`}>+ Agregar</button>
-                                )}
                             </header>
                             {visibles.length > 0 ? (
                                 <TareasListaPaginada

@@ -15,7 +15,6 @@ export default function CargaTecnicos({
     tecnicoFiltro,
     onEditar,
     onCambiarEstado,
-    onNueva,
 }) {
     const hoy = fechaLocalISO();
     const personas = useMemo(() => {
@@ -56,16 +55,7 @@ export default function CargaTecnicos({
             <EmptyState
                 icon="👷"
                 title="Todavía no hay carga asignada"
-                description="Crea una tarea y selecciona uno o más técnicos para comenzar a organizar el trabajo."
-                action={onNueva ? (
-                    <button
-                        type="button"
-                        onClick={onNueva}
-                        className="min-h-[44px] rounded-xl bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700"
-                    >
-                        + Nuevo requerimiento
-                    </button>
-                ) : null}
+                description="Los requerimientos aparecerán aquí cuando tengan uno o más técnicos asignados."
             />
         );
     }
@@ -231,15 +221,6 @@ export default function CargaTecnicos({
                                     <p className="text-sm font-bold text-emerald-800 dark:text-emerald-300">
                                         Sin trabajos pendientes
                                     </p>
-                                    {onNueva && (
-                                        <button
-                                            type="button"
-                                            onClick={onNueva}
-                                            className="mt-2 min-h-[44px] rounded-xl px-3 text-xs font-bold text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-500/10"
-                                        >
-                                            + Asignar tarea
-                                        </button>
-                                    )}
                                 </div>
                             )}
                         </div>

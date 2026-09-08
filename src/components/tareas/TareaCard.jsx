@@ -111,7 +111,7 @@ export default function TareaCard({
 
     return (
         <article
-            className={`overflow-hidden rounded-2xl border bg-white shadow-[0_6px_20px_rgba(15,23,42,0.06)] dark:bg-carbon-900 ${
+            className={`flex h-full flex-col overflow-hidden rounded-2xl border bg-white shadow-[0_6px_20px_rgba(15,23,42,0.06)] dark:bg-carbon-900 ${
                 vencida
                     ? "border-rose-300 dark:border-rose-500/35"
                     : "border-slate-200 dark:border-white/10"
@@ -120,7 +120,7 @@ export default function TareaCard({
             <button
                 type="button"
                 onClick={() => onEditar(tarea)}
-                className={`block min-h-[44px] w-full text-left transition hover:bg-slate-50 dark:hover:bg-white/5 ${
+                className={`flex min-h-[44px] w-full flex-1 flex-col text-left transition hover:bg-slate-50 dark:hover:bg-white/5 ${
                     compacta ? "p-3" : "p-4"
                 }`}
                 aria-label={`${puedePlanificar ? "Editar" : "Abrir detalle de"} el requerimiento ${tarea.titulo}, estado ${tarea.estado}, prioridad ${tarea.prioridad}`}
@@ -152,7 +152,7 @@ export default function TareaCard({
                                 {tarea.tipo === "Terreno" ? "🚐 Terreno" : "🔧 Taller"}
                             </span>
                         </div>
-                        <h3 className="mt-2 text-[0.95rem] font-extrabold leading-snug text-slate-900 dark:text-slate-100">
+                        <h3 className={`${compacta ? "" : "min-h-10 line-clamp-2"} mt-2 text-[0.95rem] font-extrabold leading-snug text-slate-900 dark:text-slate-100`}>
                             {tarea.titulo}
                         </h3>
                     </div>
@@ -161,13 +161,13 @@ export default function TareaCard({
                     </span>
                 </div>
 
-                {!compacta && tarea.descripcion && (
-                    <p className="mt-1.5 line-clamp-2 text-sm text-slate-600 dark:text-neutral-400">
-                        {tarea.descripcion}
+                {!compacta && (
+                    <p className={`mt-1.5 min-h-10 line-clamp-2 text-sm ${tarea.descripcion ? "text-slate-600 dark:text-neutral-400" : "text-slate-400 dark:text-neutral-500"}`}>
+                        {tarea.descripcion || "Sin descripción adicional."}
                     </p>
                 )}
 
-                <div className="mt-3 space-y-1.5 text-xs font-medium text-slate-600 dark:text-neutral-300">
+                <div className="mt-3 flex-1 space-y-1.5 text-xs font-medium text-slate-600 dark:text-neutral-300">
                     {faltantes.length > 0 && activa && (
                         <p className="rounded-lg bg-amber-50 px-2.5 py-2 font-extrabold text-amber-800 ring-1 ring-amber-200/70 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20">
                             ⚠ Falta definir {faltantes.join(" y ")}

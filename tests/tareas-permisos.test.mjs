@@ -5,11 +5,11 @@ import {
     rutaInicialParaPermisos,
 } from "../src/lib/authPermissions.js";
 
-test("un usuario con acceso de lectura puede entrar a la agenda compartida", () => {
-    assert.equal(rutaInicialParaPermisos([PERMISOS.TAREAS]), "/tareas");
+test("un usuario sin una vista operativa no entra en un bucle de rutas", () => {
+    assert.equal(rutaInicialParaPermisos([PERMISOS.TAREAS]), "/sin-acceso");
 });
 
-test("un técnico entra primero a sus tareas y conserva el acceso compartido", () => {
+test("un técnico entra directamente a sus tareas", () => {
     assert.equal(
         rutaInicialParaPermisos([
             PERMISOS.TAREAS,

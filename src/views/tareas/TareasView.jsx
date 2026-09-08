@@ -454,7 +454,7 @@ export default function TareasView({ vista = "agenda" }) {
                 icon="📋"
                 actions={
                     <>
-                        {puedePlanificar && (
+                        {puedePlanificar && vista === "agenda" && (
                             <Link
                                 to="/tareas/pantalla"
                                 className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50 dark:border-white/15 dark:bg-carbon-900 dark:text-slate-200 dark:hover:bg-white/5"
@@ -462,7 +462,7 @@ export default function TareasView({ vista = "agenda" }) {
                                 📺 Pantalla TV
                             </Link>
                         )}
-                        {puedePlanificar && (
+                        {puedePlanificar && vista === "agenda" && (
                             <button
                                 type="button"
                                 onClick={() => abrirNueva()}
@@ -726,21 +726,18 @@ export default function TareasView({ vista = "agenda" }) {
                     tareas={tareasFiltradas}
                     onEditar={abrirEditar}
                     onCambiarEstado={handleCambiarEstado}
-                    onNueva={puedePlanificar ? abrirNueva : null}
                 />
             ) : vista === "por_programar" ? (
                 <PorProgramar
                     tareas={tareasFiltradas}
                     onEditar={abrirEditar}
                     onCambiarEstado={handleCambiarEstado}
-                    onNueva={puedePlanificar ? abrirNueva : null}
                 />
             ) : vista === "calendario" ? (
                 <TareasCalendario
                     tareas={tareasFiltradas}
                     onEditar={abrirEditar}
                     onCambiarEstado={handleCambiarEstado}
-                    onNuevaFecha={puedePlanificar ? abrirNueva : null}
                 />
             ) : vista === "tecnicos" ? (
                 <div className="space-y-4">
@@ -770,7 +767,6 @@ export default function TareasView({ vista = "agenda" }) {
                         tecnicoFiltro={filtroTecnico}
                         onEditar={abrirEditar}
                         onCambiarEstado={handleCambiarEstado}
-                        onNueva={puedePlanificar ? () => abrirNueva() : null}
                     />
                 </div>
             ) : vista === "semana" ? (
@@ -778,7 +774,6 @@ export default function TareasView({ vista = "agenda" }) {
                     tareas={tareasFiltradas}
                     onEditar={abrirEditar}
                     onCambiarEstado={handleCambiarEstado}
-                    onNueva={puedePlanificar ? abrirNueva : null}
                 />
             ) : vista === "mis_tareas" ? (
                 <MisTareas
@@ -800,7 +795,7 @@ export default function TareasView({ vista = "agenda" }) {
                         onCambiarEstado={handleCambiarEstado}
                         limiteInicial={18}
                         incremento={18}
-                        className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3"
+                        className="grid auto-rows-fr items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3"
                     />
                 ) : (
                     <EmptyState
@@ -814,7 +809,6 @@ export default function TareasView({ vista = "agenda" }) {
                     tareas={tareasFiltradas}
                     onEditar={abrirEditar}
                     onCambiarEstado={handleCambiarEstado}
-                    onNueva={puedePlanificar ? () => abrirNueva() : null}
                 />
             )}
 

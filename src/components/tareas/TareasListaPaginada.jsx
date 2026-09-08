@@ -8,7 +8,7 @@ export default function TareasListaPaginada({
     compacta = false,
     limiteInicial = 12,
     incremento = 12,
-    className = "grid items-start gap-3 md:grid-cols-2 xl:grid-cols-3",
+    className = "grid auto-rows-fr items-stretch gap-3 md:grid-cols-2 xl:grid-cols-3",
 }) {
     const [limite, setLimite] = useState(limiteInicial);
     const visibles = tareas.slice(0, limite);

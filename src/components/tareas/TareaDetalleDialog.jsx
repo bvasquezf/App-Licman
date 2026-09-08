@@ -26,7 +26,7 @@ function telefonoDesdeContacto(contacto) {
 function CampoDetalle({ icono, etiqueta, children, destacado = false }) {
     return (
         <div
-            className={`rounded-2xl border p-4 ${
+            className={`flex h-full min-h-[132px] flex-col rounded-2xl border p-4 ${
                 destacado
                     ? "border-blue-200 bg-blue-50/70 dark:border-blue-500/25 dark:bg-blue-500/5"
                     : "border-slate-200 bg-slate-50/70 dark:border-white/10 dark:bg-white/[0.025]"
@@ -35,7 +35,7 @@ function CampoDetalle({ icono, etiqueta, children, destacado = false }) {
             <dt className="text-xs font-extrabold uppercase tracking-wide text-slate-500 dark:text-neutral-400">
                 <span aria-hidden="true">{icono}</span> {etiqueta}
             </dt>
-            <dd className="mt-1.5 break-words text-sm font-semibold leading-relaxed text-slate-800 dark:text-slate-200">
+            <dd className="mt-1.5 flex flex-1 flex-col justify-start break-words text-sm font-semibold leading-relaxed text-slate-800 dark:text-slate-200">
                 {children}
             </dd>
         </div>
@@ -142,7 +142,7 @@ export default function TareaDetalleDialog({ open, tarea, onClose }) {
                         </section>
                     )}
 
-                    <dl className="grid gap-3 sm:grid-cols-2">
+                    <dl className="grid auto-rows-fr gap-3 sm:grid-cols-2">
                         <CampoDetalle icono="📨" etiqueta="Origen">
                             {valorOPlaceholder(
                                 [

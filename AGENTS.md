@@ -108,12 +108,11 @@ de alta no los edita, pero sí se pueden corregir desde la ficha del inventario)
 - Mi perfil (`/perfil`) muestra actividad propia; administración (`/usuarios`) requiere
   `usuarios.gestionar`.
 - Sub-nav y rutas de `/tareas` gateadas por permiso granular (subNavConfig +
-  `RequirePermission` anidado en App.jsx): las vistas compartidas (Hoy,
-  Requerimientos, Calendario, Semana, Por técnico, Tablero, Finalizadas y Pantalla
-  TV) requieren `tareas.usar`; las acciones de creación/edición requieren
+  `RequirePermission` anidado en App.jsx): las vistas de coordinación requieren
   `tareas.planificar`; `Mis tareas` requiere `tareas.ejecutar_propias`; Papelera
-  requiere `tareas.eliminar`. Un Técnico entra directamente a "Mis tareas", pero
-  también puede consultar la planificación general desde la sub-nav.
+  requiere `tareas.eliminar`. El rol Técnico solo ve "Mis tareas". La sub-nav del
+  planificador muestra Inicio, Requerimientos, Calendario, Por técnico,
+  Finalizadas y Papelera; Semana, Tablero y Pantalla TV no ocupan una pestaña.
 - Bodega separa `bodega.usar`, `bodega.productos`, `bodega.ingresar`,
   `bodega.retirar`, `bodega.devolver` y `bodega.historial`. Técnicos pueden consultar,
   retirar y devolver sus propios retiros. No compran ni editan catálogo.

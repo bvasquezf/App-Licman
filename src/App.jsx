@@ -205,13 +205,11 @@ function App() {
                                     element={<TareasView vista="mis_tareas" />}
                                 />
                             </Route>
-                            {/* Vistas compartidas de consulta. Las acciones de
-                                creación y edición se siguen validando con
-                                tareas.planificar dentro de TareasView y en BD. */}
+                            {/* Vistas de coordinación: solo planificadores. */}
                             <Route
                                 element={
                                     <RequirePermission
-                                        permiso={PERMISOS.TAREAS}
+                                        permiso={PERMISOS.TAREAS_PLANIFICAR}
                                     />
                                 }
                             >

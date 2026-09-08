@@ -54,7 +54,6 @@ export default function TareasCalendario({
     tareas,
     onEditar,
     onCambiarEstado,
-    onNuevaFecha,
 }) {
     const hoy = fechaLocalISO();
     const [mesActual, setMesActual] = useState(() => inicioMes(new Date()));
@@ -184,7 +183,7 @@ export default function TareasCalendario({
                 </div>
 
                 <div className="mt-4 border-t border-slate-100 pt-4 dark:border-white/5">
-                    <div className="mb-3 flex items-center justify-between gap-3">
+                    <div className="mb-3">
                         <p className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
                             {new Intl.DateTimeFormat("es-CL", {
                                 weekday: "long",
@@ -194,15 +193,6 @@ export default function TareasCalendario({
                                 new Date(`${fechaSeleccionada}T12:00:00`),
                             )}
                         </p>
-                        {onNuevaFecha && (
-                            <button
-                                type="button"
-                                onClick={() => onNuevaFecha(fechaSeleccionada)}
-                                className="min-h-[44px] shrink-0 rounded-xl bg-blue-600 px-3 text-xs font-bold text-white"
-                            >
-                                + Agendar
-                            </button>
-                        )}
                     </div>
                     <div>
                         <TareasListaPaginada
@@ -257,35 +247,17 @@ export default function TareasCalendario({
                                             : "bg-slate-50/70 dark:bg-black/10"
                                     }`}
                                 >
-                                    {onNuevaFecha ? (
-                                        <button
-                                            type="button"
-                                            onClick={() => onNuevaFecha(iso)}
-                                            className={`flex h-11 w-11 items-center justify-center rounded-xl text-sm font-extrabold transition hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-500/10 dark:hover:text-blue-300 ${
-                                                iso === hoy
-                                                    ? "bg-blue-600 text-white"
-                                                    : delMes
-                                                      ? "text-slate-700 dark:text-neutral-300"
-                                                      : "text-slate-300 dark:text-neutral-600"
-                                            }`}
-                                            title="Agendar tarea en esta fecha"
-                                            aria-label={`Agendar tarea el ${iso}`}
-                                        >
-                                            {fecha.getDate()}
-                                        </button>
-                                    ) : (
-                                        <span
-                                            className={`flex h-11 w-11 items-center justify-center rounded-xl text-sm font-extrabold ${
-                                                iso === hoy
-                                                    ? "bg-blue-600 text-white"
-                                                    : delMes
-                                                      ? "text-slate-700 dark:text-neutral-300"
-                                                      : "text-slate-300 dark:text-neutral-600"
-                                            }`}
-                                        >
-                                            {fecha.getDate()}
-                                        </span>
-                                    )}
+                                    <span
+                                        className={`flex h-11 w-11 items-center justify-center rounded-xl text-sm font-extrabold ${
+                                            iso === hoy
+                                                ? "bg-blue-600 text-white"
+                                                : delMes
+                                                  ? "text-slate-700 dark:text-neutral-300"
+                                                  : "text-slate-300 dark:text-neutral-600"
+                                        }`}
+                                    >
+                                        {fecha.getDate()}
+                                    </span>
                                     <div className="mt-1 space-y-1.5">
                                         {tareasVisibles.map((tarea) => (
                                             <button

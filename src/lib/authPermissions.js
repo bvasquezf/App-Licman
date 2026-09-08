@@ -51,8 +51,14 @@ export function rutaInicialParaPermisos(permisos = []) {
     ) {
         return "/tareas/mis-tareas";
     }
+    const modulosConVista = MODULOS_ACCESO.filter(
+        ({ permiso }) =>
+            permiso !== PERMISOS.TAREAS ||
+            disponibles.has(PERMISOS.TAREAS_PLANIFICAR) ||
+            disponibles.has(PERMISOS.TAREAS_EJECUTAR_PROPIAS),
+    );
     return (
-        MODULOS_ACCESO.find(({ permiso }) => disponibles.has(permiso))?.ruta ??
+        modulosConVista.find(({ permiso }) => disponibles.has(permiso))?.ruta ??
         "/sin-acceso"
     );
 }

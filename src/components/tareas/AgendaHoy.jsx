@@ -21,7 +21,6 @@ export default function AgendaHoy({
     tareas,
     onEditar,
     onCambiarEstado,
-    onNueva,
 }) {
     const hoy = fechaLocalISO();
     const mananaFecha = new Date();
@@ -75,53 +74,17 @@ export default function AgendaHoy({
         <div className="space-y-5">
             <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-white shadow-[0_18px_50px_rgba(15,23,42,0.22)]">
                 <div className="p-5 sm:p-6">
-                    <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-                        <div>
-                            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-blue-300">
-                                Operación diaria
-                            </p>
-                            <h2 className="mt-1 text-2xl font-black capitalize sm:text-3xl">
-                                {tituloFecha}
-                            </h2>
-                            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-300">
-                                Revisa atrasos, coordina las visitas de hoy y deja
-                                cada trabajo con un responsable claro.
-                            </p>
-                        </div>
-                        {onNueva && (
-                            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        onNueva({ fecha_programada: hoy })
-                                    }
-                                    className="min-h-[48px] rounded-xl bg-white px-4 text-sm font-extrabold text-slate-950 hover:bg-blue-50"
-                                >
-                                    + Trabajo hoy
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        onNueva({
-                                            fecha_programada: hoy,
-                                            tipo: "Terreno",
-                                            categoria_requerimiento:
-                                                "Visita técnica",
-                                        })
-                                    }
-                                    className="min-h-[48px] rounded-xl border border-white/20 bg-white/10 px-4 text-sm font-extrabold text-white hover:bg-white/15"
-                                >
-                                    🚐 Nueva visita
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => onNueva()}
-                                    className="col-span-2 min-h-[48px] rounded-xl border border-white/20 px-4 text-sm font-bold text-slate-200 hover:bg-white/10 sm:col-span-1"
-                                >
-                                    + Requerimiento
-                                </button>
-                            </div>
-                        )}
+                    <div>
+                        <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-blue-300">
+                            Operación diaria
+                        </p>
+                        <h2 className="mt-1 text-2xl font-black capitalize sm:text-3xl">
+                            {tituloFecha}
+                        </h2>
+                        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-300">
+                            Revisa atrasos, coordina las visitas de hoy y deja
+                            cada trabajo con un responsable claro.
+                        </p>
                     </div>
 
                     <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -191,18 +154,7 @@ export default function AgendaHoy({
                     <EmptyState
                         icon="☀️"
                         title="No hay trabajos agendados para hoy"
-                        description="Puedes registrar una visita para hoy o dejar un requerimiento pendiente de planificación."
-                        action={onNueva ? (
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    onNueva({ fecha_programada: hoy })
-                                }
-                                className="min-h-[44px] rounded-xl bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700"
-                            >
-                                + Agendar trabajo hoy
-                            </button>
-                        ) : null}
+                        description="No hay visitas ni trabajos programados para esta jornada."
                     />
                 )}
             </section>

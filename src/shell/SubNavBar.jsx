@@ -31,7 +31,10 @@ export function SubNavBar() {
     const seccionId = getSeccionActiva(location.pathname);
     const items = seccionId
         ? (SUB_NAV_POR_SECCION[seccionId] ?? []).filter(
-              (item) => !item.permiso || puede(item.permiso),
+              (item) =>
+                  (!item.permiso || puede(item.permiso)) &&
+                  (!item.ocultarConPermiso ||
+                      !puede(item.ocultarConPermiso)),
           )
         : [];
 

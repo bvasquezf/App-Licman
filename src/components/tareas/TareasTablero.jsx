@@ -36,7 +36,6 @@ export default function TareasTablero({
     tareas,
     onEditar,
     onCambiarEstado,
-    onNueva,
 }) {
     return (
         <div className="grid items-start gap-4 lg:grid-cols-2 xl:grid-cols-4">
@@ -79,18 +78,6 @@ export default function TareasTablero({
                                         columna.estado === "Por programar"
                                             ? "Los nuevos requerimientos aparecerán aquí."
                                             : "No hay trabajos en este estado con los filtros actuales."
-                                    }
-                                    action={
-                                        columna.estado === "Por programar" &&
-                                        onNueva ? (
-                                            <button
-                                                type="button"
-                                                onClick={onNueva}
-                                                className="min-h-[44px] rounded-xl bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700"
-                                            >
-                                                + Nuevo requerimiento
-                                            </button>
-                                        ) : null
                                     }
                                 />
                             )}

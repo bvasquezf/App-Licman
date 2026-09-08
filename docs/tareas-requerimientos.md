@@ -23,15 +23,15 @@ compra o un folio entregado por el cliente.
 
 ## Acceso por rol
 
-- `tareas.usar`: consulta Hoy, Requerimientos, Calendario, Semana, Por técnico,
-  Tablero, Finalizadas y Pantalla TV.
-- `tareas.planificar`: además crea, asigna y edita requerimientos.
+- `tareas.usar`: habilita el módulo y la consulta de datos.
+- `tareas.planificar`: permite usar Inicio, Requerimientos, Calendario, Por
+  técnico, Finalizadas y Pantalla TV; además crea, asigna y edita requerimientos.
 - `tareas.ejecutar_propias`: permite al técnico operar las tareas asignadas a su
   cuenta desde Mis tareas.
 - `tareas.eliminar`: permite usar la Papelera.
 
-Todas las personas deben iniciar sesión. El permiso de lectura no permite crear,
-editar ni reasignar trabajo.
+Todas las personas deben iniciar sesión. El Técnico ve solamente **Mis tareas**
+en la barra del módulo; allí opera los trabajos asignados a su propia cuenta.
 
 ## Base de datos
 
